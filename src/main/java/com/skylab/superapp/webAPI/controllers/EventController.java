@@ -65,6 +65,11 @@ public class EventController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
+    @GetMapping("/getAllFutureEventsByTenant")
+    public ResponseEntity<?> getAllFutureEventsByTenant(@RequestParam String tenant) {
+        var result = eventService.getAllFutureEventsByTenant(tenant);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
 
 
 }

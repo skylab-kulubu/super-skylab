@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -223,5 +224,20 @@ public class EventManager implements EventService {
 
         eventDao.save(event);
         return new SuccessResult(EventMessages.EventPhotosAddedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<List<GetEventDto>> getAllFutureEventsByTenant(String tenant) {
+        if (tenant == null || tenant.isEmpty()) {
+            return new ErrorDataResult<>(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
+        }
+
+        var events = eventDao.findAllByTenantAndDateAfter(tenant, new Date());
+        if (events.isEmpty()) {
+            return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        var returnEvents = GetEventDto.buildListGetEventDto(events);
+        return new SuccessDataResult<>(returnEvents, EventMessages.EventGetSuccess, HttpStatus.OK);
     }
 }

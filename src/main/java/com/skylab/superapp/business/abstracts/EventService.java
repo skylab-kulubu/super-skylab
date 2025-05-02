@@ -29,6 +29,8 @@ public interface EventService {
 
     Result addPhotosToEvent(int eventId, List<Integer> photoIds);
 
+    DataResult<List<GetEventDto>> getAllFutureEventsByTenant(String tenant);
+
 
 }
 
