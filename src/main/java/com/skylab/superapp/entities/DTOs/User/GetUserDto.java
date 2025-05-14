@@ -2,6 +2,8 @@ package com.skylab.superapp.entities.DTOs.User;
 
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
+import com.skylab.superapp.entities.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

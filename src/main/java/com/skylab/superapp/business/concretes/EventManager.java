@@ -158,7 +158,7 @@ public class EventManager implements EventService {
 
     @Override
     public DataResult<List<GetBizbizeEventDto>> getAllBizbizeEvents() {
-        var events = eventDao.findAllByTenantOrderByDateDesc("Bizbize");
+        var events = eventDao.findAllByTenantOrderByDateDesc("BIZBIZE");
         if (events.isEmpty()) {
             return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
