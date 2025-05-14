@@ -90,7 +90,7 @@ public class PhotoManager implements PhotoService {
             return new ErrorResult(PhotoMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
 
-        photo.setPhotoUrl(getPhotoDto.getPhotoUrl().isEmpty() ? getPhotoDto.getPhotoUrl() : photo.getPhotoUrl());
+        photo.setPhotoUrl(getPhotoDto.getPhotoUrl().isEmpty() ? photo.getPhotoUrl() : getPhotoDto.getPhotoUrl());
 
         photoDao.save(photo);
         return new SuccessResult(PhotoMessages.PhotoUpdatedSuccess, HttpStatus.OK);
