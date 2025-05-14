@@ -96,6 +96,11 @@ public class SecurityConfig {
                                 .requestMatchers("/api/seasons/addCompetitorToSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/competitors/addPointsToCompetitor").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
 
+                                .requestMatchers("/api/images/addImage").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/images/getImageByUrl/**").permitAll()
+                                .requestMatchers("/api/images/getImageDetailsByUrl/**").permitAll()
+                                .requestMatchers("/api/images/deleteImageById/**").hasAnyRole("ADMIN")
+
 
                                 .anyRequest().hasAnyRole("ADMIN")
 

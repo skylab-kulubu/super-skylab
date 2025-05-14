@@ -9,6 +9,8 @@ import com.skylab.superapp.entities.DTOs.User.GetUserDto;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -159,6 +161,15 @@ public class UserManager implements UserService {
         user.setLastLogin(new Date());
         userDao.save(user);
         return new SuccessResult(UserMessages.LastLoginUpdated, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<User> getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() == "anonymousUser"){
+            return new ErrorDataResult<>(UserMessages.userIsNotAuthenticatedPleaseLogin, HttpStatus.UNAUTHORIZED);
+        }
+        return getUserEntityByUsername(authentication.getName());
     }
 
     @Override

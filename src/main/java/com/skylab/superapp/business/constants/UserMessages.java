@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.constants;
 
+import com.skylab.superapp.entities.User;
 import org.springframework.http.HttpStatus;
 
 public class UserMessages {
@@ -15,4 +16,5 @@ public class UserMessages {
     public static String RoleAddedSuccess = "Rol başarıyla eklendi!";
     public static String RoleRemovedSuccess = "Rol başarıyla kaldırıldı!";
     public static String LastLoginUpdated = "Kullanıcının son girişi güncellendi!";
+    public static String userIsNotAuthenticatedPleaseLogin = "Kullanıcı kimliği doğrulanmadı. Lütfen giriş yapın!";
 }

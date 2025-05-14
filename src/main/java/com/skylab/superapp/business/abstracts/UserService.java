@@ -31,4 +31,6 @@ public interface UserService extends UserDetailsService {
     Result removeRoleFromUser(String username, Role role);
 
     Result setLastLogin(String username);
+
+    DataResult<User> getAuthenticatedUser();
 }

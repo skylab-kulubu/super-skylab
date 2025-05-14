@@ -17,10 +17,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5455:5455"
+      - "5455:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
     networks:
-        - nginx-network
+      - nginx-network
 
 networks:
-  nginx-network:
-    external: true
+    nginx-network:
+      external: true
