@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/events/getAllByTenantAndType").permitAll()
                                 .requestMatchers("/api/events/getAllByTenant").permitAll()
                                 .requestMatchers("/api/events/getAllBizbizeEvents").permitAll()
+                                .requestMatchers("/api/events/getAllFutureEventsByTenant").permitAll()
                                 .requestMatchers("/api/events/addPhotosToEvent").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
 
                                 .requestMatchers("/api/photos/addPhoto").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
