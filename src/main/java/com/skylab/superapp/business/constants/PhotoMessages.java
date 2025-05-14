@@ -15,4 +15,5 @@ public class PhotoMessages {
     public static String PhotoUrlCannotBeNull = "Fotoğraf URL'si boş olamaz!";
     public static String TenantCannotBeNull = "Tenant boş olamaz!";
     public static String UserNotAuthorized = "Kullanıcı yetkilendirilmedi!";
+    public static String PhotoUpdatedSuccess = "Fotoğraf güncellendi.";
 }

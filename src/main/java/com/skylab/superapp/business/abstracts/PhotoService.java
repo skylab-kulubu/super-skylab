@@ -14,6 +14,8 @@ public interface PhotoService {
 
     Result deletePhoto(int id);
 
+    Result updatePhoto(GetPhotoDto getPhotoDto);
+
     DataResult<Photo> getPhotoEntityById(int id);
 
     DataResult<List<GetPhotoDto>> getAllPhotos();

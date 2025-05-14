@@ -74,6 +74,30 @@ public class PhotoManager implements PhotoService {
     }
 
     @Override
+    public Result updatePhoto(GetPhotoDto getPhotoDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var username = authentication.getName();
+
+        var photo = photoDao.findById(getPhotoDto.getId());
+        if (photo == null) {
+            return new ErrorResult(PhotoMessages.PhotoNotFound, HttpStatus.NOT_FOUND);
+        }
+        if (getPhotoDto.getPhotoUrl() == null || getPhotoDto.getPhotoUrl().isEmpty()) {
+            return new ErrorResult(PhotoMessages.PhotoUrlCannotBeNull, HttpStatus.BAD_REQUEST);
+        }
+        var tenantCheck = userService.tenantCheck(getPhotoDto.getTenant(), username);
+        if (!tenantCheck) {
+            return new ErrorResult(PhotoMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
+        }
+
+        photo.setPhotoUrl(getPhotoDto.getPhotoUrl().isEmpty() ? getPhotoDto.getPhotoUrl() : photo.getPhotoUrl());
+
+        photoDao.save(photo);
+        return new SuccessResult(PhotoMessages.PhotoUpdatedSuccess, HttpStatus.OK);
+
+    }
+
+    @Override
     public DataResult<Photo> getPhotoEntityById(int id) {
         var photo = photoDao.findById(id);
         if (photo == null) {

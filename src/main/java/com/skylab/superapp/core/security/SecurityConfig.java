@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/events/addPhotosToEvent").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
 
                                 .requestMatchers("/api/photos/addPhoto").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("api/photos/updatePhoto").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/photos/deletePhoto").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/photos/getAll").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
 
