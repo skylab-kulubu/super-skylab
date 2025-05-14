@@ -1,6 +1,8 @@
 package com.skylab.superapp.entities.DTOs.User;
 
 import com.skylab.superapp.entities.User;
+import com.skylab.superapp.entities.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +18,8 @@ public class GetUserDto {
 
     private String username;
 
+    private List<Role> roles;
+
     private Date createdAt;
 
     private Date lastLogin;
@@ -23,6 +27,7 @@ public class GetUserDto {
     public GetUserDto(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
+        this.roles = user.getAuthorities().stream().toList();
         this.createdAt = user.getCreatedAt();
         this.lastLogin = user.getLastLogin();
     }
