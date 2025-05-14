@@ -15,7 +15,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry
                     .addMapping("/**")
-                    .allowedOrigins("https://www.yildizliyorum.com" ,"http://localhost:3000", "https://localhost:3000", "https://yildizliyorum.com", "https://yildizliyorum.com/account", "https://admin.yildizliyorum.com")
+                    .allowedOrigins("http://localhost:3000", "https://localhost:3000", "https://yildizskylab.com")
                     .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders(
                                 "Access-Control-Allow-Headers",
