@@ -42,7 +42,7 @@ public class AuthController {
         if (authentication.isAuthenticated()) {
             //set last login date
             userService.setLastLogin(authRequest.getUsername());
-            return new SuccessDataResult<String>(jwtService.generateToken(user.getData().getUsername()), "Token generated successfully", HttpStatus.OK);
+            return new SuccessDataResult<String>(jwtService.generateToken(user.getData().getUsername(), user.getData().getAuthorities()), "Token generated successfully", HttpStatus.OK);
         }
         return new ErrorDataResult<>("Invalid username or password", HttpStatus.BAD_REQUEST);
     }
