@@ -28,21 +28,21 @@ public class PhotoManager implements PhotoService {
     }
 
     @Override
-    public Result addPhoto(CreatePhotoDto createPhotoDto) {
+    public DataResult<Integer> addPhoto(CreatePhotoDto createPhotoDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         var username = authentication.getName();
 
         if (createPhotoDto.getPhotoUrl() == null || createPhotoDto.getPhotoUrl().isEmpty()) {
-            return new ErrorResult(PhotoMessages.PhotoUrlCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(PhotoMessages.PhotoUrlCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         if (createPhotoDto.getTenant() == null || createPhotoDto.getTenant().isEmpty()) {
-            return new ErrorResult(PhotoMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(PhotoMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         var tenantCheck = userService.tenantCheck(createPhotoDto.getTenant(), username);
         if (!tenantCheck) {
-            return new ErrorResult(PhotoMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
+            return new ErrorDataResult<>(PhotoMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
 
         var photo = Photo.builder()
@@ -51,7 +51,7 @@ public class PhotoManager implements PhotoService {
                 .build();
 
         photoDao.save(photo);
-        return new SuccessResult(PhotoMessages.PhotoAddedSuccess, HttpStatus.CREATED);
+        return new SuccessDataResult<>(photo.getId(),PhotoMessages.PhotoAddedSuccess, HttpStatus.CREATED);
     }
 
     @Override

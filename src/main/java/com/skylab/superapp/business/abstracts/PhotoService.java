@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface PhotoService {
 
-    Result addPhoto(CreatePhotoDto createPhotoDto);
+    DataResult<Integer> addPhoto(CreatePhotoDto createPhotoDto);
 
     Result deletePhoto(int id);
 
