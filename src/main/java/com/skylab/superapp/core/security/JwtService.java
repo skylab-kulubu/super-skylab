@@ -10,10 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class JwtService {
@@ -22,9 +19,12 @@ public class JwtService {
     private String SECRET;
 
 
-    public String generateToken(String username, Collection<? extends GrantedAuthority> role){
+    public String generateToken(String username, Collection<? extends GrantedAuthority> authorities){
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+        List<String> roles = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        claims.put("roles", roles);
         return createToken(claims, username);
     }
 
