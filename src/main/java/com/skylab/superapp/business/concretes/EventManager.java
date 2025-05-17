@@ -38,16 +38,16 @@ public class EventManager implements EventService {
 
 
     @Override
-    public Result addEvent(CreateEventDto createEventDto) {
+    public DataResult<Integer> addEvent(CreateEventDto createEventDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         if (createEventDto.getTenant() == null || createEventDto.getTenant().isEmpty()) {
-            return new ErrorResult(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         boolean tenantCheck = userService.tenantCheck(createEventDto.getTenant(), username);
         if (!tenantCheck) {
-            return new ErrorResult(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
+            return new ErrorDataResult<>(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
 
 
@@ -65,7 +65,7 @@ public class EventManager implements EventService {
                 .build();
 
         eventDao.save(event);
-        return new SuccessResult(EventMessages.EventCreatedSuccess, HttpStatus.CREATED);
+        return new SuccessDataResult<>(event.getId(), EventMessages.EventCreatedSuccess, HttpStatus.CREATED);
     }
 
     @Override

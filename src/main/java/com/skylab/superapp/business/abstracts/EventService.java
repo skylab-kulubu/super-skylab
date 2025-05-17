@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface EventService {
 
-    Result addEvent(CreateEventDto createEventDto);
+    DataResult<Integer> addEvent(CreateEventDto createEventDto);
 
     Result deleteEvent(int id);
 
