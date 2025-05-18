@@ -1,6 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
 import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
 import com.skylab.superapp.entities.Role;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,18 @@ public class UserController {
     @PostMapping("/deleteUser")
     public ResponseEntity<?> deleteUser(@RequestParam int id) {
         var result = userService.deleteUser(id);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+    @PostMapping("/changePassword")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePassword changePassword) {
+        var result = userService.changePassword(changePassword);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+    @PostMapping("/resetPassword")
+    public ResponseEntity<?> resetPassword(@RequestBody CreateUserDto createUserDto) {
+        var result = userService.resetPassword(createUserDto);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 

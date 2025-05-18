@@ -4,6 +4,7 @@ import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.business.constants.UserMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.UserDao;
+import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
 import com.skylab.superapp.entities.DTOs.User.GetUserDto;
 import com.skylab.superapp.entities.Role;
@@ -62,6 +63,62 @@ public class UserManager implements UserService {
 
         userDao.deleteById(id);
         return new SuccessResult(UserMessages.UserDeletedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public Result changePassword(ChangePassword changePassword) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var username = authentication.getName();
+
+        var user = userDao.findByUsername(username);
+        if(user == null) {
+            return new ErrorResult(UserMessages.UserNotFound, HttpStatus.NOT_FOUND);
+        }
+        if(!passwordEncoder.matches(changePassword.getOldPassword(), user.getPassword())) {
+            return new ErrorResult(UserMessages.OldPasswordIncorrect, HttpStatus.BAD_REQUEST);
+        }
+
+        if(changePassword.getNewPassword() == null || changePassword.getNewPassword().isEmpty()) {
+            return new ErrorResult(UserMessages.NewPasswordCannotBeNull, HttpStatus.BAD_REQUEST);
+        }
+
+        if(changePassword.getNewPassword().length() < 6) {
+            return new ErrorResult(UserMessages.NewPasswordTooShort, HttpStatus.BAD_REQUEST);
+        }
+
+        if(!changePassword.getNewPassword().equals(changePassword.getConfirmPassword())) {
+            return new ErrorResult(UserMessages.PasswordsDoNotMatch, HttpStatus.BAD_REQUEST);
+
+        }
+
+        user.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
+        userDao.save(user);
+        return new SuccessResult(UserMessages.PasswordChangedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<String> resetPassword(CreateUserDto createUserDto) {
+        if(createUserDto.getUsername() == null) {
+            return new ErrorDataResult<>(UserMessages.UsernameCannotBeNull, HttpStatus.BAD_REQUEST);
+        }
+
+        var user = userDao.findByUsername(createUserDto.getUsername());
+        if(user == null) {
+            return new ErrorDataResult<>(UserMessages.UserNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        //generate random password if password is null
+        if(createUserDto.getPassword() == null || createUserDto.getPassword().isEmpty()) {
+            var randomPassword = generateRandomPassword();
+            user.setPassword(passwordEncoder.encode(randomPassword));
+            userDao.save(user);
+            return new SuccessDataResult<>(randomPassword, UserMessages.PasswordResetSuccess, HttpStatus.OK);
+        }
+        else
+            user.setPassword(passwordEncoder.encode(createUserDto.getPassword()));
+
+        userDao.save(user);
+        return new SuccessDataResult<>(UserMessages.PasswordChangedSuccess, HttpStatus.OK);
     }
 
     @Override
@@ -180,5 +237,16 @@ public class UserManager implements UserService {
         }
 
         return user;
+    }
+
+    public String generateRandomPassword() {
+        //generate random password with letters, numbers and special characters
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            int index = (int) (Math.random() * chars.length());
+            password.append(chars.charAt(index));
+        }
+        return password.toString();
     }
 }

@@ -2,6 +2,7 @@ package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
+import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
 import com.skylab.superapp.entities.DTOs.User.GetUserDto;
 import com.skylab.superapp.entities.Role;
@@ -15,6 +16,10 @@ public interface UserService extends UserDetailsService {
     Result addUser(CreateUserDto createUserDto);
 
     Result deleteUser(int id);
+
+    Result changePassword(ChangePassword changePassword);
+
+    DataResult<String> resetPassword(CreateUserDto createUserDto);
 
     DataResult<List<GetUserDto>> getAllUsers();
 
