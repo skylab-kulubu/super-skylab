@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface StaffService {
 
-    Result addStaff(CreateStaffDto createStaffDto);
+    DataResult<Integer> addStaff(CreateStaffDto createStaffDto);
 
     Result deleteStaff(int id);
 

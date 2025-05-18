@@ -32,22 +32,22 @@ public class StaffManager implements StaffService {
     }
 
     @Override
-    public Result addStaff(CreateStaffDto createStaffDto) {
+    public DataResult<Integer> addStaff(CreateStaffDto createStaffDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         var username = authentication.getName();
 
         if (createStaffDto.getTenant() == null || createStaffDto.getTenant().isEmpty()) {
-            return new ErrorResult(StaffMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(StaffMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         var tenantCheck = userService.tenantCheck(createStaffDto.getTenant(), username);
         if(!tenantCheck){
-            return new ErrorResult(StaffMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
+            return new ErrorDataResult<>(StaffMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
 
         var photo = photoService.getPhotoEntityById(createStaffDto.getPhotoId());
         if (!photo.isSuccess()) {
-            return new ErrorResult(photo.getMessage(), photo.getHttpStatus());
+            return new ErrorDataResult<>(photo.getMessage(), photo.getHttpStatus());
         }
 
         Staff staff = Staff.builder()
@@ -61,7 +61,7 @@ public class StaffManager implements StaffService {
                 .build();
 
         staffDao.save(staff);
-        return new SuccessResult(StaffMessages.StaffAddedSuccess, HttpStatus.CREATED);
+        return new SuccessDataResult<>(staff.getId(),StaffMessages.StaffAddedSuccess, HttpStatus.CREATED);
     }
 
     @Override
