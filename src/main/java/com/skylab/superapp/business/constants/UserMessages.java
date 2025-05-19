@@ -23,4 +23,5 @@ public class UserMessages {
     public static String PasswordResetSuccess = "Şifre sıfırlama işlemi başarılı!";
     public static String NewPasswordTooShort = "Yeni şifre en az 6 karakter olmalıdır!";
     public static String PasswordsDoNotMatch = "Yeni şifreler eşleşmiyor!";
+    public static String NewPasswordCannotBeSameAsOld = "Yeni şifre eski şifre ile aynı olamaz!";
 }

@@ -130,6 +130,36 @@ public class UserManager implements UserService {
     }
 
     @Override
+    public Result changeAuthenticatedUserPassword(String newPassword) {
+        if (newPassword == null || newPassword.isEmpty()) {
+            return new ErrorResult(UserMessages.NewPasswordCannotBeNull, HttpStatus.BAD_REQUEST);
+        }
+
+        if (newPassword.length() < 6) {
+            return new ErrorResult(UserMessages.NewPasswordTooShort, HttpStatus.BAD_REQUEST);
+        }
+
+        var loggedInUserResult = getAuthenticatedUser();
+
+        if (!loggedInUserResult.isSuccess()){
+            return loggedInUserResult;
+        }
+
+        var encodedNewPassword = passwordEncoder.encode(newPassword);
+        if (encodedNewPassword.equals(loggedInUserResult.getData().getPassword())){
+            return new ErrorResult(UserMessages.NewPasswordCannotBeSameAsOld, HttpStatus.BAD_REQUEST);
+        }
+
+        loggedInUserResult.getData().setPassword(encodedNewPassword);
+        userDao.save(loggedInUserResult.getData());
+
+        emailService.sendMail(loggedInUserResult.getData().getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUserResult.getData().getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
+
+        return new SuccessResult(UserMessages.PasswordChangedSuccess, HttpStatus.OK);
+
+    }
+
+    @Override
     public DataResult<List<GetUserDto>> getAllUsers() {
         var result = userDao.findAll();
         if(result.isEmpty()) {

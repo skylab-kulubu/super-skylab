@@ -21,6 +21,8 @@ public interface UserService extends UserDetailsService {
 
     DataResult<String> resetPassword(CreateUserDto createUserDto);
 
+    Result changeAuthenticatedUserPassword(String newPassword);
+
     DataResult<List<GetUserDto>> getAllUsers();
 
     DataResult<User> getUserEntityById(int id);

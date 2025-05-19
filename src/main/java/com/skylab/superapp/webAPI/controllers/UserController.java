@@ -1,6 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
 import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
 import com.skylab.superapp.entities.Role;
@@ -34,6 +35,13 @@ public class UserController {
         var result = userService.changePassword(changePassword);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
+
+    @PostMapping("/changeAuthenticatedUserPassword")
+    public ResponseEntity<Result> changeAuthenticatedUserPassword(@RequestBody String newPassword) {
+        var result = userService.changeAuthenticatedUserPassword(newPassword);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
 
     @PostMapping("/resetPassword")
     public ResponseEntity<?> resetPassword(@RequestBody CreateUserDto createUserDto) {
