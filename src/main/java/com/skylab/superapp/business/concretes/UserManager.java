@@ -154,7 +154,7 @@ public class UserManager implements UserService {
             return new ErrorResult(UserMessages.NewPasswordCannotBeSameAsOld, HttpStatus.BAD_REQUEST);
         }
 
-        loggedInUser.setPassword(newPassword);
+        loggedInUser.setPassword(passwordEncoder.encode(newPassword));
         userDao.save(loggedInUser);
 
         emailService.sendMail(loggedInUser.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUser.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
