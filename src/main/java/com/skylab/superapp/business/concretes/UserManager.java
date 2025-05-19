@@ -145,12 +145,12 @@ public class UserManager implements UserService {
             return loggedInUserResult;
         }
 
-        var encodedNewPassword = passwordEncoder.encode(newPassword);
-        if (encodedNewPassword.equals(loggedInUserResult.getData().getPassword())){
+
+        if (passwordEncoder.matches(newPassword, loggedInUserResult.getData().getPassword())){
             return new ErrorResult(UserMessages.NewPasswordCannotBeSameAsOld, HttpStatus.BAD_REQUEST);
         }
 
-        loggedInUserResult.getData().setPassword(encodedNewPassword);
+        loggedInUserResult.getData().setPassword(passwordEncoder.encode(newPassword));
         userDao.save(loggedInUserResult.getData());
 
         emailService.sendMail(loggedInUserResult.getData().getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUserResult.getData().getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
