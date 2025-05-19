@@ -32,9 +32,9 @@ public class CompetitorManager implements CompetitorService {
     }
 
     @Override
-    public Result addCompetitor(CreateCompetitorDto createCompetitorDto) {
+    public DataResult<String> addCompetitor(CreateCompetitorDto createCompetitorDto) {
         if(createCompetitorDto.getName() == null || createCompetitorDto.getName().isEmpty()) {
-            return new ErrorResult(CompetitorMessages.CompetitorNameCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(CompetitorMessages.CompetitorNameCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         Competitor competitor = Competitor.builder()
@@ -47,7 +47,7 @@ public class CompetitorManager implements CompetitorService {
                 .competitionCount(createCompetitorDto.getCompetitionCount())
                 .build();
         competitorDao.save(competitor);
-        return new SuccessResult(CompetitorMessages.CompetitorAddedSuccess, HttpStatus.CREATED);
+        return new SuccessDataResult<>(competitor.getId(),CompetitorMessages.CompetitorAddedSuccess, HttpStatus.CREATED);
     }
 
     @Override

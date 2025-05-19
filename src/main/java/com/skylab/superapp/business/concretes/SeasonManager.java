@@ -26,14 +26,14 @@ public class SeasonManager implements SeasonService {
     }
 
     @Override
-    public Result addSeason(CreateSeasonDto createSeasonDto) {
+    public DataResult<Integer> addSeason(CreateSeasonDto createSeasonDto) {
 
         if(createSeasonDto.getName() == null || createSeasonDto.getName().isEmpty()) {
-            return new ErrorResult(SeasonMessages.NameCannotBeNull, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(SeasonMessages.NameCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         if(seasonDao.existsByName(createSeasonDto.getName())) {
-            return new ErrorResult(SeasonMessages.NameAlreadyExists, HttpStatus.BAD_REQUEST);
+            return new ErrorDataResult<>(SeasonMessages.NameAlreadyExists, HttpStatus.BAD_REQUEST);
         }
 
         Season season = Season.builder()
@@ -45,7 +45,7 @@ public class SeasonManager implements SeasonService {
                 .build();
 
         seasonDao.save(season);
-        return new SuccessResult(SeasonMessages.SeasonAddedSuccess, HttpStatus.CREATED);
+        return new SuccessDataResult<>(season.getId(), SeasonMessages.SeasonAddedSuccess, HttpStatus.CREATED);
     }
 
     @Override

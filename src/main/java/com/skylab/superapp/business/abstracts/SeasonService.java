@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface SeasonService {
 
-    Result addSeason(CreateSeasonDto createSeasonDto);
+    DataResult<Integer> addSeason(CreateSeasonDto createSeasonDto);
 
     Result deleteSeason(int id);
 

@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface CompetitorService {
 
-    Result addCompetitor(CreateCompetitorDto createCompetitorDto);
+    DataResult<String> addCompetitor(CreateCompetitorDto createCompetitorDto);
 
     Result deleteCompetitor(String id);
 
