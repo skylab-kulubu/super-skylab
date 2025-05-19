@@ -140,21 +140,17 @@ public class UserManager implements UserService {
         }
 
         var loggedInUserResult = getAuthenticatedUser();
-
         if (!loggedInUserResult.isSuccess()){
             return loggedInUserResult;
         }
 
-        var loggedInUsersUsername = loggedInUserResult.getData().getUsername();
-        var userToUpdate = userDao.findByUsername(loggedInUsersUsername);
 
-
-        if (passwordEncoder.matches(newPassword, userToUpdate.getPassword())){
+        if (passwordEncoder.matches(newPassword, loggedInUserResult.getData().getPassword())){
             return new ErrorResult(UserMessages.NewPasswordCannotBeSameAsOld, HttpStatus.BAD_REQUEST);
         }
 
-       userToUpdate.setPassword(passwordEncoder.encode(newPassword));
-        userDao.save(userToUpdate);
+        loggedInUserResult.getData().setPassword(newPassword);
+        userDao.save(loggedInUserResult.getData());
 
         emailService.sendMail(loggedInUserResult.getData().getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUserResult.getData().getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
 
