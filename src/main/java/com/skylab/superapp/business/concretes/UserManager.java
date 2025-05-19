@@ -24,8 +24,8 @@ import java.util.Set;
 @Service
 public class UserManager implements UserService {
 
-    private UserDao userDao;
-    private PasswordEncoder passwordEncoder;
+    private final UserDao userDao;
+    private final PasswordEncoder passwordEncoder;
 
     public UserManager(UserDao userDao, PasswordEncoder passwordEncoder) {
         this.userDao = userDao;
@@ -164,6 +164,16 @@ public class UserManager implements UserService {
     }
 
     @Override
+    public DataResult<User> getUserEntityByEmail(String email) {
+        var result = userDao.findByEmail(email);
+        if(!result.isPresent()) {
+            return new ErrorDataResult<>(UserMessages.UserNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        return new SuccessDataResult<>(result.get(), UserMessages.UserFoundSuccess, HttpStatus.OK);
+    }
+
+    @Override
     public boolean tenantCheck(String tenant, String username) {
         var user = userDao.findByUsername(username);
         if(user == null) {
@@ -209,7 +219,7 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public Result setLastLogin(String username) {
+    public Result setLastLoginWithUsername(String username) {
         var user = userDao.findByUsername(username);
         if(user == null) {
             return new ErrorResult(UserMessages.UserNotFound, HttpStatus.NOT_FOUND);

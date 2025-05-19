@@ -29,13 +29,15 @@ public interface UserService extends UserDetailsService {
 
     DataResult<User> getUserEntityByUsername(String username);
 
+    DataResult<User> getUserEntityByEmail(String email);
+
     boolean tenantCheck(String tenant, String username);
 
     Result addRoleToUser(String username, Role role);
 
     Result removeRoleFromUser(String username, Role role);
 
-    Result setLastLogin(String username);
+    Result setLastLoginWithUsername(String username);
 
     DataResult<User> getAuthenticatedUser();
 }

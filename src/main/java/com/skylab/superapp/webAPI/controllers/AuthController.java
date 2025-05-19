@@ -1,5 +1,6 @@
 package com.skylab.superapp.webAPI.controllers;
 
+import com.skylab.superapp.business.abstracts.AuthService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.ErrorDataResult;
@@ -19,32 +20,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private AuthenticationManager authenticationManager;
-    private JwtService jwtService;
-    private UserService userService;
+    private final AuthService authService;
 
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, JwtService jwtService){
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.userService = userService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
-
 
     @PostMapping("/login")
     public DataResult<String> generateToken(@RequestBody AuthRequest authRequest) {
-        var user = userService.getUserEntityByUsername(authRequest.getUsername());
-        if(user.getData() == null){
-            return new ErrorDataResult<>("User not found", HttpStatus.NOT_FOUND);
+        var result = authService.login(authRequest);
+
+        if (result.isSuccess()) {
+            return new SuccessDataResult<>(result.getData(), result.getMessage(), result.getHttpStatus());
+        } else {
+            return new ErrorDataResult<>(result.getMessage(), result.getHttpStatus());
         }
 
-
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getData().getUsername(), authRequest.getPassword()));
-        if (authentication.isAuthenticated()) {
-            //set last login date
-            userService.setLastLogin(authRequest.getUsername());
-            return new SuccessDataResult<String>(jwtService.generateToken(user.getData().getUsername(), user.getData().getAuthorities()), "Token generated successfully", HttpStatus.OK);
-        }
-        return new ErrorDataResult<>("Invalid username or password", HttpStatus.BAD_REQUEST);
     }
 
 
