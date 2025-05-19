@@ -89,6 +89,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/seasons/addCompetitorToSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/seasons/getAllSeasonsByTenant").permitAll()
                                 .requestMatchers("/api/seasons/getSeasonByName").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("api/seasons/getSeasonById").permitAll()
 
                                 .requestMatchers("/api/competitors/addCompetitor").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/competitors/deleteCompetitor").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")

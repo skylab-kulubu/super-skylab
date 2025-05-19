@@ -52,4 +52,11 @@ public class SeasonController {
     }
 
 
+    @GetMapping("/getSeasonById")
+    public ResponseEntity<?> getSeasonById(@RequestParam int id) {
+        var result = seasonService.getSeasonById(id);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+
 }

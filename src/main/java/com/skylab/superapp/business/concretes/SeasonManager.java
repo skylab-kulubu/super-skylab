@@ -129,4 +129,14 @@ public class SeasonManager implements SeasonService {
 
         return new SuccessResult(SeasonMessages.CompetitorAddedSuccess, HttpStatus.OK);
     }
+
+    @Override
+    public DataResult<GetSeasonDto> getSeasonById(int id) {
+        var result = seasonDao.findById(id);
+        if(result == null) {
+            return new ErrorDataResult<>(SeasonMessages.SeasonNotFound, HttpStatus.NOT_FOUND);
+        }
+        var returnSeason = new GetSeasonDto(result);
+        return new SuccessDataResult<>(returnSeason, SeasonMessages.SeasonListedSuccess, HttpStatus.OK);
+    }
 }

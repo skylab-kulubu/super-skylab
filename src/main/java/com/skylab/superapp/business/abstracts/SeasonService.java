@@ -23,4 +23,6 @@ public interface SeasonService {
     DataResult<Season> getSeasonEntityById(int id);
 
     Result addCompetitorToSeason(int seasonId, String competitorId);
+
+    DataResult<GetSeasonDto> getSeasonById(int id);
 }
