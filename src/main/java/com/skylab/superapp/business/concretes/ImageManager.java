@@ -34,7 +34,12 @@ public class ImageManager implements ImageService {
             return new ErrorDataResult<>(ImageMessages.imageCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
-        var userResult = userService.getAuthenticatedUser();
+        var usernameResult = userService.getAuthenticatedUsername();
+        if (!usernameResult.isSuccess()){
+            return new ErrorDataResult<>(usernameResult.getMessage(), usernameResult.getHttpStatus());
+        }
+
+        var userResult = userService.getUserEntityByUsername(usernameResult.getData());
         if (!userResult.isSuccess()){
             return new ErrorDataResult<>(userResult.getMessage(), userResult.getHttpStatus());
         }

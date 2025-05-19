@@ -139,20 +139,25 @@ public class UserManager implements UserService {
             return new ErrorResult(UserMessages.NewPasswordTooShort, HttpStatus.BAD_REQUEST);
         }
 
-        var loggedInUserResult = getAuthenticatedUser();
-        if (!loggedInUserResult.isSuccess()){
-            return loggedInUserResult;
+        var loggedInUsername = getAuthenticatedUsername();
+        if (!loggedInUsername.isSuccess()) {
+            return new ErrorResult(loggedInUsername.getMessage(), loggedInUsername.getHttpStatus());
+        }
+
+        var loggedInUser = userDao.findByUsername(loggedInUsername.getData());
+        if (loggedInUser == null) {
+            return new ErrorResult(UserMessages.UserNotFound, HttpStatus.NOT_FOUND);
         }
 
 
-        if (passwordEncoder.matches(newPassword, loggedInUserResult.getData().getPassword())){
+        if (passwordEncoder.matches(newPassword, loggedInUser.getPassword())){
             return new ErrorResult(UserMessages.NewPasswordCannotBeSameAsOld, HttpStatus.BAD_REQUEST);
         }
 
-        loggedInUserResult.getData().setPassword(newPassword);
-        userDao.save(loggedInUserResult.getData());
+        loggedInUser.setPassword(newPassword);
+        userDao.save(loggedInUser);
 
-        emailService.sendMail(loggedInUserResult.getData().getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUserResult.getData().getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
+        emailService.sendMail(loggedInUser.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", loggedInUser.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
 
         return new SuccessResult(UserMessages.PasswordChangedSuccess, HttpStatus.OK);
 
@@ -268,12 +273,12 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public DataResult<User> getAuthenticatedUser() {
+    public DataResult<String> getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication.getPrincipal().equals("anonymousUser")){
-            return new ErrorDataResult<>(UserMessages.userIsNotAuthenticatedPleaseLogin, HttpStatus.UNAUTHORIZED);
+            return new ErrorDataResult<>("anonymousUser", UserMessages.userIsNotAuthenticatedPleaseLogin, HttpStatus.UNAUTHORIZED);
         }
-        return getUserEntityByUsername(authentication.getName());
+        return new SuccessDataResult<>(authentication.getName(), UserMessages.AuthenticatedUsername, HttpStatus.OK);
     }
 
     @Override

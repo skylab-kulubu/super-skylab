@@ -41,5 +41,5 @@ public interface UserService extends UserDetailsService {
 
     Result setLastLoginWithUsername(String username);
 
-    DataResult<User> getAuthenticatedUser();
+    DataResult<String> getAuthenticatedUsername();
 }
