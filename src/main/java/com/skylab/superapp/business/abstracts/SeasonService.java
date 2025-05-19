@@ -24,5 +24,7 @@ public interface SeasonService {
 
     Result addCompetitorToSeason(int seasonId, String competitorId);
 
+    Result removeCompetitorFromSeason(int seasonId, String competitorId);
+
     DataResult<GetSeasonDto> getSeasonById(int id);
 }

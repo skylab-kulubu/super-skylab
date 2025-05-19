@@ -33,6 +33,12 @@ public class SeasonController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
+    @PostMapping("/removeCompetitorFromSeason")
+    public ResponseEntity<?> removeCompetitorFromSeason(@RequestParam int seasonId, @RequestParam String competitorId) {
+        var result = seasonService.removeCompetitorFromSeason(seasonId, competitorId);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
     @GetMapping("/getAllSeasonsByTenant")
     public ResponseEntity<?> getAllSeasonsByTenant(@RequestParam String tenant) {
         var result = seasonService.getAllSeasonsByTenant(tenant);

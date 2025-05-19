@@ -131,6 +131,27 @@ public class SeasonManager implements SeasonService {
     }
 
     @Override
+    public Result removeCompetitorFromSeason(int seasonId, String competitorId) {
+        var season = seasonDao.findById(seasonId);
+        if(season == null) {
+            return new ErrorResult(SeasonMessages.SeasonNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        var competitor = competitorService.getCompetitorEntityById(competitorId);
+        if(!competitor.isSuccess()){
+            return new ErrorResult(competitor.getMessage(), competitor.getHttpStatus());
+        }
+
+        if(!season.getCompetitors().contains(competitor.getData())) {
+            return new ErrorResult(SeasonMessages.CompetitorNotInSeason, HttpStatus.BAD_REQUEST);
+        }
+
+        season.getCompetitors().remove(competitor.getData());
+        seasonDao.save(season);
+        return new SuccessResult(SeasonMessages.CompetitorRemovedSuccess, HttpStatus.OK);
+    }
+
+    @Override
     public DataResult<GetSeasonDto> getSeasonById(int id) {
         var result = seasonDao.findById(id);
         if(result == null) {

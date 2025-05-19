@@ -12,4 +12,6 @@ public class SeasonMessages {
     public static String SeasonListedSuccess = "Sezonlar listelendi.";
     public static String CompetitorAlreadyInSeason = "Bu yarışmacı zaten bu sezonda mevcut!";
     public static String CompetitorAddedSuccess = "Yarışmacı başarıyla sezona eklendi!";
+    public static String CompetitorNotInSeason = "Bu yarışmacı bu sezonda mevcut değil!";
+    public static String CompetitorRemovedSuccess = "Yarışmacı başarıyla sezondan çıkarıldı!";
 }
