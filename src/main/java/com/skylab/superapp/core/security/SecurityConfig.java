@@ -77,7 +77,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/users/addUser").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/users/deleteUser").hasAnyRole("ADMIN")
                                 .requestMatchers("/api/users/changePassword").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
-                                .requestMatchers("/api/users/changeAuthenticatedUserPassword").hasAnyRole("USER")
+                                .requestMatchers("/api/users/changeAuthenticatedUserPassword").hasAnyRole("USER","AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN","ADMIN")
                                 .requestMatchers("/api/users/resetPassword").hasAnyRole("ADMIN")
                                 .requestMatchers("/api/users/addRole").hasAnyRole("ADMIN")
                                 .requestMatchers("/api/users/removeRole").hasAnyRole("ADMIN")
