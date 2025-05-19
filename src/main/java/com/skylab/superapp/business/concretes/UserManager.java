@@ -3,6 +3,7 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.business.constants.UserMessages;
 import com.skylab.superapp.core.results.*;
+import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
@@ -26,10 +27,12 @@ public class UserManager implements UserService {
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder) {
+    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @Override
@@ -51,6 +54,8 @@ public class UserManager implements UserService {
                 .build();
 
         userDao.save(user);
+        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: "+user.getUsername()+"\n"+ "ŞİFRENİZ: " + createUserDto.getPassword() + "\n" +
+                "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
         return new SuccessResult(UserMessages.UserAddedSuccess, HttpStatus.CREATED);
     }
 
@@ -112,12 +117,15 @@ public class UserManager implements UserService {
             var randomPassword = generateRandomPassword();
             user.setPassword(passwordEncoder.encode(randomPassword));
             userDao.save(user);
+            emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: "+user.getUsername()+"\n"+ "ŞİFRENİZ: " + randomPassword+ "\n" +
+                    "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
             return new SuccessDataResult<>(randomPassword, UserMessages.PasswordResetSuccess, HttpStatus.OK);
-        }
-        else
+        } else
             user.setPassword(passwordEncoder.encode(createUserDto.getPassword()));
 
         userDao.save(user);
+        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: "+user.getUsername()+"\n"+ "ŞİFRENİZ: " + createUserDto.getPassword() + "\n" +
+                "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
         return new SuccessDataResult<>(UserMessages.PasswordChangedSuccess, HttpStatus.OK);
     }
 
