@@ -274,7 +274,7 @@ public class UserManager implements UserService {
     @Override
     public DataResult<User> getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getPrincipal() == "anonymousUser"){
+        if (authentication.getPrincipal().equals("anonymousUser")){
             return new ErrorDataResult<>(UserMessages.userIsNotAuthenticatedPleaseLogin, HttpStatus.UNAUTHORIZED);
         }
         return getUserEntityByUsername(authentication.getName());
