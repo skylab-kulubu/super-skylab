@@ -37,8 +37,8 @@ public class UserController {
     }
 
     @PostMapping("/changeAuthenticatedUserPassword")
-    public ResponseEntity<Result> changeAuthenticatedUserPassword(@RequestBody String newPassword) {
-        var result = userService.changeAuthenticatedUserPassword(newPassword);
+    public ResponseEntity<Result> changeAuthenticatedUserPassword(@RequestBody ChangePassword changePassword) {
+        var result = userService.changeAuthenticatedUserPassword(changePassword.getNewPassword());
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
