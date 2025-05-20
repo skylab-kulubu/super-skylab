@@ -19,6 +19,8 @@ public class GetUserDto {
 
     private String username;
 
+    private String email;
+
     private List<Role> roles;
 
     private Date createdAt;

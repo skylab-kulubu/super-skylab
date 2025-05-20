@@ -48,6 +48,7 @@ public class UserManager implements UserService {
         User user = User.builder()
                 .authorities(Set.of(Role.ROLE_USER))
                 .username(createUserDto.getUsername())
+                .email(createUserDto.getEmail())
                 .password(passwordEncoder.encode(createUserDto.getPassword()))
                 .createdAt(new Date())
                 .lastLogin(new Date())
