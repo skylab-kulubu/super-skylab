@@ -34,13 +34,8 @@ public class Season {
     @Column(name = "is_active")
     private boolean isActive;
 
-    @ManyToMany
-    @JoinTable(
-            name = "season_competitor",
-            joinColumns = @JoinColumn(name = "season_id"),
-            inverseJoinColumns = @JoinColumn(name = "competitor_id")
-    )
-    private List<Competitor> competitors;
+    @OneToMany(mappedBy = "season", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    private List<Event> events; // Sezona ait event'ler
 
 
 }

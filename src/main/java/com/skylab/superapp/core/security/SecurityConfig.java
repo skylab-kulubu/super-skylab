@@ -87,11 +87,11 @@ public class SecurityConfig {
                                 .requestMatchers("/api/seasons/addSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/seasons/deleteSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/seasons/getAllSeasons").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
-                                .requestMatchers("/api/seasons/addCompetitorToSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/seasons/getAllSeasonsByTenant").permitAll()
                                 .requestMatchers("/api/seasons/getSeasonByName").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("api/seasons/getSeasonById").permitAll()
-                                .requestMatchers("/api/seasons/removeCompetitorFromSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/seasons/addEventToSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/seasons/removeEventFromSeason").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
 
                                 .requestMatchers("/api/competitors/addCompetitor").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
                                 .requestMatchers("/api/competitors/deleteCompetitor").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
@@ -106,6 +106,13 @@ public class SecurityConfig {
                                 .requestMatchers("/api/images/getImageByUrl/**").permitAll()
                                 .requestMatchers("/api/images/getImageDetailsByUrl/**").permitAll()
                                 .requestMatchers("/api/images/deleteImageById/**").hasAnyRole("ADMIN")
+
+                                .requestMatchers("/api/competitorEventResults/add").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/competitorEventResults/delete").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/competitorEventResults/update").hasAnyRole("ADMIN", "AGC_ADMIN", "GECEKODU_ADMIN", "BIZBIZE_ADMIN")
+                                .requestMatchers("/api/competitorEventResults/getByCompetitorIdAndEventId").permitAll()
+                                .requestMatchers("/api/competitorEventResults/getAllByCompetitorId").permitAll()
+                                .requestMatchers("/api/competitorEventResults/getAllByEventId").permitAll()
 
 
                                 .anyRequest().hasAnyRole("ADMIN")

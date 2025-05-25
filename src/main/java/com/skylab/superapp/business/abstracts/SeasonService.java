@@ -22,9 +22,9 @@ public interface SeasonService {
 
     DataResult<Season> getSeasonEntityById(int id);
 
-    Result addCompetitorToSeason(int seasonId, String competitorId);
-
-    Result removeCompetitorFromSeason(int seasonId, String competitorId);
-
     DataResult<GetSeasonDto> getSeasonById(int id);
+
+    Result addEventToSeason(int seasonId, int eventId);
+
+    Result removeEventFromSeason(int seasonId, int eventId);
 }

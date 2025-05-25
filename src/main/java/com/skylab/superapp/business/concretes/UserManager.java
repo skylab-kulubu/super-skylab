@@ -49,7 +49,7 @@ public class UserManager implements UserService {
                 .authorities(Set.of(Role.ROLE_USER))
                 .username(createUserDto.getUsername())
                 .email(createUserDto.getEmail())
-                .password(passwordEncoder.encode(createUserDto.getPassword()))
+                .password(passwordEncoder.encode(createUserDto.getPassword() == null ? generateRandomPassword() : createUserDto.getPassword()))
                 .createdAt(new Date())
                 .lastLogin(new Date())
                 .build();

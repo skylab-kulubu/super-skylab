@@ -7,6 +7,7 @@ import com.skylab.superapp.business.constants.CompetitorMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
+import com.skylab.superapp.entities.CompetitorEventResult;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CompetitorManager implements CompetitorService {
@@ -38,13 +40,11 @@ public class CompetitorManager implements CompetitorService {
         }
 
         Competitor competitor = Competitor.builder()
-                .competitionCount(createCompetitorDto.getCompetitionCount())
                 .createdAt(new Date())
                 .name(createCompetitorDto.getName())
                 .isActive(createCompetitorDto.isActive())
                 .tenant(createCompetitorDto.getTenant())
-                .totalPoints(createCompetitorDto.getTotalPoints())
-                .competitionCount(createCompetitorDto.getCompetitionCount())
+                .totalPoints(0)
                 .build();
         competitorDao.save(competitor);
         return new SuccessDataResult<>(competitor.getId(),CompetitorMessages.CompetitorAddedSuccess, HttpStatus.CREATED);
@@ -119,12 +119,34 @@ public class CompetitorManager implements CompetitorService {
             return new ErrorDataResult<>(season.getMessage(), season.getHttpStatus());
         }
 
-        var result = competitorDao.findAllBySeasons_IdOrderByTotalPointsDesc(seasonId);
-        if(result.isEmpty()) {
+        var competitors = competitorDao.findCompetitorsBySeasonId(seasonId);
+        if(competitors.isEmpty()) {
             return new ErrorDataResult<>(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var returnCompetitors = new GetCompetitorDto().buildListGetCompetitorDto(result);
+        var returnCompetitors = competitors.stream()
+                .map(competitor -> {
+                    double seasonPoints = competitor.getEventResults().stream()
+                            .filter(cer -> cer.getEvent().getSeason().getId() == seasonId)
+                            .mapToDouble(CompetitorEventResult::getPoints)
+                            .sum();
+
+                    int seasonCompetitionCount = (int) competitor.getEventResults().stream()
+                            .filter(cer -> cer.getEvent().getSeason().getId() == seasonId)
+                            .count();
+
+                    return GetCompetitorDto.builder()
+                            .id(competitor.getId())
+                            .name(competitor.getName())
+                            .tenant(competitor.getTenant())
+                            .isActive(competitor.isActive())
+                            .totalPoints(seasonPoints)
+                            .competitionCount(seasonCompetitionCount)
+                            .build();
+                })
+                .sorted((c1, c2) -> Double.compare(c2.getTotalPoints(), c1.getTotalPoints())) // DESC sıralama
+                .collect(Collectors.toList());
+
         return new SuccessDataResult<>(returnCompetitors, CompetitorMessages.CompetitorListedSuccess, HttpStatus.OK);
     }
 

@@ -26,7 +26,5 @@ public class CreateSeasonDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private List<String> competitorIds;
-
 
 }

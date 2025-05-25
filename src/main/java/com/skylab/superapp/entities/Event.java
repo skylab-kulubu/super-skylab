@@ -51,5 +51,12 @@ public class Event {
     @Column(name = "form_url")
     private String formUrl;
 
+    @ManyToOne
+    @JoinColumn(name = "season_id")
+    private Season season; // Event'in bağlı olduğu sezon
+
+    @OneToMany(mappedBy = "event")
+    private List<CompetitorEventResult> competitorResults; // Event'e katılan yarışmacılar ve puanları
+
 
 }

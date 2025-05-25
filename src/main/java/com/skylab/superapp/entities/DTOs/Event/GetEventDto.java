@@ -2,12 +2,14 @@ package com.skylab.superapp.entities.DTOs.Event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.skylab.superapp.entities.DTOs.CompetitorEventResult.GetCompetitorEventResultDto;
 import com.skylab.superapp.entities.DTOs.Photo.GetPhotoDto;
 import com.skylab.superapp.entities.Event;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -33,6 +35,10 @@ public class GetEventDto {
 
     private String formUrl;
 
+    private List<GetCompetitorEventResultDto> competitorResults;
+
+
+
     public GetEventDto(Event event) {
         this.id = event.getId();
         this.title = event.getTitle();
@@ -42,6 +48,9 @@ public class GetEventDto {
         this.photos = GetPhotoDto.buildListGetPhotoDto(event.getPhotos());
         this.type = event.getType();
         this.formUrl = event.getFormUrl();
+        this.competitorResults = GetCompetitorEventResultDto.buildListGetCompetitorEventResultDto(event.getCompetitorResults());
+
+
     }
 
     public static List<GetEventDto> buildListGetEventDto(List<Event> events) {

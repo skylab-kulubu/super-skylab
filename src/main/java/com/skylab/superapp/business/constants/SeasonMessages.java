@@ -14,4 +14,9 @@ public class SeasonMessages {
     public static String CompetitorAddedSuccess = "Yarışmacı başarıyla sezona eklendi!";
     public static String CompetitorNotInSeason = "Bu yarışmacı bu sezonda mevcut değil!";
     public static String CompetitorRemovedSuccess = "Yarışmacı başarıyla sezondan çıkarıldı!";
+    public static String EventAlreadyExistsInSeason = "Bu etkinlik zaten bu sezonda mevcut!";
+    public static String EventAddedToSeasonSuccess = "Etkinlik başarıyla sezona eklendi!";
+    public static String EventRemovedFromSeasonSuccess = "Etkinlik başarıyla sezondan çıkarıldı!";
+    public static String EventNotFoundInSeason = "Bu etkinlik bu sezonda bulunamadı!";
+    public static String EventIsInAnotherSeason = "Bu etkinlik başka bir sezonda mevcut!";
 }

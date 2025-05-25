@@ -30,4 +30,5 @@ public class CreateEventDto {
     private String type;
     private String formUrl;
 
+
 }

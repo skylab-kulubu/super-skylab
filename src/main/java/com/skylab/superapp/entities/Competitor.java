@@ -2,6 +2,7 @@ package com.skylab.superapp.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.util.Date;
 import java.util.List;
@@ -34,14 +35,14 @@ public class Competitor {
     @Column(name = "is_active")
     private boolean isActive;
 
-    @Column(name = "total_points")
+    @Formula("(SELECT COALESCE(SUM(cer.points), 0) FROM competitor_event_results cer WHERE cer.competitor_id = id)")
     private double totalPoints;
 
-    @Column(name = "competition_count" )
+    @Formula("(SELECT COUNT(*) FROM competitor_event_results cer WHERE cer.competitor_id = id)")
     private int competitionCount;
 
-    @ManyToMany(mappedBy = "competitors")
-    private List<Season> seasons;
+    @OneToMany(mappedBy = "competitor")
+    private List<CompetitorEventResult> eventResults; // Yarışmacının katıldığı tüm event'ler
 
 
 }

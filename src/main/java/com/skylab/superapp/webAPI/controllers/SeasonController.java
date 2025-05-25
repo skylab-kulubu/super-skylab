@@ -27,17 +27,6 @@ public class SeasonController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
-    @PostMapping("/addCompetitorToSeason")
-    public ResponseEntity<?> addCompetitorToSeason(@RequestParam int seasonId, @RequestParam String competitorId) {
-        var result = seasonService.addCompetitorToSeason(seasonId, competitorId);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-    @PostMapping("/removeCompetitorFromSeason")
-    public ResponseEntity<?> removeCompetitorFromSeason(@RequestParam int seasonId, @RequestParam String competitorId) {
-        var result = seasonService.removeCompetitorFromSeason(seasonId, competitorId);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
 
     @GetMapping("/getAllSeasonsByTenant")
     public ResponseEntity<?> getAllSeasonsByTenant(@RequestParam String tenant) {
@@ -61,6 +50,18 @@ public class SeasonController {
     @GetMapping("/getSeasonById")
     public ResponseEntity<?> getSeasonById(@RequestParam int id) {
         var result = seasonService.getSeasonById(id);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+    @PostMapping("/addEventToSeason")
+    public ResponseEntity<?> addEventToSeason(@RequestParam int seasonId, @RequestParam int eventId) {
+        var result = seasonService.addEventToSeason(seasonId, eventId);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+    @PostMapping("/removeEventFromSeason")
+    public ResponseEntity<?> removeEventFromSeason(@RequestParam int seasonId, @RequestParam int eventId) {
+        var result = seasonService.removeEventFromSeason(seasonId, eventId);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 

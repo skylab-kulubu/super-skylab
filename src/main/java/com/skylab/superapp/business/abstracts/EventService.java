@@ -32,5 +32,6 @@ public interface EventService {
     DataResult<List<GetEventDto>> getAllFutureEventsByTenant(String tenant);
 
 
+
 }
 

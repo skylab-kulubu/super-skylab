@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
+import com.skylab.superapp.business.abstracts.CompetitorService;
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.PhotoService;
 import com.skylab.superapp.business.abstracts.UserService;
@@ -29,11 +30,13 @@ public class EventManager implements EventService {
     private EventDao eventDao;
     private PhotoService photoService;
     private UserService userService;
+    private CompetitorService competitorService;
 
-    public EventManager(EventDao eventDao, @Lazy PhotoService photoService, @Lazy UserService userService) {
+    public EventManager(EventDao eventDao, @Lazy PhotoService photoService, @Lazy UserService userService, @Lazy CompetitorService competitorService) {
         this.eventDao = eventDao;
         this.photoService = photoService;
         this.userService = userService;
+        this.competitorService = competitorService;
     }
 
 
@@ -240,4 +243,7 @@ public class EventManager implements EventService {
         var returnEvents = GetEventDto.buildListGetEventDto(events);
         return new SuccessDataResult<>(returnEvents, EventMessages.EventGetSuccess, HttpStatus.OK);
     }
+
+
+
 }

@@ -3,6 +3,7 @@ package com.skylab.superapp.entities.DTOs.Competitor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.skylab.superapp.entities.Competitor;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Builder
 public class GetCompetitorDto {
     private String id;
 

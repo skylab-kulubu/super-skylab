@@ -19,9 +19,5 @@ public class CreateCompetitorDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private double totalPoints;
-
-    private int competitionCount;
-
 
 }

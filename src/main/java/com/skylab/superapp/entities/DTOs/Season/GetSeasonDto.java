@@ -2,6 +2,7 @@ package com.skylab.superapp.entities.DTOs.Season;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
+import com.skylab.superapp.entities.DTOs.Event.GetEventDto;
 import com.skylab.superapp.entities.Season;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +23,10 @@ public class GetSeasonDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private List<GetCompetitorDto> competitors;
+   private List<GetEventDto> events;
+
+
+
 
     public GetSeasonDto(Season season) {
         this.id = season.getId();
@@ -31,7 +35,8 @@ public class GetSeasonDto {
         this.endDate = season.getEndDate().toString();
         this.tenant = season.getTenant();
         this.isActive = season.isActive();
-        this.competitors = new GetCompetitorDto().buildListGetCompetitorDto(season.getCompetitors());
+        this.events = GetEventDto.buildListGetEventDto(season.getEvents());
+
     }
 
     public static List<GetSeasonDto> buildListGetSeasonDto(List<Season> seasons) {
