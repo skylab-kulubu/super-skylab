@@ -27,11 +27,33 @@ public class User implements UserDetails {
     @Column(name = "username")
     private String username;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_picture_id", referencedColumnName = "id")
+    private Image profilePicture;
+
     @Column(name = "email")
     private String email;
 
     @Column(name = "password")
     private String password;
+
+    @Column(name = "linkedin")
+    private String linkedin;
+
+    @Column(name = "university")
+    private String university;
+
+    @Column(name = "faculty")
+    private String faculty;
+
+    @Column(name = "department")
+    private String department;
 
     @Column(name = "created_at")
     private Date createdAt;

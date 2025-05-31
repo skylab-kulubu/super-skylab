@@ -15,6 +15,7 @@ import java.util.List;
 @Builder
 @Table(name = "announcements")
 public class Announcement {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -36,9 +37,6 @@ public class Announcement {
     @Column(name = "is_active")
     private boolean isActive;
 
-    @Column(name = "tenant")
-    private String tenant;
-
     @Column(name = "created_at")
     private Date createdAt;
 
@@ -46,14 +44,15 @@ public class Announcement {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Photo> photos;
-
-    @Column(name = "type")
-    private String type;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_type_id", nullable = false)
+    private EventType type;
 
     @Column(name = "form_url")
     private String formUrl;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "announcement", cascade = CascadeType.ALL)
+    private List<Image> images;
 
 
 }

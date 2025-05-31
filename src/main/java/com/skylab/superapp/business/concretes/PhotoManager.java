@@ -19,8 +19,8 @@ import java.util.List;
 @Service
 public class PhotoManager implements PhotoService {
 
-    private PhotoDao photoDao;
-    private UserService userService;
+    private final PhotoDao photoDao;
+    private final UserService userService;
 
     public PhotoManager(PhotoDao photoDao, @Lazy UserService userService) {
         this.photoDao = photoDao;

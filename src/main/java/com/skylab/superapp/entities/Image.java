@@ -34,8 +34,23 @@ public class Image {
     @Column(name = "url")
     private String url;
 
+    @Column(name = "image_category")
+    @Enumerated(EnumType.STRING)
+    private ImageCategory imageCategory;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @OneToOne(mappedBy = "profilePicture")
+    private User profilePictureOwner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private Event event;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "announcement_id")
+    private Announcement announcement;
 
 }

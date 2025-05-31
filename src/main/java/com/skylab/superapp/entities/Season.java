@@ -28,14 +28,15 @@ public class Season {
     @Column(name = "end_date")
     private Date endDate;
 
-    @Column(name = "tenant")
-    private String tenant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_type_id", nullable = false)
+    private EventType type;
 
     @Column(name = "is_active")
     private boolean isActive;
 
     @OneToMany(mappedBy = "season", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    private List<Event> events; // Sezona ait event'ler
+    private List<Event> events;
 
 
 }

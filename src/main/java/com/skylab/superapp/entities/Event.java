@@ -1,6 +1,7 @@
 package com.skylab.superapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,26 +38,24 @@ public class Event {
     private boolean isActive;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
-    private List<Photo> photos;
+    private List<Image> images;
 
     @Column(name = "description")
     private String description;
 
-    @Column(name = "tenant")
-    private String tenant;
-
-    @Column(name = "type")
-    private String type;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_type_id", nullable = false)
+    private EventType type;
 
     @Column(name = "form_url")
     private String formUrl;
 
     @ManyToOne
     @JoinColumn(name = "season_id")
-    private Season season; // Event'in bağlı olduğu sezon
+    private Season season;
 
     @OneToMany(mappedBy = "event")
-    private List<CompetitorEventResult> competitorResults; // Event'e katılan yarışmacılar ve puanları
+    private List<UserEventResult> competitorResults;
 
 
 }
