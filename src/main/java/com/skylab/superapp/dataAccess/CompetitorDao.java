@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface CompetitorDao extends JpaRepository<Competitor, Long> {
+public interface CompetitorDao extends JpaRepository<Competitor, Integer> {
     @Query("SELECT c FROM Competitor c WHERE c.eventType.name = :eventTypeName")
     List<Competitor> findByEventTypeName(@Param("eventTypeName") String eventTypeName);
 

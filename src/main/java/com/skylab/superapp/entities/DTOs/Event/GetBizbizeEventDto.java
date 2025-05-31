@@ -2,7 +2,7 @@ package com.skylab.superapp.entities.DTOs.Event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.skylab.superapp.entities.DTOs.Photo.GetPhotoDto;
+import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import com.skylab.superapp.entities.Event;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,7 +31,7 @@ public class GetBizbizeEventDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private List<GetPhotoDto> photos;
+    private List<GetImageDto> images;
 
     private String type;
 
@@ -46,8 +46,8 @@ public class GetBizbizeEventDto {
         this.description = event.getDescription();
         this.date = event.getDate();
         this.isActive = event.isActive();
-        this.photos = GetPhotoDto.buildListGetPhotoDto(event.getImages());
-        this.type = event.getType();
+        this.images = GetImageDto.buildListGetImageDto(event.getImages());
+        this.type = event.getType().getName();
         this.formUrl = event.getFormUrl();
     }
 

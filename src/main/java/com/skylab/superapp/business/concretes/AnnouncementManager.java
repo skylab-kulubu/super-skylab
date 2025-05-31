@@ -123,7 +123,7 @@ public class AnnouncementManager implements AnnouncementService {
 
     @Override
     public DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenant(String tenant) {
-        var result = announcementDao.findAllByTenant(tenant);
+        var result = announcementDao.findAllByType_Name(tenant);
         if(result.isEmpty()){
             return new ErrorDataResult<>(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
         }
@@ -132,16 +132,6 @@ public class AnnouncementManager implements AnnouncementService {
         return new SuccessDataResult<>(returnAnnouncements, AnnouncementMessages.GetAllSuccess, HttpStatus.OK);
     }
 
-    @Override
-    public DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenantAndType(String tenant, String type) {
-        var result = announcementDao.findAllByTenantAndType(tenant, type);
-        if(result.isEmpty()){
-            return new ErrorDataResult<>(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var returnAnnouncements = GetAnnouncementDto.buildListGetAnnouncementDto(result);
-        return new SuccessDataResult<>(returnAnnouncements, AnnouncementMessages.GetAllSuccess, HttpStatus.OK);
-    }
 
     @Override
     public DataResult<Announcement> getAnnouncementEntityById(int id) {
@@ -154,7 +144,7 @@ public class AnnouncementManager implements AnnouncementService {
     }
 
     @Override
-    public Result addPhotosToAnnouncement(int id, List<Integer> photoIds) {
+    public Result addImagesToAnnouncement(int id, List<Integer> imageIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         var announcement = announcementDao.findById(id);
@@ -166,20 +156,20 @@ public class AnnouncementManager implements AnnouncementService {
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
-        var photos = imageService.getImagesByIds(photoIds);
-        if(!photos.isSuccess()){
-            return new ErrorResult(photos.getMessage(), photos.getHttpStatus());
+        var images = imageService.getImagesByIds(imageIds);
+        if(!images.isSuccess()){
+            return new ErrorResult(images.getMessage(), images.getHttpStatus());
         }
 
-        var photoList = photos.getData();
-        for (var photo : photoList) {
-            if(photo.getAnnouncement() != null){
-                return new ErrorResult(AnnouncementMessages.PhotoAlreadyAdded, HttpStatus.BAD_REQUEST);
+        var imageList = images.getData();
+        for (var image : imageList) {
+            if(image.getAnnouncement() != null){
+                return new ErrorResult(AnnouncementMessages.ImageAlreadyAdded, HttpStatus.BAD_REQUEST);
             }
-            photo.setAnnouncement(announcement);
+            image.setAnnouncement(announcement);
         }
 
         announcementDao.save(announcement);
-        return new SuccessResult(AnnouncementMessages.AnnouncementPhotosAddedSuccess, HttpStatus.OK);
+        return new SuccessResult(AnnouncementMessages.AnnouncementImagesAddedSuccess, HttpStatus.OK);
     }
 }

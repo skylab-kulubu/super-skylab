@@ -19,13 +19,11 @@ public interface EventService {
 
     Result updateBizbizeEvent(GetBizbizeEventDto getBizbizeEventDto);
 
-    DataResult<List<GetEventDto>> getAllEventsByTenant(String tenant);
+    DataResult<List<GetEventDto>> getAllEventsByEventType(String eventType);
 
     DataResult<List<GetBizbizeEventDto>> getAllBizbizeEvents();
 
     DataResult<Event> getEventEntityById(int id);
-
-    DataResult<List<GetEventDto>> getAllEventsByTenantAndType(String tenant, String type);
 
     Result addImagesToEvent(int eventId, List<Integer> imageIds);
 

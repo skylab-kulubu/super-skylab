@@ -1,8 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
 import com.skylab.superapp.business.abstracts.CompetitorService;
-import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorDto;
-import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
+import com.skylab.superapp.entities.DTOs.Competitor.AddPointsToUserDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,39 +15,15 @@ public class CompetitorController {
         this.competitorService = competitorService;
     }
 
-    @PostMapping("/addCompetitor")
-    public ResponseEntity<?> addCompetitor(@RequestBody CreateCompetitorDto createCompetitorDto) {
-        var result = competitorService.addCompetitor(createCompetitorDto);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-    @PostMapping("/deleteCompetitor")
-    public ResponseEntity<?> deleteCompetitor(@RequestParam String id) {
-        var result = competitorService.deleteCompetitor(id);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-    @PostMapping("/updateCompetitor")
-    public ResponseEntity<?> updateCompetitor(@RequestBody GetCompetitorDto getCompetitorDto) {
-        var result = competitorService.updateCompetitor(getCompetitorDto);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-    @PostMapping("/addPointsToCompetitor")
-    public ResponseEntity<?> addPointsToCompetitor(@RequestParam String id, @RequestParam double points) {
-        var result = competitorService.addPointsToCompetitor(id, points);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
     @GetMapping("/getAllCompetitors")
     public ResponseEntity<?> getAllCompetitors() {
         var result = competitorService.getAllCompetitors();
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
-    @GetMapping("/getAllCompetitorsByTenant")
-    public ResponseEntity<?> getAllCompetitorsByTenant(@RequestParam String tenant) {
-        var result = competitorService.getAllCompetitorsByTenant(tenant);
+    @GetMapping("/getAllCompetitorsByEventType")
+    public ResponseEntity<?> getAllCompetitorsByEventType(@RequestParam String eventTypeName) {
+        var result = competitorService.getAllCompetitorsByEventType(eventTypeName);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
@@ -58,7 +33,33 @@ public class CompetitorController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
+    @PostMapping("/addPointsToUser")
+    public ResponseEntity<?> addPointsToUser(@RequestBody AddPointsToUserDto addPointsToUserDto) {
+        var result = competitorService.addPointsToUser(
+                addPointsToUserDto.getUserId(),
+                addPointsToUserDto.getEventId(),
+                addPointsToUserDto.getPoints(),
+                addPointsToUserDto.isWinner(),
+                addPointsToUserDto.getAward()
+        );
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
 
+    @GetMapping("/getWeeklyWinner")
+    public ResponseEntity<?> getWeeklyWinner(@RequestParam int eventId) {
+        var result = competitorService.getWeeklyWinner(eventId);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
 
+    @GetMapping("/getSeasonWinner")
+    public ResponseEntity<?> getSeasonWinner(@RequestParam int seasonId) {
+        var result = competitorService.getSeasonWinner(seasonId);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
 
+    @GetMapping("/getCompetitorById")
+    public ResponseEntity<?> getCompetitorById(@RequestParam int id) {
+        var result = competitorService.getCompetitorEntityById(id);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
 }

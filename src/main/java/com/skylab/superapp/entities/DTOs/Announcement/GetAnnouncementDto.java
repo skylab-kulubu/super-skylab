@@ -3,7 +3,7 @@ package com.skylab.superapp.entities.DTOs.Announcement;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.skylab.superapp.entities.Announcement;
-import com.skylab.superapp.entities.DTOs.Photo.GetPhotoDto;
+import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,8 +21,6 @@ public class GetAnnouncementDto {
 
     private String description;
 
-    private String tenant;
-
     private String content;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
@@ -33,7 +31,7 @@ public class GetAnnouncementDto {
 
     private String type;
 
-    private List<GetPhotoDto> photos;
+    private List<GetImageDto> images;
 
     private String author;
 
@@ -43,12 +41,11 @@ public class GetAnnouncementDto {
         this.id = announcement.getId();
         this.title = announcement.getTitle();
         this.description = announcement.getDescription();
-        this.tenant = announcement.getTenant();
         this.content = announcement.getContent();
         this.date = announcement.getDate();
         this.isActive = announcement.isActive();
-        this.type = announcement.getType();
-        this.photos = GetPhotoDto.buildListGetPhotoDto(announcement.getPhotos());
+        this.type = announcement.getType().getName();
+        this.images = GetImageDto.buildListGetImageDto(announcement.getImages());
         this.author = announcement.getUser().getUsername();
         this.formUrl = announcement.getFormUrl();
     }

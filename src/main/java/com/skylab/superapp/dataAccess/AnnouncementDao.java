@@ -15,7 +15,6 @@ public interface AnnouncementDao extends JpaRepository<Announcement, Integer> {
 
     List<Announcement> findAllByContentContainingIgnoreCase(String content);
 
-    List<Announcement> findAllByTenant(String tenant);
+    List<Announcement> findAllByType_Name(String name);
 
-    List<Announcement> findAllByTenantAndType(String tenant, String type);
 }

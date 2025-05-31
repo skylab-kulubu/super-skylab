@@ -42,9 +42,9 @@ public class EventController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
-    @GetMapping("/getAllByTenant")
+    @GetMapping("/getAllByEventType")
     public ResponseEntity<?> getAllEventsByTenant(@RequestParam String tenant) {
-        var result = eventService.getAllEventsByTenant(tenant);
+        var result = eventService.getAllEventsByEventType(tenant);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
@@ -53,15 +53,10 @@ public class EventController {
         var result = eventService.getAllBizbizeEvents();
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
-    @GetMapping("/getAllByTenantAndType")
-    public ResponseEntity<?> getAllEventsByTenantAndType(@RequestParam String tenant, @RequestParam String type) {
-        var result = eventService.getAllEventsByTenantAndType(tenant, type);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
 
-    @PostMapping("/addPhotosToEvent")
-    public ResponseEntity<?> addPhotosToEvent(@RequestParam int id, @RequestBody List<Integer> photoIds) {
-        var result = eventService.addPhotosToEvent(id, photoIds);
+    @PostMapping("/addImagesToEvent")
+    public ResponseEntity<?> addImagesToEvent(@RequestParam int id, @RequestBody List<Integer> imageIds) {
+        var result = eventService.addImagesToEvent(id, imageIds);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
@@ -70,6 +65,4 @@ public class EventController {
         var result = eventService.getAllFutureEventsByTenant(tenant);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
-
-
 }

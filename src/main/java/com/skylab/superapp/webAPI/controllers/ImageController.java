@@ -3,8 +3,7 @@ package com.skylab.superapp.webAPI.controllers;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.constants.ImageMessages;
 import com.skylab.superapp.core.results.*;
-import com.skylab.superapp.entities.DTOs.Image.ResponseImageDto;
-import com.skylab.superapp.entities.User;
+import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,88 +30,56 @@ public class ImageController {
     }
 
     @PostMapping("/addImage")
-    public ResponseEntity<DataResult<ResponseImageDto>> addImage(@RequestParam("image") Optional<MultipartFile> image){
+    public ResponseEntity<?> addImage(@RequestParam("image") Optional<MultipartFile> image) {
+        if (!image.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorDataResult<>(ImageMessages.imageCannotBeNull, HttpStatus.BAD_REQUEST));
+        }
         var result = imageService.addImage(image.get());
-        if (!result.isSuccess()){
-            return ResponseEntity.status(result.getHttpStatus()).body(
-                    new ErrorDataResult<>(result.getMessage(), result.getHttpStatus()));
+        if (!result.isSuccess()) {
+            return ResponseEntity.status(result.getHttpStatus()).body(result);
         }
 
+        GetImageDto responseImageDto = new GetImageDto(result.getData());
+        responseImageDto.setImageUrl(API_URL + IMAGE_GET_URL + result.getData().getUrl());
 
-         var responseUser = User.builder()
-                .id(result.getData().getCreatedBy().getId())
-                .username(result.getData().getCreatedBy().getUsername())
-                .build();
-
-        ResponseImageDto responseImageDto = ResponseImageDto.builder()
-                .id(result.getData().getId())
-                .name(result.getData().getName())
-                .type(result.getData().getType())
-                .url(API_URL+IMAGE_GET_URL+result.getData().getUrl())
-                .createdBy(responseUser)
-                .build();
-
-
-        return ResponseEntity.status(result.getHttpStatus()).body(
-                new SuccessDataResult<>(responseImageDto, result.getMessage(), result.getHttpStatus())
-        );
-
+        return ResponseEntity.status(result.getHttpStatus())
+                .body(new SuccessDataResult<>(responseImageDto, result.getMessage(), result.getHttpStatus()));
     }
 
     @GetMapping("/getImageByUrl/{url}")
     public ResponseEntity<byte[]> getImageByUrl(@PathVariable Optional<String> url) {
-
-        if (!url.isPresent()){
-            var error = new ErrorResult(ImageMessages.imageUrlCannotBeNull, HttpStatus.BAD_REQUEST);
-            return ResponseEntity.status(error.getHttpStatus()).build();
+        if (!url.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
         }
 
         var imageResult = imageService.getImageByUrl(url.get());
-
-        if(imageResult.isSuccess()) {
+        if (imageResult.isSuccess()) {
             return ResponseEntity.status(imageResult.getHttpStatus())
                     .contentType(MediaType.valueOf(imageResult.getData().getType()))
                     .body(imageResult.getData().getData());
-        }else{
-            return ResponseEntity.status(imageResult.getHttpStatus()).build();
         }
-
+        return ResponseEntity.status(imageResult.getHttpStatus()).build();
     }
 
     @GetMapping("/getImageDetailsByUrl/{url}")
-    public ResponseEntity<DataResult<ResponseImageDto>> getImageDetailsByUrl(@PathVariable String url){
+    public ResponseEntity<?> getImageDetailsByUrl(@PathVariable String url) {
         var imageResult = imageService.getImageByUrl(url);
-
-        if (!imageResult.isSuccess()){
-            return ResponseEntity.status(imageResult.getHttpStatus()).body(
-                    new ErrorDataResult<ResponseImageDto>(imageResult.getMessage(), imageResult.getHttpStatus())
-            );
+        if (!imageResult.isSuccess()) {
+            return ResponseEntity.status(imageResult.getHttpStatus()).body(imageResult);
         }
 
-        User responseUserDto = User.builder()
-                .id(imageResult.getData().getCreatedBy().getId())
-                .username(imageResult.getData().getCreatedBy().getUsername())
-                .build();
+        GetImageDto responseImageDto = new GetImageDto(imageResult.getData());
+        responseImageDto.setImageUrl(API_URL + IMAGE_GET_URL + imageResult.getData().getUrl());
 
-        ResponseImageDto responseImageDto = ResponseImageDto.builder()
-                .id(imageResult.getData().getId())
-                .name(imageResult.getData().getName())
-                .type(imageResult.getData().getType())
-                .url(API_URL+IMAGE_GET_URL+imageResult.getData().getUrl())
-                .createdBy(responseUserDto)
-                .build();
-
-        return ResponseEntity.status(imageResult.getHttpStatus()).body(
-                new SuccessDataResult<>(responseImageDto, imageResult.getMessage(), imageResult.getHttpStatus())
-        );
+        return ResponseEntity.status(imageResult.getHttpStatus())
+                .body(new SuccessDataResult<>(responseImageDto, imageResult.getMessage(), imageResult.getHttpStatus()));
     }
 
     @DeleteMapping("/deleteImageById/{id}")
-    public ResponseEntity<Result> deleteImageById(@PathVariable int id){
+    public ResponseEntity<?> deleteImageById(@PathVariable int id) {
         var result = imageService.deleteImage(id);
-
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
-
-
 }

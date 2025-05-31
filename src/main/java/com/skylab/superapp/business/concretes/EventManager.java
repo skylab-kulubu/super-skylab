@@ -134,7 +134,7 @@ public class EventManager implements EventService {
         event.setFormUrl(getBizbizeEventDto.getFormUrl() == null ? event.getFormUrl() : getBizbizeEventDto.getFormUrl());
         event.setGuestName(getBizbizeEventDto.getGuestName() == null ? event.getGuestName() : getBizbizeEventDto.getGuestName());
         event.setDescription(getBizbizeEventDto.getDescription() == null ? event.getDescription() : getBizbizeEventDto.getDescription());
-        // Type güncellemesi için EventType kontrolü
+
         if (getBizbizeEventDto.getType() != null) {
             var eventTypeResult = eventTypeService.getEventTypeByName(getBizbizeEventDto.getType());
             if (eventTypeResult.isSuccess()) {
@@ -147,12 +147,12 @@ public class EventManager implements EventService {
     }
 
     @Override
-    public DataResult<List<GetEventDto>> getAllEventsByTenant(String tenant) {
+    public DataResult<List<GetEventDto>> getAllEventsByEventType(String tenant) {
         if (tenant == null || tenant.isEmpty()) {
             return new ErrorDataResult<>(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
-        var events = eventDao.findAllByTenantOrderByDateDesc(tenant);
+        var events = eventDao.findAllByType_NameOrderByDateDesc(tenant);
         if (events.isEmpty()) {
             return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
@@ -163,7 +163,7 @@ public class EventManager implements EventService {
 
     @Override
     public DataResult<List<GetBizbizeEventDto>> getAllBizbizeEvents() {
-        var events = eventDao.findAllByTenantOrderByDateDesc("BIZBIZE");
+        var events = eventDao.findAllByType_NameOrderByDateDesc("BIZBIZE");
         if (events.isEmpty()) {
             return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
@@ -182,20 +182,6 @@ public class EventManager implements EventService {
         return new SuccessDataResult<>(event, EventMessages.EventGetSuccess, HttpStatus.OK);
     }
 
-    @Override
-    public DataResult<List<GetEventDto>> getAllEventsByTenantAndType(String tenant, String type) {
-        if (tenant == null || tenant.isEmpty()) {
-            return new ErrorDataResult<>(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
-        }
-
-        var events = eventDao.findAllByTenantAndType(tenant, type);
-        if (events.isEmpty()) {
-            return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var returnEvents = GetEventDto.buildListGetEventDto(events);
-        return new SuccessDataResult<>(returnEvents, EventMessages.EventGetSuccess, HttpStatus.OK);
-    }
 
     @Override
     public Result addImagesToEvent(int eventId, List<Integer> imageIds) {
@@ -237,7 +223,7 @@ public class EventManager implements EventService {
             return new ErrorDataResult<>(EventMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
-        var events = eventDao.findAllByTenantAndDateAfter(tenant, new Date());
+        var events = eventDao.findAllByType_NameAndDateAfter(tenant, new Date());
         if (events.isEmpty()) {
             return new ErrorDataResult<>(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }

@@ -9,12 +9,12 @@ import java.util.List;
 public interface EventDao extends JpaRepository<Event,Integer> {
     Event findById(int id);
 
-    List<Event> findAllByTenantOrderByDateDesc(String tenant);
+    List<Event> findAllByType_NameOrderByDateDesc(String name);
 
-    List<Event> findAllByTenantAndIsActiveTrue(String tenant);
+    List<Event> findAllByType_NameAndIsActiveTrue(String name);
 
-    List<Event> findAllByTenantAndType(String tenant, String type);
+    List<Event> findAllByType_Name(String name);
 
 
-    List<Event> findAllByTenantAndDateAfter(String tenant, Date date);
+    List<Event> findAllByType_NameAndDateAfter(String name, Date date);
 }

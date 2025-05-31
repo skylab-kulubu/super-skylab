@@ -14,9 +14,9 @@ public interface SeasonDao extends JpaRepository<Season, Integer> {
 
     boolean existsById(int id);
 
-    List<Season> findAllByTenant(String tenant);
+    List<Season> findAllByType_Name(String name);
 
-    List<Season> findAllByTenantAndIsActiveTrue(String tenant);
+    List<Season> findAllByType_NameAndIsActiveTrue(String name);
 
 
 }

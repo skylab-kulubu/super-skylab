@@ -42,21 +42,9 @@ public class AnnouncementController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
-    @GetMapping("/getAllByTenantAndType")
-    public ResponseEntity<?> getAllAnnouncementsByTenantAndType(@RequestParam String tenant, @RequestParam String type) {
-        var result = announcementService.getAllAnnouncementsByTenantAndType(tenant, type);
+    @PostMapping("/addImagesToAnnouncement")
+    public ResponseEntity<?> addImagesToAnnouncement(@RequestParam int id, @RequestBody List<Integer> imageIds) {
+        var result = announcementService.addImagesToAnnouncement(id, imageIds);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
-
-
-    @PostMapping("/addPhotosToAnnouncement")
-    public ResponseEntity<?> addPhotosToAnnouncement(@RequestParam int id, @RequestBody List<Integer> photoIds) {
-        var result = announcementService.addPhotosToAnnouncement(id, photoIds);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-
-
-
-
 }

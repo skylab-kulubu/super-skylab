@@ -17,7 +17,7 @@ public interface UserDao extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
 
-    List<User> findAllByAuthorities_Name(String roleName);
+    List<User> findAllByAuthorities(String role);
 
     @Query("SELECT u FROM User u JOIN u.authorities a WHERE a IN :roleNames")
     List<User> findAllByAuthorities_NameIn(@Param("roleNames") List<String> roleNames);

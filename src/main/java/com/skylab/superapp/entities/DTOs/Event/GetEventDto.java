@@ -2,14 +2,12 @@ package com.skylab.superapp.entities.DTOs.Event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.skylab.superapp.entities.DTOs.CompetitorEventResult.GetCompetitorEventResultDto;
-import com.skylab.superapp.entities.DTOs.Photo.GetPhotoDto;
+import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import com.skylab.superapp.entities.Event;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -29,13 +27,12 @@ public class GetEventDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private List<GetPhotoDto> photos;
+    private List<GetImageDto> images;
 
     private String type;
 
     private String formUrl;
 
-    private List<GetCompetitorEventResultDto> competitorResults;
 
 
 
@@ -45,12 +42,9 @@ public class GetEventDto {
         this.description = event.getDescription();
         this.date = event.getDate();
         this.isActive = event.isActive();
-        this.photos = GetPhotoDto.buildListGetPhotoDto(event.getPhotos());
-        this.type = event.getType();
+        this.images = GetImageDto.buildListGetImageDto(event.getImages());
+        this.type = event.getType().getName();
         this.formUrl = event.getFormUrl();
-        this.competitorResults = GetCompetitorEventResultDto.buildListGetCompetitorEventResultDto(event.getCompetitorResults());
-
-
     }
 
     public static List<GetEventDto> buildListGetEventDto(List<Event> events) {

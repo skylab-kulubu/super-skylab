@@ -18,9 +18,7 @@ public interface AnnouncementService {
 
     DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenant(String tenant);
 
-    DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenantAndType(String tenant, String type);
-
     DataResult<Announcement> getAnnouncementEntityById(int id);
 
-    Result addPhotosToAnnouncement(int id, List<Integer> photoIds);
+    Result addImagesToAnnouncement(int id, List<Integer> photoIds);
 }

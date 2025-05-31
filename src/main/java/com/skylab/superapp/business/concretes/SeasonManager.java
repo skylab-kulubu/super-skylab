@@ -77,7 +77,7 @@ public class SeasonManager implements SeasonService {
         if(tenant == null || tenant.isEmpty()) {
             return new ErrorDataResult<>(SeasonMessages.TenantCannotBeNull, HttpStatus.BAD_REQUEST);
         }
-        var result = seasonDao.findAllByTenant(tenant);
+        var result = seasonDao.findAllByType_Name(tenant);
         if(result.isEmpty()) {
             return new ErrorDataResult<>(SeasonMessages.SeasonNotFound, HttpStatus.NOT_FOUND);
         }

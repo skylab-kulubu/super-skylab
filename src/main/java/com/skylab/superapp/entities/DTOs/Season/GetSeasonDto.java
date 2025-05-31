@@ -33,7 +33,7 @@ public class GetSeasonDto {
         this.name = season.getName();
         this.startDate = season.getStartDate().toString();
         this.endDate = season.getEndDate().toString();
-        this.tenant = season.getTenant();
+        this.tenant = season.getType().getName();
         this.isActive = season.isActive();
         this.events = GetEventDto.buildListGetEventDto(season.getEvents());
 

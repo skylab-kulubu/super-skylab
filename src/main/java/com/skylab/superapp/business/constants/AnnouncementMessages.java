@@ -13,6 +13,6 @@ public class AnnouncementMessages {
     public static String GetAllSuccess = "Duyurular Bulundu";
     public static String GetAnnouncementSuccess = "Duyuru Bulundu";
     public static String UserNotAuthorized = "Kullanıcı yetkisi yok!";
-    public static String AnnouncementPhotosAddedSuccess = "Duyuru fotoğrafları başarıyla eklendi!";
-    public static String PhotoAlreadyAdded = "Fotoğraf zaten eklenmiş!";
+    public static String AnnouncementImagesAddedSuccess = "Duyuru fotoğrafları başarıyla eklendi!";
+    public static String ImageAlreadyAdded = "Fotoğraf zaten eklenmiş!";
 }

@@ -294,7 +294,7 @@ public class UserManager implements UserService {
 
     @Override
     public DataResult<List<User>> getStaffsByRole(Role role) {
-        var result = userDao.findAllByAuthorities_Name(role.name());
+        var result = userDao.findAllByAuthorities(role.name());
         if(result.isEmpty()) {
             return new ErrorDataResult<>(UserMessages.StaffsNotFound, HttpStatus.NOT_FOUND);
         }
