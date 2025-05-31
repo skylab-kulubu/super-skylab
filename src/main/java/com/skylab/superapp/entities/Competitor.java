@@ -3,14 +3,13 @@ package com.skylab.superapp.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Data
+@Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@Entity
 @Builder
-@Table(name = "user_event_results")
-public class UserEventResult {
+@Table(name = "competitors")
+public class Competitor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,7 +22,20 @@ public class UserEventResult {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Column(name = "points")
+    @Column(nullable = false)
     private double points;
-}
 
+    @Column(nullable = false)
+    private boolean isWinner;
+
+    @Column
+    private String award;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "season_id")
+    private Season season;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_type_id")
+    private EventType eventType;
+}

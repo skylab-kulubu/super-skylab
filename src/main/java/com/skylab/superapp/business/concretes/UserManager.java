@@ -283,6 +283,37 @@ public class UserManager implements UserService {
     }
 
     @Override
+    public DataResult<List<User>> getAllStaffs() {
+        var result = userDao.findAllByAuthorities_NameIn(List.of(Role.ROLE_ADMIN.name(), Role.ROLE_BIZBIZE_ADMIN.name(), Role.ROLE_AGC_ADMIN.name(), Role.ROLE_GECEKODU_ADMIN.name()));
+        if(result.isEmpty()) {
+            return new ErrorDataResult<>(UserMessages.StaffsNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        return new SuccessDataResult<>(result, UserMessages.StaffsListedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<List<User>> getStaffsByRole(Role role) {
+        var result = userDao.findAllByAuthorities_Name(role.name());
+        if(result.isEmpty()) {
+            return new ErrorDataResult<>(UserMessages.StaffsNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        return new SuccessDataResult<>(result, UserMessages.StaffsListedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<List<User>> getAllUserByIds(List<Integer> userIds) {
+        var result = userDao.findAllById(userIds);
+
+        if (result.isEmpty()) {
+            return new ErrorDataResult<>(UserMessages.UsersNotFound, HttpStatus.NOT_FOUND);
+        }
+
+        return new SuccessDataResult<>(result, UserMessages.UsersListedSuccess, HttpStatus.OK);
+    }
+
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         var user = userDao.findByUsername(username);
         if(user == null) {

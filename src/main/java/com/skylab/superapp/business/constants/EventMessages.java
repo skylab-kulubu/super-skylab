@@ -10,6 +10,6 @@ public class EventMessages {
     public static String EventGetSuccess = "Etkinlik Bulundu";
     public static String UserNotAuthorized = "Bu etkinliği oluşturmak için yetkiniz yok!";
     public static String EventUpdateSuccess = "Etkinlik güncellendi.";
-    public static String EventPhotosAddedSuccess = "Etkinlik fotoğrafları başarıyla eklendi!";
-    public static String PhotoAlreadyAdded = "Bu fotoğraf zaten etkinliğe eklenmiş!";
+    public static String ImageAlreadyAdded = "Bu fotoğraf zaten etkinliğe eklenmiş!";
+    public static String EventImagesAddedSuccess = "Etkinlik fotoğrafları başarıyla eklendi!";
 }

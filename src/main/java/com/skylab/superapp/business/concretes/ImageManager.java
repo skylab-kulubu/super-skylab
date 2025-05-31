@@ -17,9 +17,7 @@ import java.util.List;
 @Service
 public class ImageManager implements ImageService {
 
-
     private final ImageDao imageDao;
-
     private final UserService userService;
 
     public ImageManager(ImageDao imageDao, UserService userService) {
@@ -29,18 +27,17 @@ public class ImageManager implements ImageService {
 
     @Override
     public DataResult<Image> addImage(MultipartFile file) {
-
-        if (file == null){
+        if (file == null) {
             return new ErrorDataResult<>(ImageMessages.imageCannotBeNull, HttpStatus.BAD_REQUEST);
         }
 
         var usernameResult = userService.getAuthenticatedUsername();
-        if (!usernameResult.isSuccess()){
+        if (!usernameResult.isSuccess()) {
             return new ErrorDataResult<>(usernameResult.getMessage(), usernameResult.getHttpStatus());
         }
 
         var userResult = userService.getUserEntityByUsername(usernameResult.getData());
-        if (!userResult.isSuccess()){
+        if (!userResult.isSuccess()) {
             return new ErrorDataResult<>(userResult.getMessage(), userResult.getHttpStatus());
         }
 
@@ -54,57 +51,56 @@ public class ImageManager implements ImageService {
                     .build();
 
             imageDao.save(imageToSave);
-
             return new SuccessDataResult<>(imageToSave, ImageMessages.imageAddSuccess, HttpStatus.CREATED);
-        }catch (Exception e){
+        } catch (Exception e) {
             return new ErrorDataResult<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Override
     public DataResult<List<Image>> getImages() {
         var result = imageDao.findAll();
-
-        if(result.isEmpty()){
+        if (result.isEmpty()) {
             return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
         }
-
-        return new SuccessDataResult<List<Image>>(result, ImageMessages.imageGetSuccess, HttpStatus.OK);
+        return new SuccessDataResult<>(result, ImageMessages.imageGetSuccess, HttpStatus.OK);
     }
 
     @Override
     public DataResult<Image> getImageById(int id) {
         var result = imageDao.findById(id);
-
-        if(result.isEmpty()){
+        if (result.isEmpty()) {
             return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
         }
-
         return new SuccessDataResult<>(result.get(), ImageMessages.imageGetSuccess, HttpStatus.OK);
     }
 
     @Override
     public Result deleteImage(int id) {
-        var result = this.imageDao.findById(id);
-
-        if(!result.isPresent()){
-            return new ErrorResult(ImageMessages.imageGetSuccess, HttpStatus.NOT_FOUND);
+        var result = imageDao.findById(id);
+        if (result.isEmpty()) {
+            return new ErrorResult(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
         }
-
-        this.imageDao.delete(result.get());
+        imageDao.delete(result.get());
         return new SuccessResult(ImageMessages.imageDeleteSuccess, HttpStatus.OK);
     }
 
     @Override
     public DataResult<Image> getImageByUrl(String url) {
         var result = imageDao.findByUrl(url);
-
-        if(!result.isPresent()){
+        if (result.isEmpty()) {
             return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
         }
-
         return new SuccessDataResult<>(result.get(), ImageMessages.imageGetSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public DataResult<List<Image>> getImagesByIds(List<Integer> imageIds) {
+        List<Image> images = imageDao.findAllById(imageIds);
+        if (images.isEmpty()) {
+            return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
+        }
+        return new SuccessDataResult<>(images, ImageMessages.imageGetSuccess, HttpStatus.OK);
     }
 
     private String generateUrl() {

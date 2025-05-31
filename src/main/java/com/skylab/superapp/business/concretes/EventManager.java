@@ -1,9 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
-import com.skylab.superapp.business.abstracts.CompetitorService;
-import com.skylab.superapp.business.abstracts.EventService;
-import com.skylab.superapp.business.abstracts.PhotoService;
-import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.business.constants.EventMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.EventDao;
@@ -11,34 +8,34 @@ import com.skylab.superapp.entities.DTOs.Event.CreateEventDto;
 import com.skylab.superapp.entities.DTOs.Event.GetBizbizeEventDto;
 import com.skylab.superapp.entities.DTOs.Event.GetEventDto;
 import com.skylab.superapp.entities.Event;
-import com.skylab.superapp.entities.Photo;
+import com.skylab.superapp.entities.Image;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class EventManager implements EventService {
 
-    private EventDao eventDao;
-    private PhotoService photoService;
-    private UserService userService;
-    private CompetitorService competitorService;
+    private final EventDao eventDao;
+    private final UserService userService;
+    private final CompetitorService competitorService;
+    private final ImageService imageService;
+    private final EventTypeService eventTypeService;
 
-    public EventManager(EventDao eventDao, @Lazy PhotoService photoService, @Lazy UserService userService, @Lazy CompetitorService competitorService) {
-        this.eventDao = eventDao;
-        this.photoService = photoService;
-        this.userService = userService;
+    public EventManager(CompetitorService competitorService, EventDao eventDao, UserService userService,
+                        ImageService imageService, EventTypeService eventTypeService) {
         this.competitorService = competitorService;
+        this.eventDao = eventDao;
+        this.userService = userService;
+        this.imageService = imageService;
+        this.eventTypeService = eventTypeService;
     }
-
 
     @Override
     public DataResult<Integer> addEvent(CreateEventDto createEventDto) {
@@ -53,7 +50,10 @@ public class EventManager implements EventService {
             return new ErrorDataResult<>(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
 
-
+        var eventTypeDataResult = eventTypeService.getEventTypeByName(createEventDto.getType());
+        if (!eventTypeDataResult.isSuccess()) {
+            return new ErrorDataResult<>(eventTypeDataResult.getMessage(), eventTypeDataResult.getHttpStatus());
+        }
 
         Event event = Event.builder()
                 .title(createEventDto.getTitle())
@@ -63,8 +63,7 @@ public class EventManager implements EventService {
                 .description(createEventDto.getDescription())
                 .linkedin(createEventDto.getLinkedin())
                 .formUrl(createEventDto.getFormUrl())
-                .type(createEventDto.getType())
-                .tenant(createEventDto.getTenant())
+                .type(eventTypeDataResult.getData())
                 .build();
 
         eventDao.save(event);
@@ -76,17 +75,15 @@ public class EventManager implements EventService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-       var event = eventDao.findById(id);
+        var event = eventDao.findById(id);
         if (event == null) {
             return new ErrorResult(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(event.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(event.getType().getName(), username);
         if (!tenantCheck) {
             return new ErrorResult(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
-
-
 
         eventDao.delete(event);
         return new SuccessResult(EventMessages.EventDeleteSuccess, HttpStatus.OK);
@@ -102,7 +99,7 @@ public class EventManager implements EventService {
             return new ErrorResult(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(event.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(event.getType().getName(), username);
         if (!tenantCheck) {
             return new ErrorResult(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
@@ -125,7 +122,7 @@ public class EventManager implements EventService {
             return new ErrorResult(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(event.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(event.getType().getName(), username);
         if (!tenantCheck) {
             return new ErrorResult(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
@@ -137,8 +134,13 @@ public class EventManager implements EventService {
         event.setFormUrl(getBizbizeEventDto.getFormUrl() == null ? event.getFormUrl() : getBizbizeEventDto.getFormUrl());
         event.setGuestName(getBizbizeEventDto.getGuestName() == null ? event.getGuestName() : getBizbizeEventDto.getGuestName());
         event.setDescription(getBizbizeEventDto.getDescription() == null ? event.getDescription() : getBizbizeEventDto.getDescription());
-        event.setType(getBizbizeEventDto.getType() == null ? event.getType() : getBizbizeEventDto.getType());
-        event.setDescription(getBizbizeEventDto.getDescription() == null ? event.getDescription() : getBizbizeEventDto.getDescription());
+        // Type güncellemesi için EventType kontrolü
+        if (getBizbizeEventDto.getType() != null) {
+            var eventTypeResult = eventTypeService.getEventTypeByName(getBizbizeEventDto.getType());
+            if (eventTypeResult.isSuccess()) {
+                event.setType(eventTypeResult.getData());
+            }
+        }
 
         eventDao.save(event);
         return new SuccessResult(EventMessages.EventUpdateSuccess, HttpStatus.OK);
@@ -196,7 +198,7 @@ public class EventManager implements EventService {
     }
 
     @Override
-    public Result addPhotosToEvent(int eventId, List<Integer> photoIds) {
+    public Result addImagesToEvent(int eventId, List<Integer> imageIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -205,28 +207,28 @@ public class EventManager implements EventService {
             return new ErrorResult(EventMessages.EventNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(event.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(event.getType().getName(), username);
         if (!tenantCheck) {
             return new ErrorResult(EventMessages.UserNotAuthorized, HttpStatus.FORBIDDEN);
         }
 
-       var photos = photoService.getPhotosByIds(photoIds);
-        if(!photos.isSuccess()){
-            return new ErrorResult(photos.getMessage(), photos.getHttpStatus());
+        var images = imageService.getImagesByIds(imageIds);
+        if (!images.isSuccess()) {
+            return new ErrorResult(images.getMessage(), images.getHttpStatus());
         }
 
-        List<Photo> photoList = new ArrayList<>();
-        for (var photo : photos.getData()) {
-            if (photo.getEvent() != null) {
-                return new ErrorResult(EventMessages.PhotoAlreadyAdded, HttpStatus.BAD_REQUEST);
+        List<Image> imageList = new ArrayList<>();
+        for (var image : images.getData()) {
+            if (image.getEvent() != null) {
+                return new ErrorResult(EventMessages.ImageAlreadyAdded, HttpStatus.BAD_REQUEST);
             }
-            photo.setEvent(event);
-            photoList.add(photo);
+            image.setEvent(event);
+            imageList.add(image);
         }
-        event.setPhotos(photoList);
+        event.setImages(imageList);
 
         eventDao.save(event);
-        return new SuccessResult(EventMessages.EventPhotosAddedSuccess, HttpStatus.OK);
+        return new SuccessResult(EventMessages.EventImagesAddedSuccess, HttpStatus.OK);
     }
 
     @Override
@@ -243,7 +245,4 @@ public class EventManager implements EventService {
         var returnEvents = GetEventDto.buildListGetEventDto(events);
         return new SuccessDataResult<>(returnEvents, EventMessages.EventGetSuccess, HttpStatus.OK);
     }
-
-
-
 }

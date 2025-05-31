@@ -1,7 +1,8 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.AnnouncementService;
-import com.skylab.superapp.business.abstracts.PhotoService;
+import com.skylab.superapp.business.abstracts.EventTypeService;
+import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.business.constants.AnnouncementMessages;
 import com.skylab.superapp.core.results.*;
@@ -21,14 +22,17 @@ import java.util.List;
 @Service
 public class AnnouncementManager implements AnnouncementService {
 
-    private AnnouncementDao announcementDao;
-    private UserService userService;
-    private PhotoService photoService;
+    private final AnnouncementDao announcementDao;
+    private final UserService userService;
+    private final ImageService imageService;
+    private final EventTypeService eventTypeService;
 
-    public AnnouncementManager(AnnouncementDao announcementDao, UserService userService, @Lazy PhotoService photoService) {
+
+    public AnnouncementManager(AnnouncementDao announcementDao, UserService userService, @Lazy ImageService imageService, EventTypeService eventTypeService) {
         this.announcementDao = announcementDao;
         this.userService = userService;
-        this.photoService = photoService;
+        this.imageService = imageService;
+        this.eventTypeService = eventTypeService;
     }
 
 
@@ -52,6 +56,11 @@ public class AnnouncementManager implements AnnouncementService {
             return new ErrorResult(author.getMessage(), author.getHttpStatus());
         }
 
+        var eventType = eventTypeService.getEventTypeByName(createAnnouncementDto.getType());
+        if(!eventType.isSuccess()){
+            return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
+        }
+
 
         Announcement announcement = Announcement.builder()
                 .content(createAnnouncementDto.getContent())
@@ -62,8 +71,7 @@ public class AnnouncementManager implements AnnouncementService {
                 .formUrl(createAnnouncementDto.getFormUrl())
                 .user(author.getData())
                 .isActive(createAnnouncementDto.isActive())
-                .tenant(createAnnouncementDto.getTenant())
-                .type(createAnnouncementDto.getType())
+                .type(eventType.getData())
                 .build();
 
 
@@ -80,7 +88,7 @@ public class AnnouncementManager implements AnnouncementService {
         if(result == null){
             return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
         }
-        var tenantCheck = userService.tenantCheck(result.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
 
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
@@ -100,7 +108,7 @@ public class AnnouncementManager implements AnnouncementService {
             return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(result.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
@@ -154,11 +162,11 @@ public class AnnouncementManager implements AnnouncementService {
             return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
         }
 
-        var tenantCheck = userService.tenantCheck(announcement.getTenant(), username);
+        var tenantCheck = userService.tenantCheck(announcement.getType().getName(), username);
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
-        var photos = photoService.getPhotosByIds(photoIds);
+        var photos = imageService.getImagesByIds(photoIds);
         if(!photos.isSuccess()){
             return new ErrorResult(photos.getMessage(), photos.getHttpStatus());
         }

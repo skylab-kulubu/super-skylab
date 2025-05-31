@@ -11,15 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreateStaffDto {
 
-    private String firstName;
-
-    private String lastName;
-
-    private String linkedin;
-
-    private String department;
-
-    private int photoId;
-
     private String tenant;
 }

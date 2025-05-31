@@ -3,6 +3,8 @@ package com.skylab.superapp.business.constants;
 import com.skylab.superapp.entities.User;
 import org.springframework.http.HttpStatus;
 
+import java.util.List;
+
 public class UserMessages {
     public static String UsernameCannotBeNull = "Kullanıcı adı veya şifre boş bırakılamaz!";
     public static String UsernameAlreadyExists = "Kullanıcı adı zaten mevcut!";
@@ -25,4 +27,7 @@ public class UserMessages {
     public static String PasswordsDoNotMatch = "Yeni şifreler eşleşmiyor!";
     public static String NewPasswordCannotBeSameAsOld = "Yeni şifre eski şifre ile aynı olamaz!";
     public static String AuthenticatedUsername = "AuthenticatedUsername returned";
+    public static String StaffsNotFound = "Hiç personel bulunamadı!";
+    public static String StaffsListedSuccess = "Personeller listelendi.";
+    public static String competitorNotFound = "Yarışmacı bulunamadı!";
 }

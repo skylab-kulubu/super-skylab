@@ -1,44 +1,46 @@
 package com.skylab.superapp.entities.DTOs.Competitor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.skylab.superapp.entities.Competitor;
+import com.skylab.superapp.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
 public class GetCompetitorDto {
-    private String id;
 
-    private String name;
+    private int id;
 
-    private String tenant;
+    private String firstName;
 
-    @JsonProperty("isActive")
-    private boolean isActive;
+    private String lastName;
+
+    private String username;
+
+    private String email;
 
     private double totalPoints;
 
     private int competitionCount;
 
-    public GetCompetitorDto(Competitor competitor) {
-        this.id = competitor.getId();
-        this.name = competitor.getName();
-        this.tenant = competitor.getTenant();
-        this.isActive = competitor.isActive();
-        this.totalPoints = competitor.getTotalPoints();
-        this.competitionCount = competitor.getCompetitionCount();
+    public GetCompetitorDto(User user) {
+     this.id = user.getId();
+     this.firstName = user.getFirstName();
+     this.lastName = user.getLastName();
+     this.username = user.getUsername();
+     this.email = user.getEmail();
     }
 
-    public List<GetCompetitorDto> buildListGetCompetitorDto(List<Competitor> competitors) {
-        return competitors.stream()
+    public static List<GetCompetitorDto> buildListGetUserDto(List<User> users) {
+        return users.stream()
                 .map(GetCompetitorDto::new)
-                .toList();
+                .collect(Collectors.toList());
     }
 }

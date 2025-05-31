@@ -61,6 +61,19 @@ public class UserController {
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
 
+    @GetMapping("/getStaffByRole")
+    public ResponseEntity<?> getStaffsByRole(@RequestParam Role role){
+        var result = userService.getStaffsByRole(role);
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+    @GetMapping("/getAllStaffs")
+    public ResponseEntity<?> getAllStaffs(){
+        var result = userService.getAllStaffs();
+        return ResponseEntity.status(result.getHttpStatus()).body(result);
+    }
+
+
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllUsers() {
         var result = userService.getAllUsers();
@@ -72,4 +85,5 @@ public class UserController {
         var result = userService.getUserById(id);
         return ResponseEntity.status(result.getHttpStatus()).body(result);
     }
+
 }

@@ -54,8 +54,5 @@ public class Event {
     @JoinColumn(name = "season_id")
     private Season season;
 
-    @OneToMany(mappedBy = "event")
-    private List<UserEventResult> competitorResults;
-
 
 }

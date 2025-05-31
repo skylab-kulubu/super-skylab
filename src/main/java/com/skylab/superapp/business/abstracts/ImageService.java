@@ -21,6 +21,8 @@ public interface ImageService {
 
     DataResult<Image> getImageByUrl(String url);
 
+    DataResult<List<Image>> getImagesByIds(List<Integer> imageIds);
+
 
 
 }

@@ -46,7 +46,7 @@ public class GetBizbizeEventDto {
         this.description = event.getDescription();
         this.date = event.getDate();
         this.isActive = event.isActive();
-        this.photos = GetPhotoDto.buildListGetPhotoDto(event.getPhotos());
+        this.photos = GetPhotoDto.buildListGetPhotoDto(event.getImages());
         this.type = event.getType();
         this.formUrl = event.getFormUrl();
     }

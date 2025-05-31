@@ -2,12 +2,14 @@ package com.skylab.superapp.business.concretes;
 
 
 import com.skylab.superapp.business.abstracts.EventService;
+import com.skylab.superapp.business.abstracts.EventTypeService;
 import com.skylab.superapp.business.abstracts.SeasonService;
 import com.skylab.superapp.business.constants.SeasonMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.SeasonDao;
 import com.skylab.superapp.entities.DTOs.Season.CreateSeasonDto;
 import com.skylab.superapp.entities.DTOs.Season.GetSeasonDto;
+import com.skylab.superapp.entities.DTOs.User.GetUserDto;
 import com.skylab.superapp.entities.Event;
 import com.skylab.superapp.entities.Season;
 import org.springframework.context.annotation.Lazy;
@@ -20,12 +22,14 @@ import java.util.List;
 @Service
 public class SeasonManager implements SeasonService {
 
-    private SeasonDao seasonDao;
-    private EventService eventService;
+    private final SeasonDao seasonDao;
+    private final EventService eventService;
+    private final EventTypeService eventTypeService;
 
-    public SeasonManager(SeasonDao seasonDao, @Lazy EventService eventService) {
+    public SeasonManager(SeasonDao seasonDao, @Lazy EventService eventService, EventTypeService eventTypeService) {
         this.seasonDao = seasonDao;
         this.eventService = eventService;
+        this.eventTypeService = eventTypeService;
     }
 
     @Override
@@ -39,12 +43,17 @@ public class SeasonManager implements SeasonService {
             return new ErrorDataResult<>(SeasonMessages.NameAlreadyExists, HttpStatus.BAD_REQUEST);
         }
 
+        var eventTypeResult = eventTypeService.getEventTypeByName(createSeasonDto.getTenant());
+        if(!eventTypeResult.isSuccess()) {
+            return new ErrorDataResult<>(eventTypeResult.getMessage(), eventTypeResult.getHttpStatus());
+        }
+
         Season season = Season.builder()
                 .name(createSeasonDto.getName())
                 .startDate(createSeasonDto.getStartDate())
                 .endDate(createSeasonDto.getEndDate())
                 .isActive(createSeasonDto.isActive())
-                .tenant(createSeasonDto.getTenant())
+                .type(eventTypeResult.getData())
                 .build();
 
         seasonDao.save(season);
