@@ -4,21 +4,21 @@ import org.springframework.http.HttpStatus;
 
 public class ErrorDataResult<T> extends DataResult<T> {
 
-	public ErrorDataResult(T data, String message, HttpStatus httpStatus) {
-		super(data, false, message, httpStatus);
-		
+	public ErrorDataResult(T data, String message, HttpStatus httpStatus, String path) {
+		super(data, false, message, httpStatus, path);
+
 	}
-	
-	public ErrorDataResult(T data, HttpStatus httpStatus) {
-		super(data, false, httpStatus);
+
+	public ErrorDataResult(T data, HttpStatus httpStatus, String path) {
+		super(data, false, httpStatus, path);
 	}
-	
-	public ErrorDataResult(String message, HttpStatus httpStatus) {
-		super(null, false, message, httpStatus);
+
+	public ErrorDataResult(String message, HttpStatus httpStatus, String path) {
+		super(null, false, message, httpStatus, path);
 	}
-	
-	public ErrorDataResult(HttpStatus httpStatus) {
-		super(null, false, httpStatus);
+
+	public ErrorDataResult(HttpStatus httpStatus, String path) {
+		super(null, false, httpStatus, path);
 	}
 
 	

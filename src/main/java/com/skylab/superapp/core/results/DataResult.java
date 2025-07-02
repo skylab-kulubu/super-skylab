@@ -10,14 +10,14 @@ public class DataResult<T> extends Result {
 		return data;
 	}
 
-	public DataResult(T data, boolean success, String message, HttpStatus httpStatus) {
-		super(success, message, httpStatus);
+	public DataResult(T data, boolean success, String message, HttpStatus httpStatus, String path) {
+		super(success, message, httpStatus, path);
 		this.data = data;
 		
 	}
 	
-	public DataResult(T data, boolean success, HttpStatus httpStatus) {
-		super(success, httpStatus);
+	public DataResult(T data, boolean success, HttpStatus httpStatus, String path) {
+		super(success, httpStatus, path);
 		this.data = data;
 	}
 
