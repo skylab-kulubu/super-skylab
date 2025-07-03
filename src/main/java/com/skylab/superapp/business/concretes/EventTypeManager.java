@@ -1,7 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.EventTypeService;
-import com.skylab.superapp.business.constants.EventTypeMessages;
 import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.ErrorDataResult;
 import com.skylab.superapp.core.results.SuccessDataResult;

@@ -20,8 +20,6 @@ public class CreateAnnouncementDto {
 
     private String description;
 
-    private String tenant;
-
     private String content;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")

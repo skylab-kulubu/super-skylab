@@ -2,10 +2,9 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.AuthService;
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.business.constants.AuthMessages;
+import com.skylab.superapp.core.constants.AuthMessages;
+import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.ErrorDataResult;
-import com.skylab.superapp.core.results.ErrorResult;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.security.JwtService;
 import com.skylab.superapp.entities.DTOs.Auth.AuthRequest;
@@ -32,11 +31,11 @@ public class AuthManager implements AuthService {
     @Override
     public DataResult<String > login(AuthRequest authRequest) {
         if (authRequest.getUsernameOrEmail() == null){
-            return new ErrorDataResult<>(AuthMessages.emailOrUsernameCannotBeNull, HttpStatus.BAD_REQUEST);
+            throw new UsernameOrEmailCannotBeNullException();
         }
 
         if (authRequest.getPassword() == null){
-            return new ErrorDataResult<>(AuthMessages.passwordCannotBeNull, HttpStatus.BAD_REQUEST);
+            throw new PasswordCannotBeNullException();
         }
 
         DataResult<User> userResult;
@@ -44,12 +43,12 @@ public class AuthManager implements AuthService {
         if (DetermineIsUsernameOrEmail(authRequest.getUsernameOrEmail())){
             userResult = userService.getUserEntityByEmail(authRequest.getUsernameOrEmail());
             if (!userResult.isSuccess()) {
-                return new ErrorDataResult<>(AuthMessages.userNotFoundWithThisEmail, HttpStatus.NOT_FOUND);
+                throw new UserNotFoundByEmailException();
             }
         } else {
             userResult = userService.getUserEntityByUsername(authRequest.getUsernameOrEmail());
             if (!userResult.isSuccess()) {
-                return new ErrorDataResult<>(AuthMessages.userNotFoundWithThisUsername, HttpStatus.NOT_FOUND);
+                throw new UserNotFoundByUsernameException();
             }
 
         }
@@ -58,9 +57,9 @@ public class AuthManager implements AuthService {
         if (authentication.isAuthenticated()) {
             userService.setLastLoginWithUsername(userResult.getData().getUsername());
             String token = jwtService.generateToken(userResult.getData().getUsername(), userResult.getData().getAuthorities());
-            return new SuccessDataResult<>(token, AuthMessages.tokenGeneratedSuccessfully, HttpStatus.CREATED);
+            return new SuccessDataResult<>(token, AuthMessages.TOKEN_GENERATED_SUCCESSFULLY, HttpStatus.CREATED, userResult.getPath());
         }else {
-            return new ErrorDataResult<>(AuthMessages.invalidUsernameOrPassword, HttpStatus.BAD_REQUEST);
+            throw new InvalidUsernameOrPasswordException();
         }
 
     }

@@ -1,7 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.business.constants.UserMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;

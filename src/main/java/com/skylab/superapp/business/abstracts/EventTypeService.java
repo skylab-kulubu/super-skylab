@@ -5,9 +5,9 @@ import com.skylab.superapp.entities.Event;
 import com.skylab.superapp.entities.EventType;
 
 public interface EventTypeService {
-    DataResult<EventType> getEventTypeByName(String eventTypeName);
+    EventType getEventTypeByName(String eventTypeName);
 
-    DataResult<EventType> getEventTypeById(int eventTypeId);
+    EventType getEventTypeById(int eventTypeId);
 
 
 }

@@ -1,7 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
-import com.skylab.superapp.business.constants.EventMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.EventDao;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventDto;

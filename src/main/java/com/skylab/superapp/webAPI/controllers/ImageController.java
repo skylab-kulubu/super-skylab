@@ -1,7 +1,6 @@
 package com.skylab.superapp.webAPI.controllers;
 
 import com.skylab.superapp.business.abstracts.ImageService;
-import com.skylab.superapp.business.constants.ImageMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import org.springframework.beans.factory.annotation.Value;

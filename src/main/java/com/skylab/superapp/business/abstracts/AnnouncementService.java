@@ -10,15 +10,19 @@ import java.util.List;
 
 public interface AnnouncementService {
 
-    Result addAnnouncement(CreateAnnouncementDto createAnnouncementDto);
+    void addAnnouncement(CreateAnnouncementDto createAnnouncementDto);
 
-    Result deleteAnnouncement(int id);
+    void deleteAnnouncement(int id);
 
-    Result updateAnnouncement(GetAnnouncementDto getAnnouncementDto);
+    void updateAnnouncement(GetAnnouncementDto getAnnouncementDto);
 
-    DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenant(String tenant);
+    List<Announcement> getAllAnnouncements();
 
-    DataResult<Announcement> getAnnouncementEntityById(int id);
+    Announcement getAnnouncementById(int id);
 
-    Result addImagesToAnnouncement(int id, List<Integer> photoIds);
+    List<Announcement> getAllAnnouncementsByEventTypeName(String eventTypeName);
+
+    List<Announcement> getAllAnnouncementsByEventTypeId(int eventTypeId);
+
+    void addImagesToAnnouncement(int id, List<Integer> photoIds);
 }

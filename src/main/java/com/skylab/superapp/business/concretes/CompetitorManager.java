@@ -4,7 +4,6 @@ import com.skylab.superapp.business.abstracts.CompetitorService;
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.EventTypeService;
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.business.constants.CompetitorMessages;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.dataAccess.UserDao;

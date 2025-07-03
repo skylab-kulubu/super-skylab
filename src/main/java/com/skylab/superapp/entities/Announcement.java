@@ -46,8 +46,7 @@ public class Announcement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
-    private EventType type;
-
+    private EventType eventType;
     @Column(name = "form_url")
     private String formUrl;
 
