@@ -26,8 +26,7 @@ public class GlobalExceptionHandler {
     private HttpStatus mapErrorCodeToStatus(ErrorCode errorCode) {
         return switch (errorCode) {
             //NOT FOUND 404
-            case USER_NOT_FOUND_BY_EMAIL,
-                 USER_NOT_FOUND_BY_USERNAME,
+            case USER_NOT_FOUND,
                  ANNOUNCEMENT_NOT_FOUND,
                  EVENT_TYPE_NOT_FOUND
                     -> HttpStatus.NOT_FOUND;
@@ -36,7 +35,10 @@ public class GlobalExceptionHandler {
             //BAD REQUEST 400
             case PASSWORD_NULL,
                  USERNAME_OR_EMAIL_NULL,
-                 INVALID_USERNAME_OR_PASSWORD
+                 INVALID_USERNAME_OR_PASSWORD,
+                 USERNAME_OR_PASSWORD_NULL,
+                 OLD_PASSWORD_INCORRECT,
+                 NEW_PASSWORD_NULL
                     -> HttpStatus.BAD_REQUEST;
 
 
@@ -47,7 +49,8 @@ public class GlobalExceptionHandler {
 
 
             //CONFLICT 409
-            case IMAGE_ALREADY_ADDED
+            case IMAGE_ALREADY_ADDED,
+                 USER_ALREADY_EXISTS
                     -> HttpStatus.CONFLICT;
 
 

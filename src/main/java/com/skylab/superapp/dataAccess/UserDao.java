@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserDao extends JpaRepository<User, Integer> {
-    User findById(int id);
+    Optional<User> findById(int id);
 
-    User findByUsername(String username);
+    Optional<User> findByUsername(String username);
 
     boolean existsByUsername(String username);
 

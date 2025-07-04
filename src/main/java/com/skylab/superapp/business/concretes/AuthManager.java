@@ -29,7 +29,7 @@ public class AuthManager implements AuthService {
     }
 
     @Override
-    public DataResult<String > login(AuthRequest authRequest) {
+    public String login(AuthRequest authRequest) {
         if (authRequest.getUsernameOrEmail() == null){
             throw new UsernameOrEmailCannotBeNullException();
         }
@@ -56,8 +56,7 @@ public class AuthManager implements AuthService {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userResult.getData().getUsername(), authRequest.getPassword()));
         if (authentication.isAuthenticated()) {
             userService.setLastLoginWithUsername(userResult.getData().getUsername());
-            String token = jwtService.generateToken(userResult.getData().getUsername(), userResult.getData().getAuthorities());
-            return new SuccessDataResult<>(token, AuthMessages.TOKEN_GENERATED_SUCCESSFULLY, HttpStatus.CREATED, userResult.getPath());
+            return jwtService.generateToken(userResult.getData().getUsername(), userResult.getData().getAuthorities());
         }else {
             throw new InvalidUsernameOrPasswordException();
         }

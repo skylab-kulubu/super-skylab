@@ -2,11 +2,13 @@ package com.skylab.superapp.webAPI.controllers;
 
 import com.skylab.superapp.business.abstracts.AuthService;
 import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.core.constants.AuthMessages;
 import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.ErrorDataResult;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.security.JwtService;
 import com.skylab.superapp.entities.DTOs.Auth.AuthRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,17 +29,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public DataResult<String> generateToken(@RequestBody AuthRequest authRequest) {
+    public DataResult<String> generateToken(@RequestBody AuthRequest authRequest, HttpServletRequest request) {
         var result = authService.login(authRequest);
-
-        if (result.isSuccess()) {
-            return new SuccessDataResult<>(result.getData(), result.getMessage(), result.getHttpStatus());
-        } else {
-            return new ErrorDataResult<>(result.getMessage(), result.getHttpStatus());
-        }
-
+        return new SuccessDataResult<>(result, AuthMessages.TOKEN_GENERATED_SUCCESSFULLY, HttpStatus.OK, request.getRequestURI());
     }
-
-
 
 }

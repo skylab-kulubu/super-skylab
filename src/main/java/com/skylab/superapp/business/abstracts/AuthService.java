@@ -6,7 +6,7 @@ import com.skylab.superapp.entities.DTOs.Auth.AuthRequest;
 
 public interface AuthService {
 
-    DataResult<String> login(AuthRequest authRequest);
+    String login(AuthRequest authRequest);
 
 
 }

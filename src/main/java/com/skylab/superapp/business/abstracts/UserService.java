@@ -14,40 +14,36 @@ import java.util.List;
 
 public interface UserService extends UserDetailsService {
 
-    Result addUser(CreateUserDto createUserDto);
+    void addUser(CreateUserDto createUserDto);
 
-    Result deleteUser(int id);
+    void deleteUser(int id);
 
-    Result changePassword(ChangePassword changePassword);
+    void changePassword(ChangePassword changePassword);
 
-    DataResult<String> resetPassword(CreateUserDto createUserDto);
+    void resetPassword(CreateUserDto createUserDto);
 
-    Result changeAuthenticatedUserPassword(String newPassword);
+    List<User> getAllUsers();
 
-    DataResult<List<GetUserDto>> getAllUsers();
+    User getUserById(int id);
 
-    DataResult<User> getUserEntityById(int id);
+    User getUserByUsername(String username);
 
-    DataResult<GetUserDto> getUserById(int id);
+    User getUserByEmail(String email);
 
-    DataResult<User> getUserEntityByUsername(String username);
+    //boolean tenantCheck(String tenant, String username);
 
-    DataResult<User> getUserEntityByEmail(String email);
+    void addRoleToUser(String username, Role role);
 
-    boolean tenantCheck(String tenant, String username);
+    void removeRoleFromUser(String username, Role role);
 
-    Result addRoleToUser(String username, Role role);
+    void setLastLoginWithUsername(String username);
 
-    Result removeRoleFromUser(String username, Role role);
+    String getAuthenticatedUsername();
 
-    Result setLastLoginWithUsername(String username);
+    List<User> getAllStaffs();
 
-    DataResult<String> getAuthenticatedUsername();
+    List<User> getStaffsByRole(Role role);
 
-    DataResult<List<User>> getAllStaffs();
-
-    DataResult<List<User>> getStaffsByRole(Role role);
-
-    DataResult<List<User>> getAllUserByIds(List<Integer> userIds);
+    List<User> getAllUsersByIds(List<Integer> userIds);
 
 }
