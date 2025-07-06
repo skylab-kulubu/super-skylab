@@ -15,7 +15,7 @@ public class ImageMapper {
                 .name(image.getName())
                 .type(image.getType())
                 .url(image.getUrl())
-                .imageCategory(image.getImageCategory())
+                .category(image.getCategory())
                 .eventTypeName(image.getEvent() != null ?
                         image.getEvent().getType().getName() : null)
                 .build();

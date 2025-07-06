@@ -1,23 +1,15 @@
 package com.skylab.superapp.entities.DTOs.Competitor;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateCompetitorDto {
-
-    private String name;
-
-    private String tenant;
-
-    @JsonProperty("isActive")
-    private boolean isActive;
-
-
+    private int userId;
+    private int eventId;
 }

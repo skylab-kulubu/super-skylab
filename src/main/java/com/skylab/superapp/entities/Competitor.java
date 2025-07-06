@@ -10,6 +10,7 @@ import lombok.*;
 @Builder
 @Table(name = "competitors")
 public class Competitor {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -28,14 +29,4 @@ public class Competitor {
     @Column(nullable = false)
     private boolean isWinner;
 
-    @Column
-    private String award;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "season_id")
-    private Season season;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_type_id")
-    private EventType eventType;
 }

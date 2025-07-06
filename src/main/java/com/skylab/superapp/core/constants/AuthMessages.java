@@ -2,7 +2,7 @@ package com.skylab.superapp.core.constants;
 
 public final class AuthMessages {
 
-
+    public static final String USER_REGISTERED_SUCCESSFULLY = "auth.user.registered.successfully";
 
     private AuthMessages() {}
 

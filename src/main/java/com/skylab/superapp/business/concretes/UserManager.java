@@ -7,8 +7,10 @@ import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
+import com.skylab.superapp.entities.DTOs.User.UpdateUserDto;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,7 +32,7 @@ public class UserManager implements UserService {
     private final SecureRandom secureRandom = new SecureRandom();
 
 
-    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder,@Lazy EmailService emailService) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -290,6 +292,60 @@ public class UserManager implements UserService {
 
          */
 
+    }
+
+    @Override
+    public User getAuthenticatedUser() {
+        var username = getAuthenticatedUsername();
+        var userResult = userDao.findByUsername(username);
+
+        if(userResult.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        return userResult.get();
+    }
+
+    @Override
+    public void updateAuthenticatedUser(UpdateUserDto updateUserDto) {
+        var user = getAuthenticatedUser();
+
+        user.setFirstName(updateUserDto.getFirstName());
+        user.setLastName(updateUserDto.getLastName());
+        user.setEmail(updateUserDto.getEmail());
+        user.setLinkedin(updateUserDto.getLinkedin());
+        user.setUniversity(updateUserDto.getUniversity());
+        user.setDepartment(updateUserDto.getDepartment());
+        user.setFaculty(updateUserDto.getFaculty());
+
+        userDao.save(user);
+
+        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
+                "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
+                        "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
+    }
+
+    @Override
+    public void updateUser(int userId, UpdateUserDto updateUserDto) {
+        var userResult = userDao.findById(userId);
+        if (userResult.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+        var user = userResult.get();
+
+        user.setFirstName(updateUserDto.getFirstName());
+        user.setLastName(updateUserDto.getLastName());
+        user.setEmail(updateUserDto.getEmail());
+        user.setLinkedin(updateUserDto.getLinkedin());
+        user.setUniversity(updateUserDto.getUniversity());
+        user.setDepartment(updateUserDto.getDepartment());
+        user.setFaculty(updateUserDto.getFaculty());
+
+        userDao.save(user);
+
+        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
+                "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
+                        "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
     }
 
     @Override

@@ -36,27 +36,4 @@ public class GetBizbizeEventDto {
     private String type;
 
     private String formUrl;
-
-
-    public GetBizbizeEventDto(Event event) {
-        this.id = event.getId();
-        this.title = event.getTitle();
-        this.guestName = event.getGuestName();
-        this.linkedin = event.getLinkedin();
-        this.description = event.getDescription();
-        this.date = event.getDate();
-        this.isActive = event.isActive();
-        this.images = GetImageDto.buildListGetImageDto(event.getImages());
-        this.type = event.getType().getName();
-        this.formUrl = event.getFormUrl();
-    }
-
-    public static List<GetBizbizeEventDto> buildListGetBizbizeEventDto(List<Event> events) {
-        return events.stream()
-                .map(GetBizbizeEventDto::new)
-                .toList();
-    }
-
-
-
 }

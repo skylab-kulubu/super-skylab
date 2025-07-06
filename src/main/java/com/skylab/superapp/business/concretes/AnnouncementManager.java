@@ -6,7 +6,7 @@ import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.AnnouncementNotFoundException;
 import com.skylab.superapp.core.exceptions.EventTypeNotFoundException;
-import com.skylab.superapp.core.exceptions.ImageAlreadyAddedToAnnouncementException;
+import com.skylab.superapp.core.exceptions.ImageAlreadyAddedException;
 import com.skylab.superapp.dataAccess.AnnouncementDao;
 import com.skylab.superapp.entities.Announcement;
 import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementDto;
@@ -28,7 +28,10 @@ public class AnnouncementManager implements AnnouncementService {
     private final EventTypeService eventTypeService;
 
 
-    public AnnouncementManager(AnnouncementDao announcementDao, UserService userService, @Lazy ImageService imageService, EventTypeService eventTypeService) {
+    public AnnouncementManager(AnnouncementDao announcementDao,
+                               @Lazy UserService userService,
+                               @Lazy ImageService imageService,
+                               @Lazy EventTypeService eventTypeService) {
         this.announcementDao = announcementDao;
         this.userService = userService;
         this.imageService = imageService;
@@ -50,7 +53,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var author = userService.getUserEntityByUsername(username);
+        var author = userService.getUserByUsername(username);
         //controlleradvice handles this exception so no need to check any kind of business rules here -yusssss
         /*
         if(!author.isSuccess()){
@@ -59,7 +62,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var eventType = eventTypeService.getEventTypeByName(createAnnouncementDto.getType());
+        var eventType = eventTypeService.getEventTypeByName(createAnnouncementDto.getEventTypeName());
         /*
         if(!eventType.isSuccess()){
             return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
@@ -73,7 +76,7 @@ public class AnnouncementManager implements AnnouncementService {
                 .description(createAnnouncementDto.getDescription())
                 .title(createAnnouncementDto.getTitle())
                 .formUrl(createAnnouncementDto.getFormUrl())
-                .user(author.getData())
+                .user(author)
                 .isActive(createAnnouncementDto.isActive())
                 .eventType(eventType)
                 .build();
@@ -187,10 +190,10 @@ public class AnnouncementManager implements AnnouncementService {
         }
          */
 
-        var imageList = images.getData();
+        var imageList = images;
         for (var image : imageList) {
             if(image.getAnnouncement() != null){
-                throw new ImageAlreadyAddedToAnnouncementException();
+                throw new ImageAlreadyAddedException();
             }
             image.setAnnouncement(announcement);
         }

@@ -6,6 +6,7 @@ import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
 import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
 import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
 import com.skylab.superapp.entities.DTOs.User.GetUserDto;
+import com.skylab.superapp.entities.DTOs.User.UpdateUserDto;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,8 +31,6 @@ public interface UserService extends UserDetailsService {
 
     User getUserByEmail(String email);
 
-    //boolean tenantCheck(String tenant, String username);
-
     void addRoleToUser(String username, Role role);
 
     void removeRoleFromUser(String username, Role role);
@@ -46,4 +45,9 @@ public interface UserService extends UserDetailsService {
 
     List<User> getAllUsersByIds(List<Integer> userIds);
 
+    User getAuthenticatedUser();
+
+    void updateAuthenticatedUser(UpdateUserDto updateUserDto);
+
+    void updateUser(int userId, UpdateUserDto updateUserDto);
 }

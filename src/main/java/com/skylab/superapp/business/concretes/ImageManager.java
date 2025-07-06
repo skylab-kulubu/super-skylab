@@ -2,9 +2,12 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.core.exceptions.ImageCannotBeNullException;
+import com.skylab.superapp.core.exceptions.ImageNotFoundException;
 import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.ImageDao;
 import com.skylab.superapp.entities.Image;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,26 +22,18 @@ public class ImageManager implements ImageService {
     private final ImageDao imageDao;
     private final UserService userService;
 
-    public ImageManager(ImageDao imageDao, UserService userService) {
+    public ImageManager(ImageDao imageDao,@Lazy UserService userService) {
         this.imageDao = imageDao;
         this.userService = userService;
     }
 
     @Override
-    public DataResult<Image> addImage(MultipartFile file) {
-        if (file == null) {
-            return new ErrorDataResult<>(ImageMessages.imageCannotBeNull, HttpStatus.BAD_REQUEST);
+    public Image addImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ImageCannotBeNullException();
         }
 
-        var usernameResult = userService.getAuthenticatedUsername();
-        if (!usernameResult.isSuccess()) {
-            return new ErrorDataResult<>(usernameResult.getMessage(), usernameResult.getHttpStatus());
-        }
-
-        var userResult = userService.getUserEntityByUsername(usernameResult.getData());
-        if (!userResult.isSuccess()) {
-            return new ErrorDataResult<>(userResult.getMessage(), userResult.getHttpStatus());
-        }
+        var userResult = userService.getAuthenticatedUser();
 
         try {
             Image imageToSave = Image.builder()
@@ -46,60 +41,39 @@ public class ImageManager implements ImageService {
                     .name(file.getOriginalFilename())
                     .data(file.getBytes())
                     .url(generateUrl())
-                    .createdBy(userResult.getData())
+                    .createdBy(userResult)
                     .build();
 
-            imageDao.save(imageToSave);
-            return new SuccessDataResult<>(imageToSave, ImageMessages.imageAddSuccess, HttpStatus.CREATED);
+            return imageDao.save(imageToSave);
         } catch (Exception e) {
-            return new ErrorDataResult<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new RuntimeException("Failed to save image: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public DataResult<List<Image>> getImages() {
-        var result = imageDao.findAll();
-        if (result.isEmpty()) {
-            return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
-        }
-        return new SuccessDataResult<>(result, ImageMessages.imageGetSuccess, HttpStatus.OK);
+    public List<Image> getImages() {
+        return imageDao.findAll();
     }
 
     @Override
-    public DataResult<Image> getImageById(int id) {
-        var result = imageDao.findById(id);
-        if (result.isEmpty()) {
-            return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
-        }
-        return new SuccessDataResult<>(result.get(), ImageMessages.imageGetSuccess, HttpStatus.OK);
+    public Image getImageById(int id) {
+        return getImageEntity(id);
     }
 
     @Override
-    public Result deleteImage(int id) {
-        var result = imageDao.findById(id);
-        if (result.isEmpty()) {
-            return new ErrorResult(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
-        }
-        imageDao.delete(result.get());
-        return new SuccessResult(ImageMessages.imageDeleteSuccess, HttpStatus.OK);
+    public void deleteImage(int id) {
+        var image = getImageEntity(id);
+        imageDao.delete(image);
     }
 
     @Override
-    public DataResult<Image> getImageByUrl(String url) {
-        var result = imageDao.findByUrl(url);
-        if (result.isEmpty()) {
-            return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
-        }
-        return new SuccessDataResult<>(result.get(), ImageMessages.imageGetSuccess, HttpStatus.OK);
+    public Image getImageByUrl(String url) {
+        return imageDao.findByUrl(url).orElseThrow(ImageNotFoundException::new);
     }
 
     @Override
-    public DataResult<List<Image>> getImagesByIds(List<Integer> imageIds) {
-        List<Image> images = imageDao.findAllById(imageIds);
-        if (images.isEmpty()) {
-            return new ErrorDataResult<>(ImageMessages.imageCannotBeFound, HttpStatus.NOT_FOUND);
-        }
-        return new SuccessDataResult<>(images, ImageMessages.imageGetSuccess, HttpStatus.OK);
+    public List<Image> getImagesByIds(List<Integer> imageIds) {
+        return imageDao.findAllByIds(imageIds);
     }
 
     private String generateUrl() {
@@ -107,5 +81,9 @@ public class ImageManager implements ImageService {
         byte[] randomBytes = new byte[128];
         secureRandom.nextBytes(randomBytes);
         return Base64.getUrlEncoder().encodeToString(randomBytes);
+    }
+
+    private Image getImageEntity(int id){
+        return imageDao.findById(id).orElseThrow(ImageNotFoundException::new);
     }
 }

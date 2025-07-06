@@ -10,13 +10,5 @@ public interface AnnouncementDao extends JpaRepository<Announcement, Integer> {
 
     Announcement findById(int id);
 
-    List<Announcement> findByUserId(int userId);
-
-    List<Announcement> findAllByTitleContainingIgnoreCase(String title);
-
-    List<Announcement> findAllByContentContainingIgnoreCase(String content);
-
-    List<Announcement> findAllByType_Name(String name);
-
     List<Announcement> findAllByEventType(EventType eventType);
 }

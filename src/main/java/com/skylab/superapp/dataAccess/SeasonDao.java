@@ -1,22 +1,18 @@
 package com.skylab.superapp.dataAccess;
 
+import com.skylab.superapp.entities.EventType;
 import com.skylab.superapp.entities.Season;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SeasonDao extends JpaRepository<Season, Integer> {
-    Season findById(int id);
+    Optional<Season> findById(int id);
 
-    Season findByName(String name);
+    Optional<Season> findByName(String name);
 
     boolean existsByName(String name);
 
-    boolean existsById(int id);
-
-    List<Season> findAllByType_Name(String name);
-
-    List<Season> findAllByType_NameAndIsActiveTrue(String name);
-
-
+    List<Season> findAllByActive(boolean isActive);
 }

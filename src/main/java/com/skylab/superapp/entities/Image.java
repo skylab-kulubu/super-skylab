@@ -34,9 +34,9 @@ public class Image {
     @Column(name = "url")
     private String url;
 
-    @Column(name = "image_category")
+    @Column(name = "category")
     @Enumerated(EnumType.STRING)
-    private ImageCategory imageCategory;
+    private ImageCategory category;
 
     @ManyToOne
     @JoinColumn(name = "created_by")

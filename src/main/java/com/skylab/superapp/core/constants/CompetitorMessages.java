@@ -14,4 +14,13 @@ public final class CompetitorMessages {
     public static final String EVENT_RESULT_ALREADY_EXISTS = "competitor.event.result.already.exists";
     public static final String WEEKLY_WINNER_NOT_FOUND = "competitor.weekly.winner.not.found";
     public static final String WEEKLY_WINNER_FOUND = "competitor.weekly.winner.found";
+    public static final String COMPETITOR_NOT_FOUND = "competitor.not.found";
+    public static final String COMPETITOR_LIST_EMPTY = "competitor.list.empty";
+    public static final String COMPETITOR_ADD_SUCCESS = "competitor.add.success";
+    public static final String COMPETITOR_DELETE_SUCCESS = "competitor.delete.success";
+    public static final String COMPETITOR_GET_SUCCESS = "competitor.get.success";
+    public static final String COMPETITOR_WINNER_SET_SUCCESS = "competitor.winner.set.success";
+    public static final String COMPETITOR_NOT_PARTICIPATING_IN_EVENT = "competitor.not.participating.in.event";
+    public static final String COMPETITOR_LEADERBOARD_SUCCESS = "competitor.leaderboard.success";
+    public static final String COMPETITOR_POINTS_SET_SUCCESS = "competitor.points.set.success";
 }

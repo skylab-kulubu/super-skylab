@@ -5,28 +5,27 @@ import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.entities.DTOs.Season.CreateSeasonDto;
 import com.skylab.superapp.entities.DTOs.Season.GetSeasonDto;
 import com.skylab.superapp.entities.DTOs.User.GetUserDto;
+import com.skylab.superapp.entities.EventType;
 import com.skylab.superapp.entities.Season;
 
 import java.util.List;
 
 public interface SeasonService {
 
-    DataResult<Integer> addSeason(CreateSeasonDto createSeasonDto);
+    Season addSeason(CreateSeasonDto createSeasonDto);
 
-    Result deleteSeason(int id);
+    void deleteSeason(int id);
 
-    DataResult<List<GetSeasonDto>> getAllSeasonsByTenant(String tenant);
+    List<Season> getAllSeasons();
 
-    DataResult<List<GetSeasonDto>> getAllSeasons();
+    Season getSeasonByName(String name);
 
-    DataResult<GetSeasonDto> getSeasonByName(String name);
+    Season getSeasonById(int id);
 
-    DataResult<Season> getSeasonEntityById(int id);
+    List<Season> getActiveSeasons();
 
-    DataResult<GetSeasonDto> getSeasonById(int id);
+    void addEventToSeason(int seasonId, int eventId);
 
-    Result addEventToSeason(int seasonId, int eventId);
-
-    Result removeEventFromSeason(int seasonId, int eventId);
+    void removeEventFromSeason(int seasonId, int eventId);
 
 }

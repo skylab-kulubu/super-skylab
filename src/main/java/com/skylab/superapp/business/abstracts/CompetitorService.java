@@ -1,25 +1,39 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
+import com.skylab.superapp.entities.Competitor;
+import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
-import com.skylab.superapp.entities.DTOs.User.GetUserDto;
 import com.skylab.superapp.entities.User;
 
 import java.util.List;
 
 public interface CompetitorService {
-    DataResult<List<GetCompetitorDto>> getAllCompetitors();
 
-    DataResult<List<GetCompetitorDto>> getAllCompetitorsByEventType(String eventTypeName);
+    Competitor addCompetitor(CreateCompetitorDto createCompetitorDto);
+    void setCompetitorPoints(int competitorId, double points);
+    void setCompetitorWinner(int competitorId, boolean isWinner);
+    void deleteCompetitor(int competitorId);
+    Competitor getCompetitorById(int id);
+    List<Competitor> getMyCompetitors();
 
-    DataResult<User> getCompetitorEntityById(int id);
 
-    DataResult<List<GetCompetitorDto>> getAllBySeasonId(int seasonId);
+    List<Competitor> getAllCompetitors();
+    List<Competitor> getCompetitorsByEventId(int eventId);
+    List<Competitor> getCompetitorsByUserId(int userId);
+    List<Competitor> getCompetitorsByCompetitionId(int seasonId);
+    List<Competitor> getCompetitorsByEventTypeId(int eventTypeId);
 
-    Result addPointsToUser(int userId, int eventId, double points, boolean isWinner, String award);
+    List<Competitor> getLeaderboardByEventType(String eventTypeName);
+    List<Competitor> getCompetitionLeaderboard(int competitionId);
 
-    DataResult<User> getWeeklyWinner(int eventId);
+    Competitor getEventWinner(int eventId);
+    void setEventWinner(int eventId, int competitorId);
 
-    DataResult<User> getSeasonWinner(int seasonId);
+    double getUserTotalPoints(int userId);
+    double getUsersTotalPointsInCompetition(int userId, int competitionId);
+    int getUserCompetitionCount(int userId);
+
+    boolean isUserParticipant(int userId, int eventId);
+
+
 }

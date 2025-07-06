@@ -9,17 +9,24 @@ import java.util.List;
 @Component
 public class UserMapper {
 
+    private final ImageMapper imageMapper;
+
+    public UserMapper(ImageMapper imageMapper) {
+        this.imageMapper = imageMapper;
+    }
+
     public GetUserDto toDto(User user) {
         return GetUserDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .email(user.getEmail())
                 .linkedin(user.getLinkedin())
                 .university(user.getUniversity())
                 .faculty(user.getFaculty())
                 .department(user.getDepartment())
+                .profilePicture(user.getProfilePicture() != null ?
+                        imageMapper.toDto(user.getProfilePicture()) : null)
                 .createdAt(user.getCreatedAt())
                 .build();
     }

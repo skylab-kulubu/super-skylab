@@ -1,6 +1,7 @@
 package com.skylab.superapp.entities.DTOs.User;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,11 +18,11 @@ public class GetUserDto {
     private String username;
     private String firstName;
     private String lastName;
-    private String email;
     private String linkedin;
     private String university;
     private String faculty;
     private String department;
+    private GetImageDto profilePicture;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
     private Date createdAt;

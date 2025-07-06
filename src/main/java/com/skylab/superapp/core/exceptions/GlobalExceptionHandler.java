@@ -6,11 +6,23 @@ import com.skylab.superapp.core.results.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Result> handleBadCredentials(BadCredentialsException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResult(
+                        "Invalid username or password",
+                        ErrorCode.INVALID_USERNAME_OR_PASSWORD,
+                        HttpStatus.BAD_REQUEST,
+                        request.getRequestURI()));
+    }
 
     @ExceptionHandler(SuperSkyLabException.class)
     public ResponseEntity<Result> handleSuperSkyLabException(SuperSkyLabException exception, HttpServletRequest request){

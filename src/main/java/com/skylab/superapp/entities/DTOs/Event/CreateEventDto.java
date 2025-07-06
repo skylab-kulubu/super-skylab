@@ -17,7 +17,6 @@ import java.util.List;
 public class CreateEventDto {
     private String title;
     private String description;
-    private String guestName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
     private Date date;
@@ -26,7 +25,6 @@ public class CreateEventDto {
 
     @JsonProperty("isActive")
     private boolean isActive;
-    private String tenant;
     private String type;
     private String formUrl;
 

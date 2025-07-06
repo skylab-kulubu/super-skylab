@@ -11,17 +11,17 @@ import java.util.UUID;
 public interface ImageService {
 
 
-    DataResult<Image> addImage(MultipartFile file);
+    Image addImage(MultipartFile file);
 
-    DataResult<List<Image>> getImages();
+    List<Image> getImages();
 
-    DataResult<Image> getImageById(int id);
+    Image getImageById(int id);
 
-    Result deleteImage(int id);
+    void deleteImage(int id);
 
-    DataResult<Image> getImageByUrl(String url);
+    Image getImageByUrl(String url);
 
-    DataResult<List<Image>> getImagesByIds(List<Integer> imageIds);
+    List<Image> getImagesByIds(List<Integer> imageIds);
 
 
 

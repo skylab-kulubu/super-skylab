@@ -28,7 +28,7 @@ public class CreateAnnouncementDto {
     @JsonProperty("isActive")
     private boolean isActive;
 
-    private String type;
+    private String eventTypeName;
 
     private String formUrl;
 

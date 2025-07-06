@@ -28,14 +28,10 @@ public class Season {
     @Column(name = "end_date")
     private Date endDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_type_id", nullable = false)
-    private EventType type;
-
     @Column(name = "is_active")
-    private boolean isActive;
+    private boolean active;
 
-    @OneToMany(mappedBy = "season", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToMany(mappedBy = "season" , cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Event> events;
 
 

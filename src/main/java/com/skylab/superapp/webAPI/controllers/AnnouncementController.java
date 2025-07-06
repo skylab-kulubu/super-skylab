@@ -67,7 +67,7 @@ public class AnnouncementController {
                 .body(new SuccessDataResult(dtos, AnnouncementMessages.ANNOUNCEMENT_GET_ALL_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
-    @GetMapping("/getAllByEventType")
+    @GetMapping("/getAllByEventTypeName")
     public ResponseEntity<DataResult<List<GetAnnouncementDto>>> getAllAnnouncementsByEventTypeName(@RequestParam String eventTypeName, HttpServletRequest request) {
         var result = announcementService.getAllAnnouncementsByEventTypeName(eventTypeName);
         var dtos = announcementMapper.toDtoList(result);
@@ -75,7 +75,7 @@ public class AnnouncementController {
                 .body(new SuccessDataResult(dtos, AnnouncementMessages.ANNOUNCEMENT_GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
-    @GetMapping("/getAllByEventType")
+    @GetMapping("/getAllByEventTypeId")
     public ResponseEntity<DataResult<List<GetAnnouncementDto>>> getAllAnnouncementsByEventTypeId(@RequestParam int eventTypeId, HttpServletRequest request) {
         var result = announcementService.getAllAnnouncementsByEventTypeId(eventTypeId);
         var dtos = announcementMapper.toDtoList(result);
