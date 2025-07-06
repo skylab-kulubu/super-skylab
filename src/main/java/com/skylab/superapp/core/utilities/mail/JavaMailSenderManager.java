@@ -1,5 +1,6 @@
 package com.skylab.superapp.core.utilities.mail;
 
+import com.skylab.superapp.core.utilities.mail.rabbit.EmailProducer;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,9 +12,11 @@ import org.springframework.stereotype.Service;
 public class JavaMailSenderManager implements EmailService{
 
     private final JavaMailSender javaMailsender;
+    private final EmailProducer emailProducer;
 
-    public JavaMailSenderManager(JavaMailSender javaMailsender) {
+    public JavaMailSenderManager(JavaMailSender javaMailsender, EmailProducer emailProducer) {
         this.javaMailsender = javaMailsender;
+        this.emailProducer = emailProducer;
     }
 
     @Value("${spring.mail.username}")
@@ -39,5 +42,10 @@ public class JavaMailSenderManager implements EmailService{
         }
 
 
+    }
+
+    @Override
+    public void sendEmailAsync(String to, String subject, String body) {
+        emailProducer.sendEmailToQueue(to, subject, body);
     }
 }

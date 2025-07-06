@@ -8,6 +8,7 @@ services:
       - "9010:9010"
     depends_on:
       - super-skylab-db
+      - rabbitmq
     networks:
         - nginx-network
 
@@ -24,6 +25,25 @@ services:
       - ./data:/var/lib/postgresql/data
     networks:
       - nginx-network
+
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitMQ
+      RABBITMQ_DEFAULT_PASS: rabbitMQ
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - nginx-network
+
+volumes:
+  rabbitmq_data:
+
 
 networks:
     nginx-network:

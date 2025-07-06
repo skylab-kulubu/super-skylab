@@ -62,8 +62,9 @@ public class UserManager implements UserService {
                 .build();
 
         userDao.save(user);
-        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: "+user.getUsername()+"\n"+ "ŞİFRENİZ: " + createUserDto.getPassword() + "\n" +
-                "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
+
+        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserDto.getPassword() + "\n" +
+                    "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
     }
 
     @Override
@@ -107,8 +108,8 @@ public class UserManager implements UserService {
         user.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
         userDao.save(user);
 
-        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ",
-                user.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
+            emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ",
+                    user.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
     }
 
     @Override
@@ -135,7 +136,7 @@ public class UserManager implements UserService {
         user.setPassword(passwordEncoder.encode(finalPassword));
         userDao.save(user);
 
-        emailService.sendMail(
+        emailService.sendEmailAsync(
                 user.getEmail(),
                 "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ",
                 "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
@@ -320,7 +321,7 @@ public class UserManager implements UserService {
 
         userDao.save(user);
 
-        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
+        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
                 "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
                         "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
     }
@@ -343,7 +344,7 @@ public class UserManager implements UserService {
 
         userDao.save(user);
 
-        emailService.sendMail(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
+        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
                 "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
                         "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
     }
