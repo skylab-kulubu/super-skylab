@@ -4,7 +4,9 @@ import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.ImageCannotBeNullException;
 import com.skylab.superapp.core.exceptions.ImageNotFoundException;
+import com.skylab.superapp.core.mappers.ImageMapper;
 import com.skylab.superapp.dataAccess.ImageDao;
+import com.skylab.superapp.entities.DTOs.Image.ImageDto;
 import com.skylab.superapp.entities.Image;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,12 @@ public class ImageManager implements ImageService {
 
     private final ImageDao imageDao;
     private final UserService userService;
+    private final ImageMapper imageMapper;
 
-    public ImageManager(ImageDao imageDao,@Lazy UserService userService) {
+    public ImageManager(ImageDao imageDao,@Lazy UserService userService, ImageMapper imageMapper) {
         this.imageDao = imageDao;
         this.userService = userService;
+        this.imageMapper = imageMapper;
     }
 
     @Override
@@ -73,6 +77,12 @@ public class ImageManager implements ImageService {
     @Override
     public List<Image> getImagesByIds(List<UUID> imageIds) {
         return imageDao.findAllByIds(imageIds);
+    }
+
+    @Override
+    public List<ImageDto> getAllImages() {
+        var list = imageDao.findAll();
+        return imageMapper.toDtoList(list);
     }
 
     private String generateUrl() {

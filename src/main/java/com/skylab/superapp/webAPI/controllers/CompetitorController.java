@@ -8,6 +8,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,15 @@ public class CompetitorController {
         var result = competitorService.getMyCompetitors(includeUser, includeEvent);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@PathVariable UUID id,
+                                                                       @RequestBody UpdateCompetitorRequest updateCompetitorRequest,
+                                                                       HttpServletRequest request) {
+        var result = competitorService.updateCompetitor(id, updateCompetitorRequest);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
     @GetMapping("/user/{userId}")

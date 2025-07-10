@@ -16,6 +16,8 @@ public class UpdateEventRequest {
 
     private String description;
 
+    private String location;
+
     private String type;
 
     private String formUrl;

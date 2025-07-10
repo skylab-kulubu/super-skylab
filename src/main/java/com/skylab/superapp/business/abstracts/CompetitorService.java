@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface CompetitorService {
 
     CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest);
-    CompetitorDto updateCompetitor(UpdateCompetitorRequest updateCompetitorRequest);
+    CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest);
     void deleteCompetitor(UUID competitorId);
     CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent);
 

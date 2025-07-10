@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.abstracts;
 
+import com.skylab.superapp.entities.DTOs.Image.ImageDto;
 import com.skylab.superapp.entities.Image;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,6 @@ public interface ImageService {
 
     List<Image> getImagesByIds(List<UUID> imageIds);
 
-
+    List<ImageDto> getAllImages();
 
 }

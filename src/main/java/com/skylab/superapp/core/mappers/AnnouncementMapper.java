@@ -29,9 +29,8 @@ public class AnnouncementMapper {
         return new AnnouncementDto(
                 announcement.getId(),
                 announcement.getTitle(),
-                announcement.getDescription(),
                 announcement.getDate(),
-                announcement.getContent(),
+                announcement.getBody(),
                 announcement.isActive(),
                 announcement.getCreatedAt(),
                 includeUser ? userMapper.toDto(announcement.getUser()) : null,

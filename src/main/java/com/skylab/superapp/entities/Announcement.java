@@ -26,15 +26,12 @@ public class Announcement {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
     @Column(name = "date")
     private LocalDateTime date;
 
-    @Column(name = "content", columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "body", columnDefinition = "TEXT")
+    private String body;
 
     @Column(name = "is_active")
     private boolean active;

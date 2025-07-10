@@ -24,6 +24,8 @@ public class EventDto {
 
     private String description;
 
+    private String location;
+
     private EventTypeDto type;
 
     private String formUrl;
@@ -51,13 +53,14 @@ public class EventDto {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private SeasonDto season;
 
-    public EventDto(UUID id, String name, String description, EventTypeDto type, String formUrl,
+    public EventDto(UUID id, String name, String description, String location, EventTypeDto type, String formUrl,
                     LocalDateTime startDate, LocalDateTime endDate, String linkedin, boolean active,
                     CompetitionDto competition, List<SessionDto> sessions, List<ImageDto> images,
                     List<CompetitorDto> competitors, SeasonDto season) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.location = location;
         this.type = type;
         this.formUrl = formUrl;
         this.startDate = startDate;

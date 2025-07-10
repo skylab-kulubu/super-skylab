@@ -9,8 +9,6 @@ import java.util.UUID;
 @Setter
 public class UpdateCompetitorRequest {
 
-    private UUID competitorId;
-
     private UUID userId;
 
     private UUID eventId;

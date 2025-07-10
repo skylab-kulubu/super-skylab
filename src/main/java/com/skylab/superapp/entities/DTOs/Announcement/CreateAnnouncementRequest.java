@@ -12,11 +12,9 @@ public class CreateAnnouncementRequest {
 
     private String title;
 
-    private String description;
+    private String body;
 
     private LocalDateTime date;
-
-    private String content;
 
     private boolean active;
 

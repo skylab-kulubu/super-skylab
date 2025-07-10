@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,6 +60,17 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.OK)
                     .contentType(MediaType.valueOf(imageResult.getType()))
                     .body(imageResult.getData());
+    }
+
+    @GetMapping("/getAllImages")
+    public ResponseEntity<DataResult<List<ImageDto>>> getAllImages(HttpServletRequest request) {
+        var images = imageService.getAllImages();
+        for (var image : images){
+            image.setUrl(API_URL + IMAGE_GET_URL + image.getUrl());
+        }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(images, ImageMessages.GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
     @GetMapping("/getImageDetailsByUrl/{url}")

@@ -14,6 +14,8 @@ public class CreateEventRequest {
 
     private String description;
 
+    private String location;
+
     private UUID eventTypeId;
 
     private String formUrl;

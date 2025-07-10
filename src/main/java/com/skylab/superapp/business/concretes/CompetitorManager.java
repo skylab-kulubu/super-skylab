@@ -62,8 +62,30 @@ public class CompetitorManager implements CompetitorService {
     }
 
     @Override
-    public CompetitorDto updateCompetitor(UpdateCompetitorRequest updateCompetitorRequest) {
-        return null;
+    public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest) {
+      var competitor = getCompetitorEntityById(id);
+
+        if (updateCompetitorRequest.getUserId() != null) {
+            competitor.setUser(userService.getUserEntityById(updateCompetitorRequest.getUserId()));
+        }
+
+
+        if (updateCompetitorRequest.getEventId() != null) {
+            var event = eventService.getEventEntityById(updateCompetitorRequest.getEventId());
+            if (!event.getType().isCompetitive()) {
+                throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
+            }
+            competitor.setEvent(event);
+        }
+
+        if (updateCompetitorRequest.getPoints() != 0) {
+            competitor.setPoints(updateCompetitorRequest.getPoints());
+        }
+
+        competitor.setWinner(updateCompetitorRequest.isWinner());
+
+        return competitorMapper.toDto(competitorDao.save(competitor));
+
     }
 
 

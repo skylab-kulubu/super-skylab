@@ -70,10 +70,9 @@ public class AnnouncementManager implements AnnouncementService {
          */
 
         Announcement announcement = Announcement.builder()
-                .content(createAnnouncementRequest.getContent())
+                .body(createAnnouncementRequest.getBody())
                 .createdAt(LocalDateTime.now())
                 .date(createAnnouncementRequest.getDate())
-                .description(createAnnouncementRequest.getDescription())
                 .title(createAnnouncementRequest.getTitle())
                 .formUrl(createAnnouncementRequest.getFormUrl())
                 .user(author)
@@ -112,8 +111,17 @@ public class AnnouncementManager implements AnnouncementService {
         }
 
          */
+        if (updateAnnouncementRequest.getEventTypeId() != null) {
+            var eventType = eventTypeService.getEventTypeEntityById(updateAnnouncementRequest.getEventTypeId());
+            /*
+            if(!eventType.isSuccess()){
+                return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
+            }
+             */
+            announcement.setEventType(eventType);
+        }
 
-        announcement.setContent(updateAnnouncementRequest.getContent() == null ? announcement.getContent() : updateAnnouncementRequest.getContent());
+        announcement.setBody(updateAnnouncementRequest.getBody() == null ? announcement.getBody() : updateAnnouncementRequest.getBody());
         announcement.setTitle(updateAnnouncementRequest.getTitle() == null ? announcement.getTitle() : updateAnnouncementRequest.getTitle());
 
 

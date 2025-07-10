@@ -19,11 +19,9 @@ public class AnnouncementDto {
 
     private String title;
 
-    private String description;
-
     private LocalDateTime date;
 
-    private String content;
+    private String body;
 
     private boolean active;
 
@@ -40,14 +38,13 @@ public class AnnouncementDto {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<ImageDto> images;
 
-    public AnnouncementDto(UUID id, String title, String description, LocalDateTime date, String content, boolean active,
+    public AnnouncementDto(UUID id, String title, LocalDateTime date, String body, boolean active,
                            LocalDateTime createdAt, UserDto user, EventTypeDto eventType, String formUrl,
                            List<ImageDto> images) {
         this.id = id;
         this.title = title;
-        this.description = description;
         this.date = date;
-        this.content = content;
+        this.body = body;
         this.active = active;
         this.createdAt = createdAt;
         this.user = user;

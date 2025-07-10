@@ -40,6 +40,7 @@ public class EventMapper {
                 event.getId(),
                 event.getName(),
                 event.getDescription(),
+                event.getLocation(),
                 includeEventType ? eventTypeMapper.toDto(event.getType()) : null,
                 event.getFormUrl(),
                 event.getStartDate(),

@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,19 +17,15 @@ public class UpdateAnnouncementRequest {
 
     private String title;
 
-    private String description;
+    private String body;
 
     private LocalDate date;
-
-    private String content;
 
     private boolean active;
 
     private LocalDateTime createdAt;
 
-    private UserDto user;
-
-    private EventTypeDto eventType;
+    private UUID eventTypeId;
 
     private String formUrl;
 

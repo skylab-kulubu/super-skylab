@@ -30,6 +30,9 @@ public class Event {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "location")
+    private String location;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
     private EventType type;
