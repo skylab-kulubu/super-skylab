@@ -1,21 +1,27 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.Competition;
-import com.skylab.superapp.entities.DTOs.competition.CreateCompetitionDto;
+import com.skylab.superapp.entities.DTOs.competition.CompetitionDto;
+import com.skylab.superapp.entities.DTOs.competition.CreateCompetitionRequest;
+import com.skylab.superapp.entities.DTOs.competition.UpdateCompetitionRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CompetitionService {
 
-    Competition getCompetitionById(int competitionId);
+    CompetitionDto getCompetitionById(UUID competitionId, boolean includeEvent, boolean includeEventType);
 
-    List<Competition> getAllCompetitions();
+    List<CompetitionDto> getAllCompetitions(boolean includeEvent, boolean includeEventType);
 
-    void updateCompetition(CreateCompetitionDto createCompetitionDto, int id);
+    CompetitionDto updateCompetition(UpdateCompetitionRequest updateCompetitionRequest, UUID id);
 
-    void deleteCompetition(int competitionId);
+    void deleteCompetition(UUID competitionId);
 
-    Competition addCompetition(CreateCompetitionDto createCompetitionDto);
+    CompetitionDto addCompetition(CreateCompetitionRequest createCompetitionRequest);
 
-    List<Competition> getActiveCompetitions();
+    List<CompetitionDto> getActiveCompetitions(boolean includeEvent, boolean includeEventType);
+
+
+    Competition getCompetitionEntityById(UUID competitionId);
 }

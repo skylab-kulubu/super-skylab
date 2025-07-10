@@ -1,35 +1,30 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
-import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
-import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
-import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
-import com.skylab.superapp.entities.DTOs.User.GetUserDto;
-import com.skylab.superapp.entities.DTOs.User.UpdateUserDto;
+import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService extends UserDetailsService {
 
-    void addUser(CreateUserDto createUserDto);
+    UserDto addUser(CreateUserRequest createUpdateRequest);
 
-    void deleteUser(int id);
+    void deleteUser(UUID id);
 
-    void changePassword(ChangePassword changePassword);
+    void changePassword(ChangePasswordRequest changePasswordRequest);
 
-    void resetPassword(CreateUserDto createUserDto);
+    void resetPassword(ResetPasswordRequest resetPasswordRequest);
 
-    List<User> getAllUsers();
+    List<UserDto> getAllUsers();
 
-    User getUserById(int id);
+    UserDto getUserById(UUID id);
 
-    User getUserByUsername(String username);
+    UserDto getUserByUsername(String username);
 
-    User getUserByEmail(String email);
+    UserDto getUserByEmail(String email);
 
     void addRoleToUser(String username, Role role);
 
@@ -39,15 +34,25 @@ public interface UserService extends UserDetailsService {
 
     String getAuthenticatedUsername();
 
-    List<User> getAllStaffs();
+    List<UserDto> getAllStaffs();
 
-    List<User> getStaffsByRole(Role role);
+    List<UserDto> getStaffsByRole(Role role);
 
-    List<User> getAllUsersByIds(List<Integer> userIds);
+    List<UserDto> getAllUsersByIds(List<UUID> userIds);
 
-    User getAuthenticatedUser();
+    UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 
-    void updateAuthenticatedUser(UpdateUserDto updateUserDto);
+    UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest);
 
-    void updateUser(int userId, UpdateUserDto updateUserDto);
+    UserDto getAuthenticatedUser();
+
+    User getUserEntityById(UUID id);
+
+    User getUserEntityByUsername(String username);
+
+    User getUserEntityByEmail(String email);
+
+    User getAuthenticatedUserEntity();
+
+
 }

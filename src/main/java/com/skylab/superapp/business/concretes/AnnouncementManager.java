@@ -5,19 +5,19 @@ import com.skylab.superapp.business.abstracts.EventTypeService;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.AnnouncementNotFoundException;
-import com.skylab.superapp.core.exceptions.EventTypeNotFoundException;
 import com.skylab.superapp.core.exceptions.ImageAlreadyAddedException;
+import com.skylab.superapp.core.mappers.AnnouncementMapper;
 import com.skylab.superapp.dataAccess.AnnouncementDao;
 import com.skylab.superapp.entities.Announcement;
-import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementDto;
-import com.skylab.superapp.entities.DTOs.Announcement.GetAnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
+import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AnnouncementManager implements AnnouncementService {
@@ -26,24 +26,24 @@ public class AnnouncementManager implements AnnouncementService {
     private final UserService userService;
     private final ImageService imageService;
     private final EventTypeService eventTypeService;
+    private final AnnouncementMapper announcementMapper;
 
 
     public AnnouncementManager(AnnouncementDao announcementDao,
                                @Lazy UserService userService,
                                @Lazy ImageService imageService,
-                               @Lazy EventTypeService eventTypeService) {
+                               @Lazy EventTypeService eventTypeService,
+                               AnnouncementMapper announcementMapper) {
         this.announcementDao = announcementDao;
         this.userService = userService;
         this.imageService = imageService;
         this.eventTypeService = eventTypeService;
+        this.announcementMapper = announcementMapper;
     }
 
 
     @Override
-    public void addAnnouncement(CreateAnnouncementDto createAnnouncementDto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
+    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest) {
         // no need to check tenant, because tenants that doesnt have role wont be able to access this endpoint -yusssss
         /*
         var tenantCheck = userService.tenantCheck(createAnnouncementDto.getTenant(), username);
@@ -53,7 +53,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var author = userService.getUserByUsername(username);
+        var author = userService.getAuthenticatedUserEntity();
         //controlleradvice handles this exception so no need to check any kind of business rules here -yusssss
         /*
         if(!author.isSuccess()){
@@ -62,7 +62,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var eventType = eventTypeService.getEventTypeByName(createAnnouncementDto.getEventTypeName());
+        var eventType = eventTypeService.getEventTypeEntityById(createAnnouncementRequest.getEventTypeId());
         /*
         if(!eventType.isSuccess()){
             return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
@@ -70,27 +70,24 @@ public class AnnouncementManager implements AnnouncementService {
          */
 
         Announcement announcement = Announcement.builder()
-                .content(createAnnouncementDto.getContent())
-                .createdAt(new Date())
-                .date(createAnnouncementDto.getDate())
-                .description(createAnnouncementDto.getDescription())
-                .title(createAnnouncementDto.getTitle())
-                .formUrl(createAnnouncementDto.getFormUrl())
+                .content(createAnnouncementRequest.getContent())
+                .createdAt(LocalDateTime.now())
+                .date(createAnnouncementRequest.getDate())
+                .description(createAnnouncementRequest.getDescription())
+                .title(createAnnouncementRequest.getTitle())
+                .formUrl(createAnnouncementRequest.getFormUrl())
                 .user(author)
-                .isActive(createAnnouncementDto.isActive())
+                .active(createAnnouncementRequest.isActive())
                 .eventType(eventType)
                 .build();
 
 
-        announcementDao.save(announcement);
+        return announcementMapper.toDto(announcementDao.save(announcement));
     }
 
     @Override
-    public void deleteAnnouncement(int id) {
-        var result = announcementDao.findById(id);
-        if(result == null){
-            throw new AnnouncementNotFoundException();
-        }
+    public void deleteAnnouncement(UUID id) {
+        var result = announcementDao.findById(id).orElseThrow(AnnouncementNotFoundException::new);
 
         /*
         var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
@@ -105,11 +102,8 @@ public class AnnouncementManager implements AnnouncementService {
     }
 
     @Override
-    public void updateAnnouncement(GetAnnouncementDto getAnnouncementDto) {
-        var result = announcementDao.findById(getAnnouncementDto.getId());
-        if(result == null){
-            throw new AnnouncementNotFoundException();
-        }
+    public AnnouncementDto updateAnnouncement(UUID id, UpdateAnnouncementRequest updateAnnouncementRequest) {
+        var announcement = getAnnouncementEntityById(id);
 
         /*
         var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
@@ -119,63 +113,41 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        result.setContent(getAnnouncementDto.getContent() == null ? result.getContent() : getAnnouncementDto.getContent());
-        result.setTitle(getAnnouncementDto.getTitle() == null ? result.getTitle() : getAnnouncementDto.getTitle());
+        announcement.setContent(updateAnnouncementRequest.getContent() == null ? announcement.getContent() : updateAnnouncementRequest.getContent());
+        announcement.setTitle(updateAnnouncementRequest.getTitle() == null ? announcement.getTitle() : updateAnnouncementRequest.getTitle());
 
 
-        announcementDao.save(result);
+        return announcementMapper.toDto(announcementDao.save(announcement));
     }
 
     @Override
-    public List<Announcement> getAllAnnouncements() {
+    public List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages) {
         var result = announcementDao.findAll();
         if(result.isEmpty()){
             throw new AnnouncementNotFoundException();
         }
 
-        return result;
+        return announcementMapper.toDtoList(result, includeUser, includeEventType, includeImages);
     }
 
     @Override
-    public Announcement getAnnouncementById(int id) {
-        var result = announcementDao.findById(id);
+    public AnnouncementDto getAnnouncementById(UUID id, boolean includeUser, boolean includeEventType, boolean includeImages) {
+        var announcement = getAnnouncementEntityById(id);
 
-        if(result == null){
-            throw new AnnouncementNotFoundException();
-        }
-
-        return result;
+        return announcementMapper.toDto(announcement, includeUser, includeEventType, includeImages);
     }
 
     @Override
-    public List<Announcement> getAllAnnouncementsByEventTypeName(String eventTypeName) {
-        var eventType = eventTypeService.getEventTypeByName(eventTypeName);
-        if(eventType == null){
-            throw new EventTypeNotFoundException();
-        }
+    public List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEventType, boolean includeImages) {
+        var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
 
-        return announcementDao.findAllByEventType(eventType);
-    }
-
-    @Override
-    public List<Announcement> getAllAnnouncementsByEventTypeId(int eventTypeId) {
-        var eventType = eventTypeService.getEventTypeById(eventTypeId);
-        if(eventType == null){
-            throw new EventTypeNotFoundException();
-        }
-
-        return announcementDao.findAllByEventType(eventType);
+        return announcementMapper.toDtoList(announcementDao.findAllByEventType(eventType), includeUser, includeEventType, includeImages);
     }
 
 
     @Override
-    public void addImagesToAnnouncement(int id, List<Integer> imageIds) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        var announcement = announcementDao.findById(id);
-        if(announcement == null){
-            throw new AnnouncementNotFoundException();
-        }
+    public void addImagesToAnnouncement(UUID id, List<UUID> imageIds) {
+        var announcement = getAnnouncementEntityById(id);
 /*
         var tenantCheck = userService.tenantCheck(announcement.getType().getName(), username);
         if(!tenantCheck){
@@ -183,6 +155,7 @@ public class AnnouncementManager implements AnnouncementService {
         }
 
  */
+
         var images = imageService.getImagesByIds(imageIds);
         /*
         if(!images.isSuccess()){
@@ -190,8 +163,7 @@ public class AnnouncementManager implements AnnouncementService {
         }
          */
 
-        var imageList = images;
-        for (var image : imageList) {
+        for (var image : images) {
             if(image.getAnnouncement() != null){
                 throw new ImageAlreadyAddedException();
             }
@@ -199,5 +171,10 @@ public class AnnouncementManager implements AnnouncementService {
         }
 
         announcementDao.save(announcement);
+    }
+
+    @Override
+    public Announcement getAnnouncementEntityById(UUID id) {
+        return announcementDao.findById(id).orElseThrow(AnnouncementNotFoundException::new);
     }
 }

@@ -1,7 +1,7 @@
 package com.skylab.superapp.core.mappers;
 
+import com.skylab.superapp.entities.DTOs.Image.ImageDto;
 import com.skylab.superapp.entities.Image;
-import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,8 +9,13 @@ import java.util.List;
 @Component
 public class ImageMapper {
 
-    public GetImageDto toDto(Image image) {
-        return GetImageDto.builder()
+    public ImageDto toDto(Image image) {
+
+        if (image == null) {
+            return null;
+        }
+
+        return ImageDto.builder()
                 .id(image.getId())
                 .name(image.getName())
                 .type(image.getType())
@@ -21,7 +26,7 @@ public class ImageMapper {
                 .build();
     }
 
-    public List<GetImageDto> toDtoList(List<Image> images) {
+    public List<ImageDto> toDtoList(List<Image> images) {
         return images.stream()
                 .map(this::toDto)
                 .toList();

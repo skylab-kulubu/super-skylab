@@ -1,16 +1,15 @@
 package com.skylab.superapp.entities.DTOs.Auth;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
-public class AuthRequest {
+@Setter
+public class AuthLoginRequest {
 
     private String usernameOrEmail;
 
     private String password;
+
 
 }

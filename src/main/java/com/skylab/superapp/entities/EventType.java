@@ -3,6 +3,8 @@ package com.skylab.superapp.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -13,15 +15,15 @@ import lombok.*;
 public class EventType {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
-    private int id;
+    private UUID id;
 
     @Column(name ="name")
     private String name;
 
     @Column(name = "is_competitive")
-    private boolean isCompetitive;
+    private boolean competitive;
 
 
 

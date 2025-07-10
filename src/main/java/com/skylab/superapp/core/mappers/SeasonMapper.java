@@ -1,7 +1,7 @@
 package com.skylab.superapp.core.mappers;
 
+import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.Season;
-import com.skylab.superapp.entities.DTOs.Season.GetSeasonDto;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -16,20 +16,33 @@ public class SeasonMapper {
         this.eventMapper = eventMapper;
     }
 
-    public GetSeasonDto toDto(Season season) {
-        return GetSeasonDto.builder()
-                .id(season.getId())
-                .name(season.getName())
-                .startDate(season.getStartDate())
-                .endDate(season.getEndDate())
-                .isActive(season.isActive())
-                .events(season.getEvents() != null ? eventMapper.toDtoList(season.getEvents()) : null)
-                .build();
+    public SeasonDto toDto(Season season, boolean includeEvents) {
+
+        if (season == null) {
+            return null;
+        }
+
+        return new SeasonDto(
+                season.getId(),
+                season.getName(),
+                season.getStartDate(),
+                season.getEndDate(),
+                season.isActive(),
+                includeEvents ? eventMapper.toDtoList(season.getEvents()) : null
+        );
     }
 
-    public List<GetSeasonDto> toDtoList(List<Season> seasons) {
+    public SeasonDto toDto(Season season) {
+        return toDto(season, false);
+    }
+
+    public List<SeasonDto> toDtoList(List<Season> seasons, boolean includeEvents) {
         return seasons.stream()
-                .map(this::toDto)
+                .map(season -> toDto(season, includeEvents))
                 .toList();
+    }
+
+    public List<SeasonDto> toDtoList(List<Season> seasons) {
+       return toDtoList(seasons, false);
     }
 }

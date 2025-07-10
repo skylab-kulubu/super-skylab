@@ -1,7 +1,5 @@
 package com.skylab.superapp.core.constants;
 
-import org.springframework.http.HttpStatus;
-
 public final class AnnouncementMessages {
     private AnnouncementMessages() {}
     public static final String ANNOUNCEMENT_ADD_SUCCESS = "announcement.add.success";

@@ -3,8 +3,11 @@ package com.skylab.superapp.webAPI.controllers;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.core.constants.ImageMessages;
 import com.skylab.superapp.core.mappers.ImageMapper;
-import com.skylab.superapp.core.results.*;
-import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
+import com.skylab.superapp.core.results.DataResult;
+import com.skylab.superapp.core.results.Result;
+import com.skylab.superapp.core.results.SuccessDataResult;
+import com.skylab.superapp.core.results.SuccessResult;
+import com.skylab.superapp.entities.DTOs.Image.ImageDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -13,9 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URI;
-import java.net.URL;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/images")
@@ -36,7 +38,7 @@ public class ImageController {
     }
 
     @PostMapping("/addImage")
-    public ResponseEntity<DataResult<GetImageDto>> addImage(@RequestParam("image") MultipartFile image, HttpServletRequest request) {
+    public ResponseEntity<DataResult<ImageDto>> addImage(@RequestParam("image") MultipartFile image, HttpServletRequest request) {
         var result = imageService.addImage(image);
         var dto = imageMapper.toDto(result);
         dto.setUrl(API_URL + IMAGE_GET_URL + result.getUrl());
@@ -48,7 +50,7 @@ public class ImageController {
 
     @GetMapping("/getImageByUrl/{url}")
     public ResponseEntity<byte[]> getImageByUrl(@PathVariable Optional<String> url) {
-        if (!url.isPresent()) {
+        if (url.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(null);
         }
@@ -71,7 +73,7 @@ public class ImageController {
     }
 
     @DeleteMapping("/deleteImageById/{id}")
-    public ResponseEntity<Result> deleteImageById(@PathVariable int id, HttpServletRequest request) {
+    public ResponseEntity<Result> deleteImageById(@PathVariable UUID id, HttpServletRequest request) {
         imageService.deleteImage(id);
 
         return ResponseEntity.status(HttpStatus.OK)

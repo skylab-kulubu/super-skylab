@@ -1,7 +1,7 @@
 package com.skylab.superapp.core.mappers;
 
+import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.EventType;
-import com.skylab.superapp.entities.DTOs.eventType.GetEventTypeDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,15 +9,18 @@ import java.util.List;
 @Component
 public class EventTypeMapper {
 
-    public GetEventTypeDto toDto(EventType eventType) {
-        return GetEventTypeDto.builder()
-                .id(eventType.getId())
-                .name(eventType.getName())
-                .isCompetitive(eventType.isCompetitive())
-                .build();
+    public EventTypeDto toDto(EventType eventType) {
+        if (eventType == null) {
+            return null;
+        }
+        return new EventTypeDto(
+                eventType.getId(),
+                eventType.getName(),
+                eventType.isCompetitive()
+        );
     }
 
-    public List<GetEventTypeDto> toDtoList(List<EventType> eventTypes) {
+    public List<EventTypeDto> toDtoList(List<EventType> eventTypes) {
         return eventTypes.stream()
                 .map(this::toDto)
                 .toList();

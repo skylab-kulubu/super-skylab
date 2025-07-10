@@ -9,14 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ImageDao extends JpaRepository<Image, Integer> {
+public interface ImageDao extends JpaRepository<Image, UUID> {
 
     @Transactional
     Optional<Image> findByUrl(String url);
 
 
     @Query("SELECT i FROM Image i WHERE i.id IN :ids")
-    List<Image> findAllByIds(@Param("ids") List<Integer> ids);
+    List<Image> findAllByIds(@Param("ids") List<UUID> ids);
 }

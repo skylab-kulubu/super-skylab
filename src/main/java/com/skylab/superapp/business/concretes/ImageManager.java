@@ -4,17 +4,16 @@ import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.ImageCannotBeNullException;
 import com.skylab.superapp.core.exceptions.ImageNotFoundException;
-import com.skylab.superapp.core.results.*;
 import com.skylab.superapp.dataAccess.ImageDao;
 import com.skylab.superapp.entities.Image;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ImageManager implements ImageService {
@@ -33,7 +32,7 @@ public class ImageManager implements ImageService {
             throw new ImageCannotBeNullException();
         }
 
-        var userResult = userService.getAuthenticatedUser();
+        var userResult = userService.getAuthenticatedUserEntity();
 
         try {
             Image imageToSave = Image.builder()
@@ -56,12 +55,12 @@ public class ImageManager implements ImageService {
     }
 
     @Override
-    public Image getImageById(int id) {
+    public Image getImageById(UUID id) {
         return getImageEntity(id);
     }
 
     @Override
-    public void deleteImage(int id) {
+    public void deleteImage(UUID id) {
         var image = getImageEntity(id);
         imageDao.delete(image);
     }
@@ -72,7 +71,7 @@ public class ImageManager implements ImageService {
     }
 
     @Override
-    public List<Image> getImagesByIds(List<Integer> imageIds) {
+    public List<Image> getImagesByIds(List<UUID> imageIds) {
         return imageDao.findAllByIds(imageIds);
     }
 
@@ -83,7 +82,7 @@ public class ImageManager implements ImageService {
         return Base64.getUrlEncoder().encodeToString(randomBytes);
     }
 
-    private Image getImageEntity(int id){
+    private Image getImageEntity(UUID id){
         return imageDao.findById(id).orElseThrow(ImageNotFoundException::new);
     }
 }

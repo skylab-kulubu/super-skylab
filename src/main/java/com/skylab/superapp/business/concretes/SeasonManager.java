@@ -3,61 +3,86 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.SeasonService;
 import com.skylab.superapp.core.exceptions.*;
+import com.skylab.superapp.core.mappers.SeasonMapper;
 import com.skylab.superapp.dataAccess.SeasonDao;
-import com.skylab.superapp.entities.DTOs.Season.CreateSeasonDto;
+import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
+import com.skylab.superapp.entities.DTOs.season.SeasonDto;
+import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
 import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SeasonManager implements SeasonService {
 
     private final SeasonDao seasonDao;
     private final EventService eventService;
+    private final SeasonMapper seasonMapper;
 
-    public SeasonManager(SeasonDao seasonDao,@Lazy EventService eventService) {
+    public SeasonManager(SeasonDao seasonDao, @Lazy EventService eventService, SeasonMapper seasonMapper) {
         this.seasonDao = seasonDao;
         this.eventService = eventService;
+        this.seasonMapper = seasonMapper;
     }
 
     @Override
-    public Season addSeason(CreateSeasonDto createSeasonDto) {
-        if(createSeasonDto.getName() == null || createSeasonDto.getName().isEmpty()) {
+    public SeasonDto addSeason(CreateSeasonRequest createSeasonRequest) {
+        if(createSeasonRequest.getName() == null || createSeasonRequest.getName().isEmpty()) {
            throw new SeasonNameCannotBeNullOrBlankException();
         }
 
-        if(seasonDao.existsByName(createSeasonDto.getName())) {
+        if(seasonDao.existsByName(createSeasonRequest.getName())) {
             throw new SeasonNameAlreadyExistsException();
         }
 
         Season season = Season.builder()
-                .name(createSeasonDto.getName())
-                .startDate(createSeasonDto.getStartDate())
-                .endDate(createSeasonDto.getEndDate())
-                .active(createSeasonDto.isActive())
+                .name(createSeasonRequest.getName())
+                .startDate(createSeasonRequest.getStartDate())
+                .endDate(createSeasonRequest.getEndDate())
+                .active(createSeasonRequest.isActive())
                 .build();
 
-        return seasonDao.save(season);
+        return seasonMapper.toDto(seasonDao.save(season));
     }
 
     @Override
-    public void deleteSeason(int id) {
-
-        var season = getSeasonEntity(id);
+    public void deleteSeason(UUID id) {
+        var season = getSeasonEntityById(id);
 
         seasonDao.delete(season);
     }
 
     @Override
-    public List<Season> getAllSeasons() {
-       return seasonDao.findAll();
+    public SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest) {
+        var season = getSeasonEntityById(id);
+
+        if (season.getName()== null || season.getName().isEmpty()) {
+            throw new SeasonNameCannotBeNullOrBlankException();
+        }
+
+        if (updateSeasonRequest.getStartDate().isAfter(updateSeasonRequest.getEndDate())) {
+            throw new SeasonStartDateCannotBeAfterEndDateException();
+        }
+
+        season.setName(updateSeasonRequest.getName()==null ? season.getName() : updateSeasonRequest.getName());
+        season.setStartDate(updateSeasonRequest.getStartDate() == null ? season.getStartDate() : updateSeasonRequest.getStartDate());
+        season.setEndDate(updateSeasonRequest.getEndDate() == null ? season.getEndDate() : updateSeasonRequest.getEndDate());
+        season.setActive(updateSeasonRequest.isActive());
+
+        return seasonMapper.toDto(seasonDao.save(season));
     }
 
     @Override
-    public Season getSeasonByName(String name) {
+    public List<SeasonDto> getAllSeasons(boolean includeEvents) {
+       return seasonMapper.toDtoList(seasonDao.findAll(), includeEvents);
+    }
+
+    @Override
+    public SeasonDto getSeasonByName(String name, boolean includeEvents) {
         if(name == null || name.isEmpty()) {
             throw new SeasonNameCannotBeNullOrBlankException();
         }
@@ -66,25 +91,26 @@ public class SeasonManager implements SeasonService {
            throw new SeasonNotFoundException();
        }
 
-        return result.get();
+        return seasonMapper.toDto(result.get());
+    }
+
+    @Override
+    public SeasonDto getSeasonById(UUID id, boolean includeEvents) {
+        var season = getSeasonEntityById(id);
+        return seasonMapper.toDto(season, includeEvents);
     }
 
 
     @Override
-    public Season getSeasonById(int id) {
-        return getSeasonEntity(id);
-    }
-
-    @Override
-    public List<Season> getActiveSeasons() {
-        return seasonDao.findAllByActive(true);
+    public List<SeasonDto> getActiveSeasons(boolean includeEvents) {
+        return seasonMapper.toDtoList(seasonDao.findAllByActive(true), includeEvents);
     }
 
     @Transactional
     @Override
-    public void addEventToSeason(int seasonId, int eventId) {
-        var season = getSeasonEntity(seasonId);
-        var event = eventService.getEventById(eventId);
+    public void addEventToSeason(UUID seasonId, UUID eventId) {
+        var season = getSeasonEntityById(seasonId);
+        var event = eventService.getEventEntityById(eventId);
 
 
         if (season.getEvents().contains(event)) {
@@ -104,16 +130,14 @@ public class SeasonManager implements SeasonService {
 
     @Transactional
     @Override
-    public void removeEventFromSeason(int seasonId, int eventId) {
-        var season = getSeasonEntity(seasonId);
-        var event = eventService.getEventById(eventId); // Renamed
-
+    public void removeEventFromSeason(UUID seasonId, UUID eventId) {
+        var season = getSeasonEntityById(seasonId);
+        var event = eventService.getEventEntityById(eventId); // Renamed
 
 
         if (!season.getEvents().contains(event) || event.getSeason() == null || event.getSeason().getId() != season.getId() ) {
             throw new SeasonDoesNotContainEventException();
         }
-
 
         season.getEvents().remove(event);
         event.setSeason(null);
@@ -122,9 +146,8 @@ public class SeasonManager implements SeasonService {
 
     }
 
-
-
-    private Season getSeasonEntity(int id){
+    @Override
+    public Season getSeasonEntityById(UUID id) {
         return seasonDao.findById(id).orElseThrow(SeasonNotFoundException::new);
     }
 }

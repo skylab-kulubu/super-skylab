@@ -1,9 +1,8 @@
 package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.Announcement;
-import com.skylab.superapp.entities.DTOs.Announcement.GetAnnouncementDto;
-import com.skylab.superapp.entities.DTOs.User.GetUserDto;
-import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
+import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -13,31 +12,50 @@ public class AnnouncementMapper {
 
     private final UserMapper userMapper;
     private final ImageMapper imageMapper;
+    private final EventTypeMapper eventTypeMapper;
 
-    public AnnouncementMapper(UserMapper userMapper, ImageMapper imageMapper) {
+    public AnnouncementMapper(@Lazy UserMapper userMapper, @Lazy ImageMapper imageMapper,
+                              @Lazy EventTypeMapper eventTypeMapper) {
         this.userMapper = userMapper;
         this.imageMapper = imageMapper;
+        this.eventTypeMapper = eventTypeMapper;
     }
 
-    public GetAnnouncementDto toDto(Announcement announcement) {
-        return GetAnnouncementDto.builder()
-                .id(announcement.getId())
-                .title(announcement.getTitle())
-                .content(announcement.getContent())
-                .description(announcement.getDescription())
-                .date(announcement.getDate())
-                .createdAt(announcement.getCreatedAt())
-                .formUrl(announcement.getFormUrl())
-                .isActive(announcement.isActive())
-                .type(announcement.getEventType().getName())
-                .author(userMapper.toDto(announcement.getUser()))
-                .images(imageMapper.toDtoList(announcement.getImages()))
-                .build();
+    public AnnouncementDto toDto(Announcement announcement, boolean includeUser, boolean includeEventType,
+                                 boolean includeImages) {
+        if (announcement == null) {
+            return null;
+        }
+        return new AnnouncementDto(
+                announcement.getId(),
+                announcement.getTitle(),
+                announcement.getDescription(),
+                announcement.getDate(),
+                announcement.getContent(),
+                announcement.isActive(),
+                announcement.getCreatedAt(),
+                includeUser ? userMapper.toDto(announcement.getUser()) : null,
+                includeEventType ? eventTypeMapper.toDto(announcement.getEventType()) : null,
+                announcement.getFormUrl(),
+                includeImages ?
+                        (announcement.getImages() != null ? imageMapper.toDtoList(announcement.getImages()) : List.of())
+                        : null
+        );
     }
 
-    public List<GetAnnouncementDto> toDtoList(List<Announcement> announcements) {
+    public AnnouncementDto toDto(Announcement announcement) {
+        return toDto(announcement, false, false, false);
+    }
+
+    public List<AnnouncementDto> toDtoList(List<Announcement> announcements,
+                                            boolean includeUser, boolean includeEventType, boolean includeImages) {
         return announcements.stream()
-                .map(this::toDto)
+                .map(announcement -> toDto(announcement, includeUser, includeEventType, includeImages))
                 .toList();
     }
+
+    public List<AnnouncementDto> toDtoList(List<Announcement> announcements) {
+        return toDtoList(announcements, false, false, false);
+    }
+
 }

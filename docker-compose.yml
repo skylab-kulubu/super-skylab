@@ -8,7 +8,7 @@ services:
       - "9010:9010"
     depends_on:
       - super-skylab-db
-      - rabbitmq
+      - super-skylab-rabbitmq
     networks:
         - nginx-network
 
@@ -27,8 +27,8 @@ services:
       - nginx-network
 
 
-  rabbitmq:
-    container_name: rabbitmq
+  super-skylab-rabbitmq:
+    container_name: super-skylab-rabbitmq
     image: rabbitmq:3-management
     environment:
       RABBITMQ_DEFAULT_USER: rabbitMQ

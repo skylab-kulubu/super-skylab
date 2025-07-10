@@ -1,63 +1,75 @@
 package com.skylab.superapp.core.mappers;
 
+import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.Event;
-import com.skylab.superapp.entities.DTOs.Event.GetEventDto;
-import com.skylab.superapp.entities.DTOs.Event.GetEventDetailsDto;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+
 @Component
 public class EventMapper {
 
+    private final EventTypeMapper eventTypeMapper;
+    private final CompetitionMapper competitionMapper;
+    private final CompetitorMapper competitorMapper;
     private final ImageMapper imageMapper;
     private final SessionMapper sessionMapper;
     private final SeasonMapper seasonMapper;
 
-    public EventMapper(ImageMapper imageMapper, SessionMapper sessionMapper, @Lazy SeasonMapper seasonMapper) {
+    public EventMapper(@Lazy EventTypeMapper eventTypeMapper, @Lazy CompetitionMapper competitionMapper,
+                       @Lazy ImageMapper imageMapper, @Lazy SessionMapper sessionMapper,
+                       @Lazy SeasonMapper seasonMapper, @Lazy CompetitorMapper competitorMapper) {
+        this.eventTypeMapper = eventTypeMapper;
+        this.competitionMapper = competitionMapper;
         this.imageMapper = imageMapper;
         this.sessionMapper = sessionMapper;
         this.seasonMapper = seasonMapper;
+        this.competitorMapper = competitorMapper;
     }
 
-    public GetEventDto toDto(Event event) {
-        return GetEventDto.builder()
-                .id(event.getId())
-                .title(event.getName())
-                .description(event.getDescription())
-                .date(event.getDate())
-                .isActive(event.isActive())
-                .images(event.getImages()== null ? null : imageMapper.toDtoList(event.getImages()))
-                .type(event.getType()==null ? null : event.getType().getName())
-                .formUrl(event.getFormUrl())
-                .build();
+    public EventDto toDto(Event event, boolean includeEventType, boolean includeSession,
+                          boolean includeCompetitors, boolean includeImages,
+                          boolean includeSeason, boolean includeCompetition) {
+
+        if (event == null) {
+            return null;
+        }
+        return new EventDto(
+                event.getId(),
+                event.getName(),
+                event.getDescription(),
+                includeEventType ? eventTypeMapper.toDto(event.getType()) : null,
+                event.getFormUrl(),
+                event.getStartDate(),
+                event.getEndDate(),
+                event.getLinkedin(),
+                event.isActive(),
+                includeCompetition ? competitionMapper.toDto(event.getCompetition()) : null,
+                includeSession ? sessionMapper.toDtoList(event.getSessions()) : null,
+                includeImages ? imageMapper.toDtoList(event.getImages()) : null,
+                includeCompetitors ? competitorMapper.toDtoList(event.getCompetitors()) : null,
+                includeSeason ? seasonMapper.toDto(event.getSeason()) : null);
     }
 
-    public GetEventDetailsDto toDetailsDto(Event event) {
-        return GetEventDetailsDto.builder()
-                .id(event.getId())
-                .title(event.getName())
-                .description(event.getDescription())
-                .date(event.getDate())
-                .isActive(event.isActive())
-                .images(imageMapper.toDtoList(event.getImages()))
-                .type(event.getType().getName())
-                .formUrl(event.getFormUrl())
-                .linkedin(event.getLinkedin())
-                .sessions(sessionMapper.toDtoList(event.getSessions()))
-                .build();
+    public EventDto toDto(Event event) {
+        return toDto(event, false, false, false, false, false, false);
     }
 
-    public List<GetEventDetailsDto> toDetailsDtoList(List<Event> events) {
+    public List<EventDto> toDtoList(List<Event> events, boolean includeEventType, boolean includeSession,
+                                    boolean includeCompetitors, boolean includeImages,
+                                    boolean includeSeason, boolean includeCompetition) {
         return events.stream()
-                .map(this::toDetailsDto)
+                .map(event -> toDto(event, includeEventType, includeSession,
+                        includeCompetitors, includeImages, includeSeason, includeCompetition))
                 .toList();
     }
 
-    public List<GetEventDto> toDtoList(List<Event> events) {
+    public List<EventDto> toDtoList(List<Event> events) {
         return events.stream()
-                .map(this::toDto)
+                .map(event -> toDto(event, false, false,
+                        false, false, false, false))
                 .toList();
     }
 }

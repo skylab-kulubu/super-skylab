@@ -1,39 +1,41 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.Competitor;
-import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorDto;
-import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
-import com.skylab.superapp.entities.User;
+import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
+import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CompetitorService {
 
-    Competitor addCompetitor(CreateCompetitorDto createCompetitorDto);
-    void setCompetitorPoints(int competitorId, double points);
-    void setCompetitorWinner(int competitorId, boolean isWinner);
-    void deleteCompetitor(int competitorId);
-    Competitor getCompetitorById(int id);
-    List<Competitor> getMyCompetitors();
+    CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest);
+    CompetitorDto updateCompetitor(UpdateCompetitorRequest updateCompetitorRequest);
+    void deleteCompetitor(UUID competitorId);
+    CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent);
+
+    List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent);
 
 
-    List<Competitor> getAllCompetitors();
-    List<Competitor> getCompetitorsByEventId(int eventId);
-    List<Competitor> getCompetitorsByUserId(int userId);
-    List<Competitor> getCompetitorsByCompetitionId(int seasonId);
-    List<Competitor> getCompetitorsByEventTypeId(int eventTypeId);
+    List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getCompetitorsByEventId(UUID eventId, boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getCompetitorsByUserId(UUID userId, boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getCompetitorsByCompetitionId(UUID seasonId, boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent);
 
-    List<Competitor> getLeaderboardByEventType(String eventTypeName);
-    List<Competitor> getCompetitionLeaderboard(int competitionId);
+    List<CompetitorDto> getLeaderboardByEventType(String eventTypeName, boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getCompetitionLeaderboard(UUID competitionId, boolean includeUser, boolean includeEvent);
 
-    Competitor getEventWinner(int eventId);
-    void setEventWinner(int eventId, int competitorId);
+    CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent);
 
-    double getUserTotalPoints(int userId);
-    double getUsersTotalPointsInCompetition(int userId, int competitionId);
-    int getUserCompetitionCount(int userId);
+    double getUserTotalPoints(UUID userId);
+    double getUsersTotalPointsInCompetition(UUID userId, UUID competitionId);
+    int getUserCompetitionCount(UUID userId);
 
-    boolean isUserParticipant(int userId, int eventId);
+    boolean isUserParticipant(UUID userId, UUID eventId);
+
+    Competitor getCompetitorEntityById(UUID id);
 
 
 }

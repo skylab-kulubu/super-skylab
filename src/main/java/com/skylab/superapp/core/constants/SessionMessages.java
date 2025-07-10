@@ -1,9 +1,5 @@
 package com.skylab.superapp.core.constants;
 
-import com.skylab.superapp.entities.DTOs.sessions.GetSessionDto;
-
-import java.util.List;
-
 public final class SessionMessages {
 
     public static final String SESSIONS_EMPTY = "sessions.empty";

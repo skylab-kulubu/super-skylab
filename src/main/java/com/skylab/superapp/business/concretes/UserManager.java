@@ -3,13 +3,14 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.*;
+import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;
-import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
-import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
-import com.skylab.superapp.entities.DTOs.User.UpdateUserDto;
+import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,9 +20,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class UserManager implements UserService {
@@ -30,45 +32,59 @@ public class UserManager implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final UserMapper userMapper;
+    private final Logger logger = LoggerFactory.getLogger(UserManager.class);
 
 
-    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder,@Lazy EmailService emailService) {
+    public UserManager(UserDao userDao, PasswordEncoder passwordEncoder, @Lazy EmailService emailService, UserMapper userMapper) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.userMapper = userMapper;
     }
 
     @Override
-    public void addUser(CreateUserDto createUserDto) {
-        if(createUserDto.getUsername() == null || createUserDto.getPassword() == null) {
+    public UserDto addUser(CreateUserRequest createUserRequest) {
+        logger.info("Saving user with username: {}", createUserRequest.getUsername());
+        if(createUserRequest.getUsername() == null || createUserRequest.getPassword() == null) {
             throw new UsernameorOrPasswordCannotBeNullException();
         }
 
-        if(createUserDto.getEmail() == null) {
+        if(createUserRequest.getEmail() == null) {
             throw new EmailCannotBeNullException();
         }
 
-        if(userDao.existsByUsername(createUserDto.getUsername())) {
+        if(userDao.existsByUsername(createUserRequest.getUsername())) {
             throw new UserAlreadyExistsException();
         }
 
         User user = User.builder()
                 .authorities(Set.of(Role.ROLE_USER))
-                .username(createUserDto.getUsername())
-                .email(createUserDto.getEmail())
-                .password(passwordEncoder.encode(createUserDto.getPassword()))
-                .createdAt(new Date())
-                .lastLogin(new Date())
+                .username(createUserRequest.getUsername())
+                .firstName(createUserRequest.getFirstName())
+                .lastName(createUserRequest.getLastName())
+                .email(createUserRequest.getEmail())
+                .password(passwordEncoder.encode(createUserRequest.getPassword()))
+                .linkedin(createUserRequest.getLinkedin())
+                .birthday(LocalDateTime.now())
+                .university(createUserRequest.getUniversity())
+                .faculty(createUserRequest.getFaculty())
+                .department(createUserRequest.getDepartment())
                 .build();
 
-        userDao.save(user);
+        var savedUser = userDao.save(user);
+        logger.info("User created with username: {} and email: {}", user.getUsername(), user.getEmail());
 
-        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserDto.getPassword() + "\n" +
-                    "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
+        //will change these
+        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserRequest.getPassword() + "\n" +
+                "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
+
+        return userMapper.toDto(savedUser);
+
     }
 
     @Override
-    public void deleteUser(int id) {
+    public void deleteUser(UUID id) {
         var user = userDao.findById(id);
         if(user.isEmpty()) {
             throw new UserNotFoundException();
@@ -78,63 +94,55 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public void changePassword(ChangePassword changePassword) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var username = authentication.getName();
+    public void changePassword(ChangePasswordRequest changePasswordRequest) {
+        logger.info("Changing password for user with username: {}", getAuthenticatedUsername());
+        var user = getAuthenticatedUserEntity();
 
-        var userResult = userDao.findByUsername(username);
-        if(userResult.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-        var user = userResult.get();
-
-        if(!passwordEncoder.matches(changePassword.getOldPassword(), user.getPassword())) {
-            throw new OldPasswordIncorrectException();
-        }
-
-        if(changePassword.getNewPassword() == null || changePassword.getNewPassword().isEmpty()) {
-            throw new NewPasswordCannotBeNullException();
-        }
-
-        if(changePassword.getNewPassword().length() < 6) {
-            throw new PasswordTooShortException();
-        }
-
-        if(!changePassword.getNewPassword().equals(changePassword.getConfirmPassword())) {
+        if(!changePasswordRequest.getOldPassword().equals(changePasswordRequest.getNewPassword())) {
             throw new PasswordsDoNotMatchException();
 
         }
 
-        user.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
+        if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword())) {
+            throw new OldPasswordIncorrectException();
+        }
+
+        if(changePasswordRequest.getNewPassword() == null || changePasswordRequest.getNewPassword().isEmpty()) {
+            throw new NewPasswordCannotBeNullException();
+        }
+
+        if(changePasswordRequest.getNewPassword().length() < 6) {
+            throw new PasswordTooShortException();
+        }
+
+        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         userDao.save(user);
+        logger.info("Password changed for user with username: {}", user.getUsername());
 
             emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ",
                     user.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
     }
 
     @Override
-    public void resetPassword(CreateUserDto createUserDto) {
-        if(createUserDto.getUsername() == null) {
+    public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
+        if(resetPasswordRequest.getUsername() == null) {
             throw new UsernameCannotBeNullException();
         }
 
-        var userResult = userDao.findByUsername(createUserDto.getUsername());
+        var userResult = userDao.findByUsername(resetPasswordRequest.getUsername());
         if(userResult.isEmpty()) {
             throw new UserNotFoundException();
         }
 
         var user = userResult.get();
+        var finalPassword = generateRandomPassword();
 
-
-        String finalPassword;
-        if (createUserDto.getPassword() == null || createUserDto.getPassword().isEmpty()) {
-            finalPassword = generateRandomPassword();
-        } else {
-            finalPassword = createUserDto.getPassword();
-        }
+        user.setPassword(finalPassword);
 
         user.setPassword(passwordEncoder.encode(finalPassword));
         userDao.save(user);
+
+        logger.info("Password reset for user with username: {}", user.getUsername());
 
         emailService.sendEmailAsync(
                 user.getEmail(),
@@ -146,44 +154,38 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userDao.findAll();
-        /*
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-         */
+    public List<UserDto> getAllUsers() {
+        return userMapper.toDtoList(userDao.findAll());
     }
 
     @Override
-    public User getUserById(int id) {
+    public UserDto getUserById(UUID id) {
         var result = userDao.findById(id);
         if(result.isEmpty()) {
             throw new UserNotFoundException();
         }
 
-       return result.get();
+       return userMapper.toDto(result.get());
     }
 
     @Override
-    public User getUserByUsername(String username) {
+    public UserDto getUserByUsername(String username) {
         var result = userDao.findByUsername(username);
         if(result.isEmpty()) {
             throw new UserNotFoundException();
         }
 
-       return result.get();
+       return userMapper.toDto(result.get());
     }
 
     @Override
-    public User getUserByEmail(String email) {
+    public UserDto getUserByEmail(String email) {
         var result = userDao.findByEmail(email);
         if(result.isEmpty()) {
             throw new UserNotFoundException();
         }
 
-        return result.get();
+        return userMapper.toDto(result.get());
 
     }
 
@@ -247,9 +249,11 @@ public class UserManager implements UserService {
         }
         var user = userResult.get();
 
-        user.setLastLogin(new Date());
+        user.setLastLogin(LocalDateTime.now());
         userDao.save(user);
     }
+
+
 
     @Override
     public String getAuthenticatedUsername() {
@@ -261,8 +265,9 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<User> getAllStaffs() {
-        return userDao.findAllByAuthorities_NameIn(List.of(Role.ROLE_ADMIN.name(), Role.ROLE_BIZBIZE_ADMIN.name(), Role.ROLE_AGC_ADMIN.name(), Role.ROLE_GECEKODU_ADMIN.name()));
+    public List<UserDto> getAllStaffs() {
+        var result = userDao.findAllByAuthorities_NameIn(List.of(Role.ROLE_ADMIN.name(), Role.ROLE_BIZBIZE_ADMIN.name(), Role.ROLE_AGC_ADMIN.name(), Role.ROLE_GECEKODU_ADMIN.name()));
+        return userMapper.toDtoList(result);
         /*
         if(result.isEmpty()) {
             throw new UserNotFoundException();
@@ -272,31 +277,17 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<User> getStaffsByRole(Role role) {
-        return userDao.findAllByAuthorities(role.name());
-        /*
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-         */
+    public List<UserDto> getStaffsByRole(Role role) {
+        return userMapper.toDtoList(userDao.findAllByAuthorities(role.name()));
     }
 
     @Override
-    public List<User> getAllUsersByIds(List<Integer> userIds) {
-        return userDao.findAllById(userIds);
-
-        /*
-        if (result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-         */
-
+    public List<UserDto> getAllUsersByIds(List<UUID> userIds) {
+        return userMapper.toDtoList(userDao.findAllById(userIds));
     }
 
     @Override
-    public User getAuthenticatedUser() {
+    public User getAuthenticatedUserEntity() {
         var username = getAuthenticatedUsername();
         var userResult = userDao.findByUsername(username);
 
@@ -308,45 +299,76 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public void updateAuthenticatedUser(UpdateUserDto updateUserDto) {
-        var user = getAuthenticatedUser();
+    public User getUserEntityById(UUID id) {
+        return userDao.findById(id)
+                .orElseThrow(UserNotFoundException::new);
+    }
 
-        user.setFirstName(updateUserDto.getFirstName());
-        user.setLastName(updateUserDto.getLastName());
-        user.setEmail(updateUserDto.getEmail());
-        user.setLinkedin(updateUserDto.getLinkedin());
-        user.setUniversity(updateUserDto.getUniversity());
-        user.setDepartment(updateUserDto.getDepartment());
-        user.setFaculty(updateUserDto.getFaculty());
+    @Override
+    public User getUserEntityByUsername(String username) {
+        return userDao.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+    }
 
-        userDao.save(user);
+    @Override
+    public User getUserEntityByEmail(String email) {
+        return userDao.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+    }
+
+    @Override
+    public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest) {
+        logger.info("Updating authenticated user with username: {}", getAuthenticatedUsername());
+        var user = getAuthenticatedUserEntity();
+
+        user.setFirstName(updateUserRequest.getFirstName());
+        user.setLastName(updateUserRequest.getLastName());
+        user.setLinkedin(updateUserRequest.getLinkedin());
+        user.setUniversity(updateUserRequest.getUniversity());
+        user.setDepartment(updateUserRequest.getDepartment());
+        user.setFaculty(updateUserRequest.getFaculty());
+
+        var updatedUser = userDao.save(user);
+        logger.info("Updated authenticated user with username: {}", updatedUser.getUsername());
 
         emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
                 "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
                         "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
+
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
-    public void updateUser(int userId, UpdateUserDto updateUserDto) {
+    public UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest) {
+        logger.info("Updating user with id: {}", userId);
         var userResult = userDao.findById(userId);
         if (userResult.isEmpty()) {
             throw new UserNotFoundException();
         }
         var user = userResult.get();
 
-        user.setFirstName(updateUserDto.getFirstName());
-        user.setLastName(updateUserDto.getLastName());
-        user.setEmail(updateUserDto.getEmail());
-        user.setLinkedin(updateUserDto.getLinkedin());
-        user.setUniversity(updateUserDto.getUniversity());
-        user.setDepartment(updateUserDto.getDepartment());
-        user.setFaculty(updateUserDto.getFaculty());
+        user.setFirstName(updateUserRequest.getFirstName());
+        user.setLastName(updateUserRequest.getLastName());
+        user.setLinkedin(updateUserRequest.getLinkedin());
+        user.setUniversity(updateUserRequest.getUniversity());
+        user.setDepartment(updateUserRequest.getDepartment());
+        user.setFaculty(updateUserRequest.getFaculty());
 
-        userDao.save(user);
+        var updatedUser = userDao.save(user);
+        logger.info("Updated user with id: {}", updatedUser.getId());
 
         emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
                 "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
                         "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
+
+        return userMapper.toDto(updatedUser);
+    }
+
+    @Override
+    public UserDto getAuthenticatedUser() {
+        logger.info("Retrieving authenticated user with username: {}", getAuthenticatedUsername());
+        var user = getAuthenticatedUserEntity();
+        return userMapper.toDto(user);
     }
 
     @Override

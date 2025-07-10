@@ -1,7 +1,5 @@
 package com.skylab.superapp.core.constants;
 
-import org.springframework.http.HttpStatus;
-
 public final class SeasonMessages {
     public static final String SEASON_CREATED_SUCCESSFULLY = "season.created.successfully";
     public static final String SEASONS_NO_CONTENT = "season.seasons.no.content";
@@ -14,6 +12,7 @@ public final class SeasonMessages {
     public static final String SEASON_NOT_FOUND = "season.not.found";
     public static final String SEASONS_ALREADY_CONTAINS_EVENT = "season.seasons.already.contains.event";
     public static final String SEASON_NOT_FOUND_IN_SEASON =  "season.not.found.in.season";
+    public static final String SEASON_START_DATE_CANNOT_BE_AFTER_END_DATE = "season.start.date.cannot.be.after.end.date";
 
     private SeasonMessages() {}
 

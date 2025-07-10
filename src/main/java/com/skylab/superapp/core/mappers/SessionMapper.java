@@ -1,43 +1,55 @@
 package com.skylab.superapp.core.mappers;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.skylab.superapp.entities.DTOs.Image.GetImageDto;
-import com.skylab.superapp.entities.DTOs.sessions.GetSessionDto;
+import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import com.skylab.superapp.entities.Session;
-import com.skylab.superapp.entities.SessionType;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.List;
 
 @Component
 public class SessionMapper {
 
     private final ImageMapper imageMapper;
+    private final EventMapper eventMapper;
 
-    public SessionMapper(ImageMapper imageMapper) {
+    public SessionMapper(@Lazy ImageMapper imageMapper, @Lazy EventMapper eventMapper) {
         this.imageMapper = imageMapper;
+        this.eventMapper = eventMapper;
     }
 
-    public GetSessionDto toDto(Session session) {
-        return GetSessionDto.builder()
-                .id(session.getId())
-                .title(session.getTitle())
-                .speakerName(session.getSpeakerName())
-                .speakerLinkedin(session.getSpeakerLinkedin())
-                .speakerImage(session.getSpeakerImage() != null ? imageMapper.toDto(session.getSpeakerImage()) : null)
-                .description(session.getDescription())
-                .startTime(session.getStartTime())
-                .endTime(session.getEndTime())
-                .orderIndex(session.getOrderIndex())
-                .eventId(session.getEvent().getId())
-                .sessionType(session.getSessionType())
-                .build();
+    public SessionDto toDto(Session session, boolean includeSpeakerImage, boolean includeEvent) {
+
+        if (session == null) {
+            return null;
+        }
+        return new SessionDto(
+                session.getId(),
+                session.getTitle(),
+                session.getSpeakerName(),
+                session.getSpeakerLinkedin(),
+                includeSpeakerImage ? imageMapper.toDto(session.getSpeakerImage()) : null,
+                session.getDescription(),
+                session.getStartTime(),
+                session.getEndTime(),
+                session.getOrderIndex(),
+                includeEvent ? eventMapper.toDto(session.getEvent()) : null,
+                session.getSessionType()
+        );
     }
 
-    public List<GetSessionDto> toDtoList(List<Session> sessions) {
+    public SessionDto toDto(Session session) {
+        return toDto(session, false, false);
+    }
+
+
+    public List<SessionDto> toDtoList(List<Session> sessions, boolean includeSpeakerImage, boolean includeEvent) {
         return sessions.stream()
-                .map(this::toDto)
+                .map(session -> toDto(session, includeSpeakerImage, includeEvent))
                 .toList();
+    }
+
+    public List<SessionDto> toDtoList(List<Session> sessions) {
+        return toDtoList(sessions, false, false);
     }
 }

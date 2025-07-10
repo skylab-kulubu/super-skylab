@@ -1,7 +1,5 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.entities.Image;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,18 +8,17 @@ import java.util.UUID;
 
 public interface ImageService {
 
-
     Image addImage(MultipartFile file);
 
     List<Image> getImages();
 
-    Image getImageById(int id);
+    Image getImageById(UUID id);
 
-    void deleteImage(int id);
+    void deleteImage(UUID id);
 
     Image getImageByUrl(String url);
 
-    List<Image> getImagesByIds(List<Integer> imageIds);
+    List<Image> getImagesByIds(List<UUID> imageIds);
 
 
 

@@ -3,81 +3,87 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.CompetitionService;
 import com.skylab.superapp.business.abstracts.EventTypeService;
 import com.skylab.superapp.core.exceptions.CompetitionNotFoundException;
+import com.skylab.superapp.core.mappers.CompetitionMapper;
 import com.skylab.superapp.dataAccess.CompetitionDao;
 import com.skylab.superapp.entities.Competition;
-import com.skylab.superapp.entities.DTOs.competition.CreateCompetitionDto;
+import com.skylab.superapp.entities.DTOs.competition.CompetitionDto;
+import com.skylab.superapp.entities.DTOs.competition.CreateCompetitionRequest;
+import com.skylab.superapp.entities.DTOs.competition.UpdateCompetitionRequest;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CompetitionManager implements CompetitionService {
 
     private final CompetitionDao competitionDao;
     private final EventTypeService eventTypeService;
+    private final CompetitionMapper competitionMapper;
 
 
 
-    public CompetitionManager(CompetitionDao competitionDao,@Lazy EventTypeService eventTypeService) {
+    public CompetitionManager(CompetitionDao competitionDao,@Lazy EventTypeService eventTypeService,
+                              CompetitionMapper competitionMapper) {
         this.competitionDao = competitionDao;
         this.eventTypeService = eventTypeService;
+        this.competitionMapper = competitionMapper;
     }
 
 
 
 
     @Override
-    public Competition getCompetitionById(int competitionId) {
-        return getCompetitionEntity(competitionId);
+    public CompetitionDto getCompetitionById(UUID competitionId, boolean includeEvent, boolean includeEventType) {
+        return competitionMapper.toDto(getCompetitionEntityById(competitionId));
 
     }
 
     @Override
-    public List<Competition> getAllCompetitions() {
-        return competitionDao.findAll();
+    public List<CompetitionDto> getAllCompetitions(boolean includeEvent, boolean includeEventType) {
+        return competitionMapper.toDtoList(competitionDao.findAll(), includeEvent, includeEventType);
     }
 
     @Override
-    public void updateCompetition(CreateCompetitionDto createCompetitionDto, int id) {
-        var competition = getCompetitionEntity(id);
-        var eventType = eventTypeService.getEventTypeById(createCompetitionDto.getEventType().getId());
+    public CompetitionDto updateCompetition(UpdateCompetitionRequest updateCompetitionRequest, UUID id) {
+        var competition = getCompetitionEntityById(id);
 
-        competition.setActive(createCompetitionDto.isActive());
-        competition.setName(createCompetitionDto.getName());
-        competition.setStartDate(createCompetitionDto.getStartDate());
-        competition.setEndDate(createCompetitionDto.getEndDate());
-        competition.setEventType(eventType);
-        competitionDao.save(competition);
+        competition.setName(updateCompetitionRequest.getName());
+        competition.setStartDate(updateCompetitionRequest.getStartDate());
+        competition.setEndDate(updateCompetitionRequest.getEndDate());
+        competition.setActive(updateCompetitionRequest.isActive());
+
+        return competitionMapper.toDto(competitionDao.save(competition));
     }
 
     @Override
-    public void deleteCompetition(int competitionId) {
-        var competition = getCompetitionEntity(competitionId);
+    public void deleteCompetition(UUID competitionId) {
+        var competition = getCompetitionEntityById(competitionId);
         competitionDao.delete(competition);
     }
 
     @Override
-    public Competition addCompetition(CreateCompetitionDto createCompetitionDto) {
-        var eventType = eventTypeService.getEventTypeById(createCompetitionDto.getEventType().getId());
+    public CompetitionDto addCompetition(CreateCompetitionRequest createCompetitionRequest) {
+        var eventType = eventTypeService.getEventTypeEntityById(createCompetitionRequest.getEventTypeId());
 
         var competition = Competition.builder()
-                .name(createCompetitionDto.getName())
-                .startDate(createCompetitionDto.getStartDate())
-                .endDate(createCompetitionDto.getEndDate())
-                .active(true)
+                .name(createCompetitionRequest.getName())
+                .startDate(createCompetitionRequest.getStartDate())
+                .endDate(createCompetitionRequest.getEndDate())
+                .active(createCompetitionRequest.isActive())
                 .eventType(eventType)
                 .build();
 
-        return competitionDao.save(competition);
+        return competitionMapper.toDto(competitionDao.save(competition));
     }
 
     @Override
-    public List<Competition> getActiveCompetitions() {
-        return competitionDao.findAllByActive(true);
+    public List<CompetitionDto> getActiveCompetitions(boolean includeEvent, boolean includeEventType) {
+        return competitionMapper.toDtoList(competitionDao.findAllByActive(true), includeEvent, includeEventType);
     }
 
-    private Competition getCompetitionEntity(int id){
+    public Competition getCompetitionEntityById(UUID id){
         return competitionDao.findById(id).orElseThrow(CompetitionNotFoundException::new);
     }
 }

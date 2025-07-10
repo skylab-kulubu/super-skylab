@@ -1,26 +1,30 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeDto;
-import com.skylab.superapp.entities.DTOs.eventType.GetEventTypeDto;
-import com.skylab.superapp.entities.Event;
+import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
+import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
+import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface EventTypeService {
 
-    EventType getEventTypeById(int eventTypeId);
+    EventTypeDto getEventTypeById(UUID eventTypeId);
 
-    EventType getEventTypeByName(String eventTypeName);
+    EventTypeDto getEventTypeByName(String eventTypeName);
 
-    List<EventType> getAllEventTypes();
+    List<EventTypeDto> getAllEventTypes();
 
-    EventType addEventType(CreateEventTypeDto createEventTypeDto);
+    EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest);
 
-    void updateEventType(int id, CreateEventTypeDto createEventTypeDto);
+    EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest);
 
-    void deleteEventType(int id);
+    void deleteEventType(UUID id);
+
+    EventType getEventTypeEntityById(UUID eventTypeId);
+
+    EventType getEventTypeEntityByName(String eventTypeName);
 
 
 

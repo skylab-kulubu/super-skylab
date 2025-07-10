@@ -2,8 +2,12 @@ package com.skylab.superapp.dataAccess;
 
 import com.skylab.superapp.entities.EventType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
-public interface EventTypeDao extends JpaRepository<EventType, Integer> {
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface EventTypeDao extends JpaRepository<EventType, UUID> {
     Optional<EventType> findByName(String name);
 }

@@ -1,15 +1,14 @@
 package com.skylab.superapp.entities.DTOs.User;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
-@Builder
-public class UpdateUserDto {
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class CreateUserRequest {
+
+    private String username;
 
     private String firstName;
 
@@ -17,11 +16,19 @@ public class UpdateUserDto {
 
     private String email;
 
+    private String password;
+
     private String linkedin;
+
+    private String birthdate;
 
     private String university;
 
     private String faculty;
 
     private String department;
+
+
+
+
 }

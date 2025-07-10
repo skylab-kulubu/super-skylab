@@ -4,9 +4,9 @@ import com.skylab.superapp.business.abstracts.AuthService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.security.JwtService;
+import com.skylab.superapp.entities.DTOs.Auth.AuthLoginRequest;
 import com.skylab.superapp.entities.DTOs.Auth.AuthRegisterRequest;
-import com.skylab.superapp.entities.DTOs.Auth.AuthRequest;
-import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
+import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import com.skylab.superapp.entities.User;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,26 +33,25 @@ public class AuthManager implements AuthService {
     }
 
     @Override
-    public String login(AuthRequest authRequest) {
-        if (authRequest.getUsernameOrEmail() == null){
+    public String login(AuthLoginRequest authLoginRequest) {
+        if (authLoginRequest.getUsernameOrEmail() == null){
             throw new UsernameOrEmailCannotBeNullException();
         }
 
-        if (authRequest.getPassword() == null){
+        if (authLoginRequest.getPassword() == null){
             throw new PasswordCannotBeNullException();
         }
 
         User user;
 
-        if (DetermineIsUsernameOrEmail(authRequest.getUsernameOrEmail())){
-            user = userService.getUserByEmail(authRequest.getUsernameOrEmail());
+        if (DetermineIsUsernameOrEmail(authLoginRequest.getUsernameOrEmail())){
+            user = userService.getUserEntityByEmail(authLoginRequest.getUsernameOrEmail());
         } else {
-            user = userService.getUserByUsername(authRequest.getUsernameOrEmail());
+            user = userService.getUserEntityByUsername(authLoginRequest.getUsernameOrEmail());
         }
 
-        // Authentication'da user'ın gerçek username'ini kullan
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), authRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(user.getUsername(), authLoginRequest.getPassword())
         );
 
         if (authentication.isAuthenticated()) {
@@ -89,13 +88,13 @@ public class AuthManager implements AuthService {
 
          */
 
-        CreateUserDto userDto = CreateUserDto.builder()
-                .username(authRegisterRequest.getUsername())
-                .email(authRegisterRequest.getEmail())
-                .password(authRegisterRequest.getPassword())
-                .build();
+        CreateUserRequest createUserRequest = new CreateUserRequest();
+        createUserRequest.setUsername(authRegisterRequest.getUsername());
+        createUserRequest.setEmail(authRegisterRequest.getEmail());
+        //dont encode password here, it will be done in UserService
+        createUserRequest.setPassword(authRegisterRequest.getPassword());
 
-        userService.addUser(userDto);
+        userService.addUser(createUserRequest);
 
     }
 
