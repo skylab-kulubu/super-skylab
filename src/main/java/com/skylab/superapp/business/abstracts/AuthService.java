@@ -5,7 +5,7 @@ import com.skylab.superapp.entities.DTOs.Auth.AuthRegisterRequest;
 
 public interface AuthService {
 
-    String login(AuthLoginRequest authLoginRequest);
+    //String login(AuthLoginRequest authLoginRequest);
 
     void register(AuthRegisterRequest authRegisterRequest);
 

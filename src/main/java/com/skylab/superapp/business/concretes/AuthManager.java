@@ -2,36 +2,28 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.AuthService;
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.core.exceptions.*;
-import com.skylab.superapp.core.security.JwtService;
-import com.skylab.superapp.entities.DTOs.Auth.AuthLoginRequest;
+import com.skylab.superapp.core.exceptions.EmailCannotBeNullException;
+import com.skylab.superapp.core.exceptions.PasswordCannotBeNullException;
+import com.skylab.superapp.core.exceptions.UsernameCannotBeNullException;
+import com.skylab.superapp.core.security.keycloak.KeycloakService;
 import com.skylab.superapp.entities.DTOs.Auth.AuthRegisterRequest;
 import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
-import com.skylab.superapp.entities.User;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthManager implements AuthService {
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
 
-    public AuthManager(AuthenticationManager authenticationManager,
-                       @Lazy UserService userService,
-                       @Lazy JwtService jwtService, PasswordEncoder passwordEncoder) {
-        this.authenticationManager = authenticationManager;
+    private final KeycloakService keycloakService;
+
+    public AuthManager(@Lazy UserService userService, KeycloakService keycloakService) {
         this.userService = userService;
-        this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
+        this.keycloakService = keycloakService;
     }
 
+    /*
     @Override
     public String login(AuthLoginRequest authLoginRequest) {
         if (authLoginRequest.getUsernameOrEmail() == null){
@@ -50,9 +42,6 @@ public class AuthManager implements AuthService {
             user = userService.getUserEntityByUsername(authLoginRequest.getUsernameOrEmail());
         }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), authLoginRequest.getPassword())
-        );
 
         if (authentication.isAuthenticated()) {
             userService.setLastLoginWithUsername(user.getUsername());
@@ -62,6 +51,8 @@ public class AuthManager implements AuthService {
         }
 
     }
+
+     */
 
     @Override
     public void register(AuthRegisterRequest authRegisterRequest) {
@@ -87,6 +78,12 @@ public class AuthManager implements AuthService {
         }
 
          */
+
+        boolean created = keycloakService.createUser(authRegisterRequest);
+        if (!created) {
+            throw new RuntimeException("User creation failed in Keycloak");
+        }
+
 
         CreateUserRequest createUserRequest = new CreateUserRequest();
         createUserRequest.setUsername(authRegisterRequest.getUsername());

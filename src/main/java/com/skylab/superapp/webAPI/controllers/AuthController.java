@@ -24,6 +24,10 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
+    /*
+
+
+
 
     @PostMapping("/login")
     public ResponseEntity<DataResult<String>> generateToken(@RequestBody AuthLoginRequest authLoginRequest,
@@ -33,6 +37,8 @@ public class AuthController {
                 .body(new SuccessDataResult<>(result, AuthMessages.TOKEN_GENERATED_SUCCESSFULLY,
                         HttpStatus.OK, request.getRequestURI()));
     }
+
+     */
 
     @PostMapping("/register")
     public ResponseEntity<Result> register(@RequestBody AuthRegisterRequest authRequest, HttpServletRequest request) {
