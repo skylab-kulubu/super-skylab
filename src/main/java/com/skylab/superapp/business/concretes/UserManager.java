@@ -1,28 +1,25 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;
-import com.skylab.superapp.entities.DTOs.User.*;
-import com.skylab.superapp.entities.Role;
+import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
+import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
+import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -44,9 +41,9 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public UserDto addUser(CreateUserRequest createUserRequest) {
+    public UserDto addUser(CreateUserRequest createUserRequest, UUID keycloakId) {
         logger.info("Saving user with username: {}", createUserRequest.getUsername());
-        if(createUserRequest.getUsername() == null || createUserRequest.getPassword() == null) {
+        if(createUserRequest.getUsername() == null) {
             throw new UsernameorOrPasswordCannotBeNullException();
         }
 
@@ -59,12 +56,11 @@ public class UserManager implements UserService {
         }
 
         User user = User.builder()
-                .authorities(Set.of(Role.ROLE_USER))
+                .id(keycloakId)
                 .username(createUserRequest.getUsername())
                 .firstName(createUserRequest.getFirstName())
                 .lastName(createUserRequest.getLastName())
                 .email(createUserRequest.getEmail())
-                .password(passwordEncoder.encode(createUserRequest.getPassword()))
                 .linkedin(createUserRequest.getLinkedin())
                 .birthday(LocalDateTime.now())
                 .university(createUserRequest.getUniversity())
@@ -92,6 +88,7 @@ public class UserManager implements UserService {
 
         userDao.deleteById(id);
     }
+    /*
 
     @Override
     public void changePassword(ChangePasswordRequest changePasswordRequest) {
@@ -123,6 +120,10 @@ public class UserManager implements UserService {
                     user.getUsername() + " KULLANICI ADLI SKY LAB HESABINIZIN ŞİFRESİ DEĞİŞTİRİLDİ! BU İŞLEMİ SİZ YAPMADIYSANIZ ŞİFRENİZİ SIFIRLAYINIZ!");
     }
 
+     */
+
+    //password management is handled vy keycloak, this is just for resetting password
+    /*
     @Override
     public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
         if(resetPasswordRequest.getUsername() == null) {
@@ -152,6 +153,8 @@ public class UserManager implements UserService {
                         "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!"
         );
     }
+
+     */
 
     @Override
     public List<UserDto> getAllUsers() {
@@ -206,6 +209,7 @@ public class UserManager implements UserService {
     }
 
      */
+    /*
 
     @Override
     public void addRoleToUser(String username, Role role) {
@@ -241,6 +245,8 @@ public class UserManager implements UserService {
         userDao.save(user);
     }
 
+     */
+
     @Override
     public void setLastLoginWithUsername(String username) {
         var userResult = userDao.findByUsername(username);
@@ -264,22 +270,15 @@ public class UserManager implements UserService {
        return authentication.getName();
     }
 
-    @Override
-    public List<UserDto> getAllStaffs() {
-        var result = userDao.findAllByAuthorities_NameIn(List.of(Role.ROLE_ADMIN.name(), Role.ROLE_BIZBIZE_ADMIN.name(), Role.ROLE_AGC_ADMIN.name(), Role.ROLE_GECEKODU_ADMIN.name()));
-        return userMapper.toDtoList(result);
-        /*
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
 
-         */
-    }
 
+    /*
     @Override
     public List<UserDto> getStaffsByRole(Role role) {
         return userMapper.toDtoList(userDao.findAllByAuthorities(role.name()));
     }
+
+     */
 
     @Override
     public List<UserDto> getAllUsersByIds(List<UUID> userIds) {
@@ -371,15 +370,6 @@ public class UserManager implements UserService {
         return userMapper.toDto(user);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user = userDao.findByUsername(username);
-        if(user.isEmpty()) {
-            throw new UsernameNotFoundException(UserMessages.USER_NOT_FOUND);
-        }
-
-        return user.get();
-    }
 
     public String generateRandomPassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";

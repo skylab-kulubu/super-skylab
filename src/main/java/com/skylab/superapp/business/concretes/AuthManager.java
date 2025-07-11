@@ -11,6 +11,8 @@ import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class AuthManager implements AuthService {
 
@@ -79,8 +81,8 @@ public class AuthManager implements AuthService {
 
          */
 
-        boolean created = keycloakService.createUser(authRegisterRequest);
-        if (!created) {
+        String keycloakId = keycloakService.createUser(authRegisterRequest);
+        if (keycloakId == null) {
             throw new RuntimeException("User creation failed in Keycloak");
         }
 
@@ -88,10 +90,12 @@ public class AuthManager implements AuthService {
         CreateUserRequest createUserRequest = new CreateUserRequest();
         createUserRequest.setUsername(authRegisterRequest.getUsername());
         createUserRequest.setEmail(authRegisterRequest.getEmail());
-        //dont encode password here, it will be done in UserService
-        createUserRequest.setPassword(authRegisterRequest.getPassword());
+        createUserRequest.setFirstName(authRegisterRequest.getFirstName());
+        createUserRequest.setLastName(authRegisterRequest.getLastName());
+        var uuid = UUID.fromString(keycloakId);
+        System.out.println("Keycloak ID: " + uuid);
 
-        userService.addUser(createUserRequest);
+        userService.addUser(createUserRequest, uuid);
 
     }
 

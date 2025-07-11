@@ -6,10 +6,8 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
-import com.skylab.superapp.entities.DTOs.User.ChangePasswordRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import com.skylab.superapp.entities.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +53,7 @@ public class UserController {
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
+    /*
     @PostMapping("/me/changePassword")
     public ResponseEntity<Result> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest,
                                                  HttpServletRequest request) {
@@ -62,6 +61,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.PASSWORD_CHANGED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
+
+     */
 
     @GetMapping("/")
     public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(HttpServletRequest request) {
@@ -97,6 +98,7 @@ public class UserController {
                 .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
+    /* ALL ROLES ARE BEING MODERATED BY KEYCLOAK, WILL IMPLEMENT THESE ROLE ENDPOINTS LATER
     @PutMapping("/addRole/{username}")
     public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam Role role,
                                                 HttpServletRequest request) {
@@ -112,6 +114,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.ROLE_REMOVED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
+
+     */
 
 
     /*

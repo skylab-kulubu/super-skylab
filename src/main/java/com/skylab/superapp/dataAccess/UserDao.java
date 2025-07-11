@@ -20,9 +20,4 @@ public interface UserDao extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
-    List<User> findAllByAuthorities(String role);
-
-    @Query("SELECT u FROM User u JOIN u.authorities a WHERE a IN :roleNames")
-    List<User> findAllByAuthorities_NameIn(@Param("roleNames") List<String> roleNames);
-
 }

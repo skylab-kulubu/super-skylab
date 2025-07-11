@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -26,13 +28,13 @@ public class KeycloakService {
 
 
 
-    public boolean createUser(AuthRegisterRequest registerRequest) {
+    public String createUser(AuthRegisterRequest registerRequest) {
         String token = getAdminAccessToken();
-        if (token == null){
-            return false;
+        if (token == null) {
+            return null;
         }
 
-       WebClient webClient = webClientBuilder.baseUrl(keycloakBaseUrl).build();
+        WebClient webClient = webClientBuilder.baseUrl(keycloakBaseUrl).build();
 
         Map<String, Object> userPayload = Map.of(
                 "username", registerRequest.getUsername(),
@@ -49,22 +51,52 @@ public class KeycloakService {
                 }
         );
 
-        try{
-            webClient.post()
+        try {
+            ClientResponse response = webClient.post()
                     .uri("/admin/realms/{realm}/users", realm)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .body(Mono.just(userPayload), Map.class)
-                    .retrieve()
-                    .toBodilessEntity()
+                    .exchange()
                     .block();
 
-            return true;
-        }catch (Exception e){
-            return false;
+            if (response != null && response.statusCode().is2xxSuccessful()) {
+                String location = response.headers().header("Location").stream().findFirst().orElse(null);
+                if (location != null) {
+
+                    var userId = location.substring(location.lastIndexOf('/') + 1);
+                    Map<String, Object> role = Map.of(
+                            "name", "user",
+                            "clientRole", false,
+                            "composite", false
+                    );
+
+                    Map<String, Object> roleToAdd = webClient.get()
+                            .uri("/admin/realms/{realm}/roles/{roleName}", realm, "user")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .retrieve()
+                            .bodyToMono(Map.class)
+                            .block();
+
+                    webClient.post()
+                            .uri("/admin/realms/{realm}/users/{userId}/role-mappings/realm", realm, userId)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(List.of(roleToAdd))
+                            .retrieve()
+                            .toBodilessEntity()
+                            .block();
+
+                    return userId;
+                }
+            }
+            return null;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
-
 
     private String getAdminAccessToken() {
         WebClient webClient = webClientBuilder.baseUrl(keycloakBaseUrl).build();

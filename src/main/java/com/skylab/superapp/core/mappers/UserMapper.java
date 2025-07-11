@@ -32,8 +32,7 @@ public class UserMapper {
                 user.getUniversity(),
                 user.getFaculty(),
                 user.getDepartment(),
-                user.getLastLogin(),
-                user.getAuthorities());
+                user.getLastLogin());
 
     }
 
