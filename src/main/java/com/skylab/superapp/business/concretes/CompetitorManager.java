@@ -1,175 +1,210 @@
 package com.skylab.superapp.business.concretes;
 
-import com.skylab.superapp.business.abstracts.CompetitorService;
-import com.skylab.superapp.business.abstracts.SeasonService;
-import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.business.constants.CompetitorMessages;
-import com.skylab.superapp.core.results.*;
+import com.skylab.superapp.business.abstracts.*;
+import com.skylab.superapp.core.exceptions.CompetitorNotFoundException;
+import com.skylab.superapp.core.exceptions.CompetitorNotParticipatingInEventException;
+import com.skylab.superapp.core.mappers.CompetitorMapper;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
-import com.skylab.superapp.entities.CompetitorEventResult;
-import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorDto;
-import com.skylab.superapp.entities.DTOs.Competitor.GetCompetitorDto;
+import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
+import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 public class CompetitorManager implements CompetitorService {
 
+    private final CompetitorDao competitorDao;
     private final UserService userService;
-    private CompetitorDao competitorDao;
-    private SeasonService seasonService;
+    private final EventService eventService;
+    private final EventTypeService eventTypeService;
+    private final CompetitionService competitionService;
+    private final CompetitorMapper competitorMapper;
 
-    public CompetitorManager(CompetitorDao competitorDao, @Lazy SeasonService seasonService, UserService userService) {
+    @Autowired
+    public CompetitorManager(CompetitorDao competitorDao,@Lazy UserService userService,
+                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService,
+                             @Lazy CompetitionService competitionService, CompetitorMapper competitorMapper) {
         this.competitorDao = competitorDao;
-        this.seasonService = seasonService;
         this.userService = userService;
+        this.eventService = eventService;
+        this.eventTypeService = eventTypeService;
+        this.competitionService = competitionService;
+        this.competitorMapper = competitorMapper;
     }
 
     @Override
-    public DataResult<String> addCompetitor(CreateCompetitorDto createCompetitorDto) {
-        if(createCompetitorDto.getName() == null || createCompetitorDto.getName().isEmpty()) {
-            return new ErrorDataResult<>(CompetitorMessages.CompetitorNameCannotBeNull, HttpStatus.BAD_REQUEST);
+    public CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest) {
+        var user = userService.getUserEntityById(createCompetitorRequest.getUserId());
+        var event = eventService.getEventEntityById(createCompetitorRequest.getEventId());
+
+        if (!event.getType().isCompetitive()){
+            throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
         }
 
-        Competitor competitor = Competitor.builder()
-                .createdAt(new Date())
-                .name(createCompetitorDto.getName())
-                .isActive(createCompetitorDto.isActive())
-                .tenant(createCompetitorDto.getTenant())
-                .totalPoints(0)
+        if (competitorDao.existsByUserAndEvent(user, event)) {
+            throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
+        }
+
+        var competitor = Competitor.builder()
+                .user(user)
+                .event(event)
+                .points(createCompetitorRequest.getPoints())
+                .isWinner(createCompetitorRequest.isWinner())
                 .build();
-        competitorDao.save(competitor);
-        return new SuccessDataResult<>(competitor.getId(),CompetitorMessages.CompetitorAddedSuccess, HttpStatus.CREATED);
+
+        return competitorMapper.toDto(competitorDao.save(competitor));
     }
 
     @Override
-    public Result deleteCompetitor(String id) {
-        var result = competitorDao.findById(id);
-        if(result.isEmpty()) {
-            return new ErrorResult(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
+    public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest) {
+      var competitor = getCompetitorEntityById(id);
+
+        if (updateCompetitorRequest.getUserId() != null) {
+            competitor.setUser(userService.getUserEntityById(updateCompetitorRequest.getUserId()));
         }
 
-        Competitor competitor = result.get();
+
+        if (updateCompetitorRequest.getEventId() != null) {
+            var event = eventService.getEventEntityById(updateCompetitorRequest.getEventId());
+            if (!event.getType().isCompetitive()) {
+                throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
+            }
+            competitor.setEvent(event);
+        }
+
+        if (updateCompetitorRequest.getPoints() != 0) {
+            competitor.setPoints(updateCompetitorRequest.getPoints());
+        }
+
+        competitor.setWinner(updateCompetitorRequest.isWinner());
+
+        return competitorMapper.toDto(competitorDao.save(competitor));
+
+    }
+
+
+    @Override
+    public void deleteCompetitor(UUID competitorId) {
+        Competitor competitor = getCompetitorEntity(competitorId);
         competitorDao.delete(competitor);
-        return new SuccessResult(CompetitorMessages.CompetitorDeletedSuccess, HttpStatus.OK);
     }
 
     @Override
-    public Result updateCompetitor(GetCompetitorDto getCompetitorDto) {
-        var result = competitorDao.findById(getCompetitorDto.getId());
-        if(result.isEmpty()) {
-            return new ErrorResult(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var competitor = result.get();
-        competitor.setName(getCompetitorDto.getName() == null ? competitor.getName() : getCompetitorDto.getName());
-        competitor.setActive(getCompetitorDto.isActive());
-        competitor.setTotalPoints(getCompetitorDto.getTotalPoints() == 0 ? competitor.getTotalPoints() : getCompetitorDto.getTotalPoints());
-        competitor.setUpdatedAt(new Date());
-
-        competitorDao.save(competitor);
-        return new SuccessResult(CompetitorMessages.CompetitorUpdatedSuccess, HttpStatus.OK);
+    public CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent) {
+       return competitorMapper.toDto(getCompetitorEntityById(id));
     }
 
     @Override
-    public DataResult<List<GetCompetitorDto>> getAllCompetitors() {
-        var result = competitorDao.findAll();
-        if(result.isEmpty()) {
-            return new ErrorDataResult<>(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
+    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent) {
+        var authenticatedUser = userService.getAuthenticatedUserEntity();
+        var result = competitorDao.findCompetitorsByUser(authenticatedUser);
+        return competitorMapper.toDtoList(result, includeUser, includeEvent);
+    }
 
-        var returnCompetitors = new GetCompetitorDto().buildListGetCompetitorDto(result);
-        return new SuccessDataResult<>(returnCompetitors, CompetitorMessages.CompetitorListedSuccess, HttpStatus.OK);
+
+    @Override
+    public List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent) {
+        return competitorMapper.toDtoList(competitorDao.findAll(), includeUser, includeEvent);
     }
 
     @Override
-    public DataResult<List<GetCompetitorDto>> getAllCompetitorsByTenant(String tenant) {
-        var result = competitorDao.findAllByTenant(tenant);
-        if(result.isEmpty()) {
-            return new ErrorDataResult<>(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var returnCompetitors = new GetCompetitorDto().buildListGetCompetitorDto(result);
-        return new SuccessDataResult<>(returnCompetitors, CompetitorMessages.CompetitorListedSuccess, HttpStatus.OK);
+    public List<CompetitorDto> getCompetitorsByEventId(UUID eventId, boolean includeUser, boolean includeEvent) {
+       return competitorMapper.toDtoList(competitorDao.findByEventId(eventId), includeUser, includeEvent);
     }
 
     @Override
-    public DataResult<Competitor> getCompetitorEntityById(String id) {
-        var result = competitorDao.findById(id);
-        if(result.isEmpty()) {
-            return new ErrorDataResult<>(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
+    public List<CompetitorDto> getCompetitorsByUserId(UUID userId, boolean includeUser, boolean includeEvent) {
+        return competitorMapper.toDtoList(competitorDao.findByUserId(userId), includeUser, includeEvent);
+    }
 
-        Competitor competitor = result.get();
-        return new SuccessDataResult<>(competitor, CompetitorMessages.CompetitorListedSuccess, HttpStatus.OK);
+
+    @Override
+    public List<CompetitorDto> getCompetitorsByCompetitionId(UUID competitionId, boolean includeUser, boolean includeEvent) {
+        return competitorMapper.toDtoList(competitorDao.findBySeasonId(competitionId), includeUser, includeEvent);
     }
 
     @Override
-    public DataResult<List<GetCompetitorDto>> getAllBySeasonId(int seasonId) {
-        var season = seasonService.getSeasonEntityById(seasonId);
-        if(!season.isSuccess()){
-            return new ErrorDataResult<>(season.getMessage(), season.getHttpStatus());
-        }
+    public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent) {
+        var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
 
-        var competitors = competitorDao.findCompetitorsBySeasonId(seasonId);
-        if(competitors.isEmpty()) {
-            return new ErrorDataResult<>(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
+        return competitorMapper.toDtoList(competitorDao.findAllByEventType(eventType), includeUser, includeEvent);
+    }
 
-        var returnCompetitors = competitors.stream()
-                .map(competitor -> {
-                    double seasonPoints = competitor.getEventResults().stream()
-                            .filter(cer -> cer.getEvent().getSeason().getId() == seasonId)
-                            .mapToDouble(CompetitorEventResult::getPoints)
-                            .sum();
 
-                    int seasonCompetitionCount = (int) competitor.getEventResults().stream()
-                            .filter(cer -> cer.getEvent().getSeason().getId() == seasonId)
-                            .count();
+    @Override
+    public List<CompetitorDto> getLeaderboardByEventType(String eventTypeName, boolean includeUser, boolean includeEvent) {
+        return competitorMapper.toDtoList(competitorDao.findLeaderboardByEventType(eventTypeName), includeUser, includeEvent);
+    }
 
-                    return GetCompetitorDto.builder()
-                            .id(competitor.getId())
-                            .name(competitor.getName())
-                            .tenant(competitor.getTenant())
-                            .isActive(competitor.isActive())
-                            .totalPoints(seasonPoints)
-                            .competitionCount(seasonCompetitionCount)
-                            .build();
-                })
-                .sorted((c1, c2) -> Double.compare(c2.getTotalPoints(), c1.getTotalPoints())) // DESC sıralama
-                .collect(Collectors.toList());
 
-        return new SuccessDataResult<>(returnCompetitors, CompetitorMessages.CompetitorListedSuccess, HttpStatus.OK);
+    @Override
+    public List<CompetitorDto> getCompetitionLeaderboard(UUID competitionId, boolean includeUser, boolean includeEvent) {
+        var competition = competitionService.getCompetitionEntityById(competitionId);
+
+        return competitorMapper.toDtoList(competitorDao.findLeaderboardByCompetition(competition));
+
     }
 
     @Override
-    public Result addPointsToCompetitor(String competitorId, double points) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var username = authentication.getName();
+    public CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent) {
+        var event = eventService.getEventEntityById(eventId);
 
-        var result = competitorDao.findById(competitorId);
-        if(result.isEmpty()) {
-            return new ErrorResult(CompetitorMessages.CompetitorNotFound, HttpStatus.NOT_FOUND);
-        }
+        return competitorMapper.toDto(competitorDao.findWinnerOfEvent(event), includeUser, includeEvent);
 
-        var tenantCheck = userService.tenantCheck(result.get().getTenant(), username);
-        if(!tenantCheck){
-            return new ErrorResult(CompetitorMessages.TenantCheckFailed, HttpStatus.UNAUTHORIZED);
-        }
-
-        var competitor = result.get();
-        competitor.setTotalPoints(competitor.getTotalPoints() + points);
-        competitor.setUpdatedAt(new Date());
-
-        competitorDao.save(competitor);
-        return new SuccessResult(CompetitorMessages.CompetitorPointsAddedSuccess, HttpStatus.OK);
     }
+
+    @Override
+    public double getUserTotalPoints(UUID userId) {
+        var user = userService.getUserEntityById(userId);
+        var competitors = competitorDao.findCompetitorsByUser(user);
+
+        var totalPoints = competitors.stream()
+                .mapToDouble(Competitor::getPoints)
+                .sum();
+
+        return totalPoints;
+    }
+
+    @Override
+    public double getUsersTotalPointsInCompetition(UUID userId, UUID competitionId) {
+        var user = userService.getUserEntityById(userId);
+        var competition = competitionService.getCompetitionEntityById(competitionId);
+
+        return competitorDao.findUsersTotalPointsInCompetition(user, competition);
+
+    }
+
+    @Override
+    public int getUserCompetitionCount(UUID userId) {
+        var user = userService.getUserEntityById(userId);
+        return competitorDao.getTotalCompetitionCountByUserId(user);
+    }
+
+
+    @Override
+    public boolean isUserParticipant(UUID userId, UUID eventId) {
+        var user = userService.getUserEntityById(userId);
+        var event = eventService.getEventEntityById(eventId);
+
+        return competitorDao.existsByUserAndEvent(user, event);
+    }
+
+    @Override
+    public Competitor getCompetitorEntityById(UUID id) {
+        return competitorDao.findById(id)
+                .orElseThrow(CompetitorNotFoundException::new);
+    }
+
+
+    private Competitor getCompetitorEntity(UUID competitorId) {
+        return competitorDao.findById(competitorId)
+                .orElseThrow(CompetitorNotFoundException::new);
+    }
+
 }

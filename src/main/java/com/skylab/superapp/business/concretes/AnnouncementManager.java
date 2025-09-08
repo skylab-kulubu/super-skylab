@@ -1,177 +1,188 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.AnnouncementService;
-import com.skylab.superapp.business.abstracts.PhotoService;
+import com.skylab.superapp.business.abstracts.EventTypeService;
+import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.business.constants.AnnouncementMessages;
-import com.skylab.superapp.core.results.*;
+import com.skylab.superapp.core.exceptions.AnnouncementNotFoundException;
+import com.skylab.superapp.core.exceptions.ImageAlreadyAddedException;
+import com.skylab.superapp.core.mappers.AnnouncementMapper;
 import com.skylab.superapp.dataAccess.AnnouncementDao;
 import com.skylab.superapp.entities.Announcement;
-import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementDto;
-import com.skylab.superapp.entities.DTOs.Announcement.GetAnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
+import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AnnouncementManager implements AnnouncementService {
 
-    private AnnouncementDao announcementDao;
-    private UserService userService;
-    private PhotoService photoService;
+    private final AnnouncementDao announcementDao;
+    private final UserService userService;
+    private final ImageService imageService;
+    private final EventTypeService eventTypeService;
+    private final AnnouncementMapper announcementMapper;
 
-    public AnnouncementManager(AnnouncementDao announcementDao, UserService userService, @Lazy PhotoService photoService) {
+
+    public AnnouncementManager(AnnouncementDao announcementDao,
+                               @Lazy UserService userService,
+                               @Lazy ImageService imageService,
+                               @Lazy EventTypeService eventTypeService,
+                               AnnouncementMapper announcementMapper) {
         this.announcementDao = announcementDao;
         this.userService = userService;
-        this.photoService = photoService;
+        this.imageService = imageService;
+        this.eventTypeService = eventTypeService;
+        this.announcementMapper = announcementMapper;
     }
 
 
     @Override
-    public Result addAnnouncement(CreateAnnouncementDto createAnnouncementDto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        if(createAnnouncementDto.getTenant() == null || createAnnouncementDto.getTenant().isEmpty()){
-            return new ErrorResult(AnnouncementMessages.tenantCannotBeNull, HttpStatus.BAD_REQUEST);
-        }
-
+    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest) {
+        // no need to check tenant, because tenants that doesnt have role wont be able to access this endpoint -yusssss
+        /*
         var tenantCheck = userService.tenantCheck(createAnnouncementDto.getTenant(), username);
         if(!tenantCheck){
-            return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
-
+            throw new UserNotAuthorizedException();
         }
 
-        var author = userService.getUserEntityByUsername(username);
+         */
+
+        var author = userService.getAuthenticatedUserEntity();
+        //controlleradvice handles this exception so no need to check any kind of business rules here -yusssss
+        /*
         if(!author.isSuccess()){
             return new ErrorResult(author.getMessage(), author.getHttpStatus());
         }
 
+         */
+
+        var eventType = eventTypeService.getEventTypeEntityById(createAnnouncementRequest.getEventTypeId());
+        /*
+        if(!eventType.isSuccess()){
+            return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
+        }
+         */
 
         Announcement announcement = Announcement.builder()
-                .content(createAnnouncementDto.getContent())
-                .createdAt(new Date())
-                .date(createAnnouncementDto.getDate())
-                .description(createAnnouncementDto.getDescription())
-                .title(createAnnouncementDto.getTitle())
-                .formUrl(createAnnouncementDto.getFormUrl())
-                .user(author.getData())
-                .isActive(createAnnouncementDto.isActive())
-                .tenant(createAnnouncementDto.getTenant())
-                .type(createAnnouncementDto.getType())
+                .body(createAnnouncementRequest.getBody())
+                .createdAt(LocalDateTime.now())
+                .date(createAnnouncementRequest.getDate())
+                .title(createAnnouncementRequest.getTitle())
+                .formUrl(createAnnouncementRequest.getFormUrl())
+                .user(author)
+                .active(createAnnouncementRequest.isActive())
+                .eventType(eventType)
                 .build();
 
 
-        announcementDao.save(announcement);
-        return new SuccessResult(AnnouncementMessages.AnnouncementAddedSuccess, HttpStatus.CREATED);
+        return announcementMapper.toDto(announcementDao.save(announcement));
     }
 
     @Override
-    public Result deleteAnnouncement(int id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public void deleteAnnouncement(UUID id) {
+        var result = announcementDao.findById(id).orElseThrow(AnnouncementNotFoundException::new);
 
-        var result = announcementDao.findById(id);
-        if(result == null){
-            return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-        var tenantCheck = userService.tenantCheck(result.getTenant(), username);
+        /*
+        var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
 
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
+
+         */
 
         announcementDao.delete(result);
-        return new ErrorResult(AnnouncementMessages.DeleteSuccess, HttpStatus.OK);
     }
 
     @Override
-    public Result updateAnnouncement(GetAnnouncementDto getAnnouncementDto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public AnnouncementDto updateAnnouncement(UUID id, UpdateAnnouncementRequest updateAnnouncementRequest) {
+        var announcement = getAnnouncementEntityById(id);
 
-        var result = announcementDao.findById(getAnnouncementDto.getId());
-        if(result == null){
-            return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var tenantCheck = userService.tenantCheck(result.getTenant(), username);
+        /*
+        var tenantCheck = userService.tenantCheck(result.getType().getName(), username);
         if(!tenantCheck){
             return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
         }
 
-        result.setContent(getAnnouncementDto.getContent() == null ? result.getContent() : getAnnouncementDto.getContent());
-        result.setTitle(getAnnouncementDto.getTitle() == null ? result.getTitle() : getAnnouncementDto.getTitle());
-
-
-        announcementDao.save(result);
-        return new SuccessResult(AnnouncementMessages.UpdateSuccess, HttpStatus.OK);
-    }
-
-    @Override
-    public DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenant(String tenant) {
-        var result = announcementDao.findAllByTenant(tenant);
-        if(result.isEmpty()){
-            return new ErrorDataResult<>(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var returnAnnouncements = GetAnnouncementDto.buildListGetAnnouncementDto(result);
-        return new SuccessDataResult<>(returnAnnouncements, AnnouncementMessages.GetAllSuccess, HttpStatus.OK);
-    }
-
-    @Override
-    public DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenantAndType(String tenant, String type) {
-        var result = announcementDao.findAllByTenantAndType(tenant, type);
-        if(result.isEmpty()){
-            return new ErrorDataResult<>(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var returnAnnouncements = GetAnnouncementDto.buildListGetAnnouncementDto(result);
-        return new SuccessDataResult<>(returnAnnouncements, AnnouncementMessages.GetAllSuccess, HttpStatus.OK);
-    }
-
-    @Override
-    public DataResult<Announcement> getAnnouncementEntityById(int id) {
-        var result = announcementDao.findById(id);
-        if(result == null){
-            return new ErrorDataResult<>(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        return new SuccessDataResult<>(result, AnnouncementMessages.GetAnnouncementSuccess, HttpStatus.OK);
-    }
-
-    @Override
-    public Result addPhotosToAnnouncement(int id, List<Integer> photoIds) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        var announcement = announcementDao.findById(id);
-        if(announcement == null){
-            return new ErrorResult(AnnouncementMessages.AnnouncementNotFound, HttpStatus.NOT_FOUND);
-        }
-
-        var tenantCheck = userService.tenantCheck(announcement.getTenant(), username);
-        if(!tenantCheck){
-            return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
-        }
-        var photos = photoService.getPhotosByIds(photoIds);
-        if(!photos.isSuccess()){
-            return new ErrorResult(photos.getMessage(), photos.getHttpStatus());
-        }
-
-        var photoList = photos.getData();
-        for (var photo : photoList) {
-            if(photo.getAnnouncement() != null){
-                return new ErrorResult(AnnouncementMessages.PhotoAlreadyAdded, HttpStatus.BAD_REQUEST);
+         */
+        if (updateAnnouncementRequest.getEventTypeId() != null) {
+            var eventType = eventTypeService.getEventTypeEntityById(updateAnnouncementRequest.getEventTypeId());
+            /*
+            if(!eventType.isSuccess()){
+                return new ErrorResult(eventType.getMessage(), eventType.getHttpStatus());
             }
-            photo.setAnnouncement(announcement);
+             */
+            announcement.setEventType(eventType);
+        }
+
+        announcement.setBody(updateAnnouncementRequest.getBody() == null ? announcement.getBody() : updateAnnouncementRequest.getBody());
+        announcement.setTitle(updateAnnouncementRequest.getTitle() == null ? announcement.getTitle() : updateAnnouncementRequest.getTitle());
+
+
+        return announcementMapper.toDto(announcementDao.save(announcement));
+    }
+
+    @Override
+    public List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages) {
+        var result = announcementDao.findAll();
+        if(result.isEmpty()){
+            throw new AnnouncementNotFoundException();
+        }
+
+        return announcementMapper.toDtoList(result, includeUser, includeEventType, includeImages);
+    }
+
+    @Override
+    public AnnouncementDto getAnnouncementById(UUID id, boolean includeUser, boolean includeEventType, boolean includeImages) {
+        var announcement = getAnnouncementEntityById(id);
+
+        return announcementMapper.toDto(announcement, includeUser, includeEventType, includeImages);
+    }
+
+    @Override
+    public List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEventType, boolean includeImages) {
+        var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
+
+        return announcementMapper.toDtoList(announcementDao.findAllByEventType(eventType), includeUser, includeEventType, includeImages);
+    }
+
+
+    @Override
+    public void addImagesToAnnouncement(UUID id, List<UUID> imageIds) {
+        var announcement = getAnnouncementEntityById(id);
+/*
+        var tenantCheck = userService.tenantCheck(announcement.getType().getName(), username);
+        if(!tenantCheck){
+            return new ErrorResult(AnnouncementMessages.UserNotAuthorized, HttpStatus.UNAUTHORIZED);
+        }
+
+ */
+
+        var images = imageService.getImagesByIds(imageIds);
+        /*
+        if(!images.isSuccess()){
+            return new ErrorResult(images.getMessage(), images.getHttpStatus());
+        }
+         */
+
+        for (var image : images) {
+            if(image.getAnnouncement() != null){
+                throw new ImageAlreadyAddedException();
+            }
+            image.setAnnouncement(announcement);
         }
 
         announcementDao.save(announcement);
-        return new SuccessResult(AnnouncementMessages.AnnouncementPhotosAddedSuccess, HttpStatus.OK);
+    }
+
+    @Override
+    public Announcement getAnnouncementEntityById(UUID id) {
+        return announcementDao.findById(id).orElseThrow(AnnouncementNotFoundException::new);
     }
 }

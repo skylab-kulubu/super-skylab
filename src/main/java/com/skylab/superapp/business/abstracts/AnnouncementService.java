@@ -1,26 +1,29 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.entities.Announcement;
-import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementDto;
-import com.skylab.superapp.entities.DTOs.Announcement.GetAnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
+import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
+import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AnnouncementService {
 
-    Result addAnnouncement(CreateAnnouncementDto createAnnouncementDto);
+    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest);
 
-    Result deleteAnnouncement(int id);
+    void deleteAnnouncement(UUID id);
 
-    Result updateAnnouncement(GetAnnouncementDto getAnnouncementDto);
+    AnnouncementDto updateAnnouncement(UUID id, UpdateAnnouncementRequest updateAnnouncementRequest);
 
-    DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenant(String tenant);
+    List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages);
 
-    DataResult<List<GetAnnouncementDto>> getAllAnnouncementsByTenantAndType(String tenant, String type);
+    AnnouncementDto getAnnouncementById(UUID id, boolean includeUser, boolean includeEventType, boolean includeImages);
 
-    DataResult<Announcement> getAnnouncementEntityById(int id);
+    List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser,
+                                                           boolean includeEventType, boolean includeImages);
 
-    Result addPhotosToAnnouncement(int id, List<Integer> photoIds);
+    void addImagesToAnnouncement(UUID id, List<UUID> imageIds);
+
+    Announcement getAnnouncementEntityById(UUID id);
 }

@@ -2,47 +2,33 @@ package com.skylab.superapp.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Formula;
 
-import java.util.Date;
-import java.util.List;
+import java.util.UUID;
 
+@Data
+@Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@Entity
 @Builder
 @Table(name = "competitors")
 public class Competitor {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
-    private String id;
+    private UUID id;
 
-    @Column(name = "name")
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "created_at")
-    private Date createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
 
-    @Column(name = "updated_at")
-    private Date updatedAt;
+    @Column(nullable = false)
+    private double points;
 
-    @Column(name = "tenant")
-    private String tenant;
-
-    @Column(name = "is_active")
-    private boolean isActive;
-
-    @Formula("(SELECT COALESCE(SUM(cer.points), 0) FROM competitor_event_results cer WHERE cer.competitor_id = id)")
-    private double totalPoints;
-
-    @Formula("(SELECT COUNT(*) FROM competitor_event_results cer WHERE cer.competitor_id = id)")
-    private int competitionCount;
-
-    @OneToMany(mappedBy = "competitor")
-    private List<CompetitorEventResult> eventResults; // Yarışmacının katıldığı tüm event'ler
-
+    @Column(nullable = false)
+    private boolean isWinner;
 
 }

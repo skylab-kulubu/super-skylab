@@ -1,21 +1,13 @@
 package com.skylab.superapp.dataAccess;
 
 import com.skylab.superapp.entities.Announcement;
+import com.skylab.superapp.entities.EventType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface AnnouncementDao extends JpaRepository<Announcement, Integer> {
+public interface AnnouncementDao extends JpaRepository<Announcement, UUID> {
 
-    Announcement findById(int id);
-
-    List<Announcement> findByUserId(int userId);
-
-    List<Announcement> findAllByTitleContainingIgnoreCase(String title);
-
-    List<Announcement> findAllByContentContainingIgnoreCase(String content);
-
-    List<Announcement> findAllByTenant(String tenant);
-
-    List<Announcement> findAllByTenantAndType(String tenant, String type);
+    List<Announcement> findAllByEventType(EventType eventType);
 }

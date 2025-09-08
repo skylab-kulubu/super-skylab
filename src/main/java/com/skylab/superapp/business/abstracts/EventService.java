@@ -1,37 +1,48 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
-import com.skylab.superapp.entities.DTOs.Event.CreateEventDto;
-import com.skylab.superapp.entities.DTOs.Event.GetBizbizeEventDto;
-import com.skylab.superapp.entities.DTOs.Event.GetEventDto;
+import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
+import com.skylab.superapp.entities.DTOs.Event.EventDto;
+import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import com.skylab.superapp.entities.Event;
+import com.skylab.superapp.entities.EventType;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface EventService {
 
-    DataResult<Integer> addEvent(CreateEventDto createEventDto);
+    EventDto addEvent(CreateEventRequest createEventDto);
 
-    Result deleteEvent(int id);
+    void deleteEvent(UUID id);
 
-    Result updateEvent(GetEventDto getEventDto);
+    EventDto updateEvent(UpdateEventRequest updateEventRequest);
 
-    Result updateBizbizeEvent(GetBizbizeEventDto getBizbizeEventDto);
+    List<EventDto> getAllEventsByEventType(EventType eventType, boolean includeEventType, boolean includeSession,
+                                           boolean includeCompetitors, boolean includeImages, boolean includeSeason,
+                                           boolean includeCompetition);
 
-    DataResult<List<GetEventDto>> getAllEventsByTenant(String tenant);
+    EventDto  getEventById(UUID id, boolean includeEventType, boolean includeSession,
+                           boolean includeCompetitors, boolean includeImages, boolean includeSeason,
+                           boolean includeCompetition);
 
-    DataResult<List<GetBizbizeEventDto>> getAllBizbizeEvents();
+    Event getEventEntityById(UUID id);
 
-    DataResult<Event> getEventEntityById(int id);
+    void addImagesToEvent(UUID eventId, List<UUID> imageIds);
 
-    DataResult<List<GetEventDto>> getAllEventsByTenantAndType(String tenant, String type);
+    List<EventDto> getAllFutureEventsByEventType(String eventType, boolean includeEventType, boolean includeSession,
+                                                 boolean includeCompetitors, boolean includeImages,
+                                                 boolean includeSeason, boolean includeCompetition);
 
-    Result addPhotosToEvent(int eventId, List<Integer> photoIds);
+    List<EventDto> getAllEvents(boolean includeEventType, boolean includeSession,
+                                  boolean includeCompetitors, boolean includeImages,
+                                  boolean includeSeason, boolean includeCompetition);
 
-    DataResult<List<GetEventDto>> getAllFutureEventsByTenant(String tenant);
+    List<EventDto> getAllEventsByEventTypeName(String eventTypeName, boolean includeEventType, boolean includeSession,
+                                boolean includeCompetitors, boolean includeImages,
+                                boolean includeSeason, boolean includeCompetition);
 
-
-
+    List<EventDto> getAllEventByIsActive(boolean isActive, boolean includeEventType, boolean includeSession,
+                                         boolean includeCompetitors, boolean includeImages,
+                                         boolean includeSeason, boolean includeCompetition);
 }
 

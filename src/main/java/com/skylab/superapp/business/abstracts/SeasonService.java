@@ -1,30 +1,33 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
-import com.skylab.superapp.entities.DTOs.Season.CreateSeasonDto;
-import com.skylab.superapp.entities.DTOs.Season.GetSeasonDto;
+import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
+import com.skylab.superapp.entities.DTOs.season.SeasonDto;
+import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface SeasonService {
 
-    DataResult<Integer> addSeason(CreateSeasonDto createSeasonDto);
+    SeasonDto addSeason(CreateSeasonRequest createSeasonRequest);
 
-    Result deleteSeason(int id);
+    void deleteSeason(UUID id);
 
-    DataResult<List<GetSeasonDto>> getAllSeasonsByTenant(String tenant);
+    SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest);
 
-    DataResult<List<GetSeasonDto>> getAllSeasons();
+    List<SeasonDto> getAllSeasons(boolean includeEvents);
 
-    DataResult<GetSeasonDto> getSeasonByName(String name);
+    SeasonDto getSeasonByName(String name, boolean includeEvents);
 
-    DataResult<Season> getSeasonEntityById(int id);
+    SeasonDto getSeasonById(UUID id, boolean includeEvents);
 
-    DataResult<GetSeasonDto> getSeasonById(int id);
+    List<SeasonDto> getActiveSeasons(boolean includeEvents);
 
-    Result addEventToSeason(int seasonId, int eventId);
+    void addEventToSeason(UUID seasonId, UUID eventId);
 
-    Result removeEventFromSeason(int seasonId, int eventId);
+    void removeEventFromSeason(UUID seasonId, UUID eventId);
+
+    Season getSeasonEntityById(UUID id);
+
 }

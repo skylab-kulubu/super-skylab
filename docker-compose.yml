@@ -2,15 +2,18 @@ version: '3.8'
 
 services:
   super-skylab-app:
+    container_name: super-skylab-app
     build: .
     ports:
       - "9010:9010"
     depends_on:
-      - db
+      - super-skylab-db
+      - super-skylab-rabbitmq
     networks:
         - nginx-network
 
-  db:
+  super-skylab-db:
+    container_name: super-skylab-db
     image: postgres:latest
     environment:
       POSTGRES_DB: superSkyLabDB
@@ -22,6 +25,25 @@ services:
       - ./data:/var/lib/postgresql/data
     networks:
       - nginx-network
+
+
+  super-skylab-rabbitmq:
+    container_name: super-skylab-rabbitmq
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitMQ
+      RABBITMQ_DEFAULT_PASS: rabbitMQ
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - nginx-network
+
+volumes:
+  rabbitmq_data:
+
 
 networks:
     nginx-network:

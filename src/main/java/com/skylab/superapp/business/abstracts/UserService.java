@@ -1,45 +1,58 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.results.DataResult;
-import com.skylab.superapp.core.results.Result;
-import com.skylab.superapp.entities.DTOs.Auth.ChangePassword;
-import com.skylab.superapp.entities.DTOs.User.CreateUserDto;
-import com.skylab.superapp.entities.DTOs.User.GetUserDto;
+import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Role;
 import com.skylab.superapp.entities.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService extends UserDetailsService {
 
-    Result addUser(CreateUserDto createUserDto);
+    UserDto addUser(CreateUserRequest createUpdateRequest);
 
-    Result deleteUser(int id);
+    void deleteUser(UUID id);
 
-    Result changePassword(ChangePassword changePassword);
+    void changePassword(ChangePasswordRequest changePasswordRequest);
 
-    DataResult<String> resetPassword(CreateUserDto createUserDto);
+    void resetPassword(ResetPasswordRequest resetPasswordRequest);
 
-    Result changeAuthenticatedUserPassword(String newPassword);
+    List<UserDto> getAllUsers();
 
-    DataResult<List<GetUserDto>> getAllUsers();
+    UserDto getUserById(UUID id);
 
-    DataResult<User> getUserEntityById(int id);
+    UserDto getUserByUsername(String username);
 
-    DataResult<GetUserDto> getUserById(int id);
+    UserDto getUserByEmail(String email);
 
-    DataResult<User> getUserEntityByUsername(String username);
+    void addRoleToUser(String username, Role role);
 
-    DataResult<User> getUserEntityByEmail(String email);
+    void removeRoleFromUser(String username, Role role);
 
-    boolean tenantCheck(String tenant, String username);
+    void setLastLoginWithUsername(String username);
 
-    Result addRoleToUser(String username, Role role);
+    String getAuthenticatedUsername();
 
-    Result removeRoleFromUser(String username, Role role);
+    List<UserDto> getAllStaffs();
 
-    Result setLastLoginWithUsername(String username);
+    List<UserDto> getStaffsByRole(Role role);
 
-    DataResult<String> getAuthenticatedUsername();
+    List<UserDto> getAllUsersByIds(List<UUID> userIds);
+
+    UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
+
+    UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest);
+
+    UserDto getAuthenticatedUser();
+
+    User getUserEntityById(UUID id);
+
+    User getUserEntityByUsername(String username);
+
+    User getUserEntityByEmail(String email);
+
+    User getAuthenticatedUserEntity();
+
+
 }

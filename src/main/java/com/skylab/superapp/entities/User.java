@@ -8,8 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -20,9 +21,9 @@ import java.util.Set;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
-    private int id;
+    private UUID id;
 
     @Column(name = "username")
     private String username;
@@ -30,15 +31,36 @@ public class User implements UserDetails {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_picture_id", referencedColumnName = "id")
+    private Image profilePicture;
+
     @Column(name = "password")
     private String password;
 
-    @Column(name = "created_at")
-    private Date createdAt;
+    @Column(name = "linkedin")
+    private String linkedin;
+
+    @Column(name = "birthday")
+    private LocalDateTime birthday;
+
+    @Column(name = "university")
+    private String university;
+
+    @Column(name = "faculty")
+    private String faculty;
+
+    @Column(name = "department")
+    private String department;
 
     @Column(name = "last_login")
-    private Date lastLogin;
-
+    private LocalDateTime lastLogin;
 
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @JoinTable(name = "authorities", joinColumns = @JoinColumn(name = "user_id"))
