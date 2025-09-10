@@ -6,6 +6,7 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
+import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
 import com.skylab.superapp.entities.DTOs.User.ChangePasswordRequest;
 import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
@@ -89,7 +90,7 @@ public class UserController {
     }
 
     @PutMapping("/addRole/{username}")
-    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam String role,
+    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam KeycloakRole role,
                                                 HttpServletRequest request) {
         userService.addRoleToUser(username, role);
         return ResponseEntity.status(HttpStatus.OK)
