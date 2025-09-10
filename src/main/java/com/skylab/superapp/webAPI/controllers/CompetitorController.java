@@ -49,7 +49,7 @@ public class CompetitorController {
     public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors(@RequestParam(defaultValue = "false") boolean includeUser,
                                                                             @RequestParam(defaultValue = "false") boolean includeEvent,
                                                                             HttpServletRequest request) {
-        var result = competitorService.getMyCompetitors(includeUser, includeEvent);
+        var result = competitorService.getMyCompetitors(includeUser, includeEvent, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }

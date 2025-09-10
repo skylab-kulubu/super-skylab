@@ -4,9 +4,13 @@ package com.skylab.superapp.entities.DTOs.User;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class CreateUserRequest {
+
+    private UUID id;
 
     private String username;
 
@@ -27,8 +31,5 @@ public class CreateUserRequest {
     private String faculty;
 
     private String department;
-
-
-
 
 }

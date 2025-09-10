@@ -7,9 +7,9 @@ import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.User.ChangePasswordRequest;
+import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import com.skylab.superapp.entities.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,18 +29,16 @@ public class UserController {
     }
 
 
-    /*
     @PostMapping("/addUser")
-    public ResponseEntity<Result> addUser(@RequestBody CreateUserDto createUserDto, HttpServletRequest request) {
-        userService.addUser(createUserDto);
+    public ResponseEntity<Result> addUser(@RequestBody CreateUserRequest createUserRequest, HttpServletRequest request) {
+        userService.addUser(createUserRequest);
         return ResponseEntity.status(201)
                 .body(new SuccessResult(UserMessages.USER_ADDED_SUCCESS, HttpStatus.CREATED, request.getRequestURI()));
     }
-     */
 
     @GetMapping("/me")
     public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser(HttpServletRequest request) {
-     var result = userService.getAuthenticatedUser();
+     var result = userService.getAuthenticatedUser(request);
      return ResponseEntity.status(HttpStatus.OK)
              .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS,
                      HttpStatus.OK, request.getRequestURI()));
@@ -49,19 +47,12 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@RequestBody UpdateUserRequest updateUserRequest,
                                                            HttpServletRequest request) {
-       var result =userService.updateAuthenticatedUser(updateUserRequest);
+       var result =userService.updateAuthenticatedUser(updateUserRequest, request);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
-    @PostMapping("/me/changePassword")
-    public ResponseEntity<Result> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest,
-                                                 HttpServletRequest request) {
-        userService.changePassword(changePasswordRequest);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.PASSWORD_CHANGED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
-    }
 
     @GetMapping("/")
     public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(HttpServletRequest request) {
@@ -98,20 +89,13 @@ public class UserController {
     }
 
     @PutMapping("/addRole/{username}")
-    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam Role role,
+    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam String role,
                                                 HttpServletRequest request) {
         userService.addRoleToUser(username, role);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
     }
 
-    @DeleteMapping("/removeRole/{username}")
-    public ResponseEntity<Result> removeRoleFromUser(@PathVariable String username, @RequestParam Role role,
-                                                     HttpServletRequest request) {
-        userService.removeRoleFromUser(username, role);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.ROLE_REMOVED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
-    }
 
 
     /*

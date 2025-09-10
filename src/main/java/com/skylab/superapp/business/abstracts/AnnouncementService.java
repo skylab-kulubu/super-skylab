@@ -4,13 +4,14 @@ import com.skylab.superapp.entities.Announcement;
 import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
 import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
 import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface AnnouncementService {
 
-    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest);
+    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest, HttpServletRequest request);
 
     void deleteAnnouncement(UUID id);
 

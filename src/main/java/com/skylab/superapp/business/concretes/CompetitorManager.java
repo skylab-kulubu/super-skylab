@@ -9,6 +9,7 @@ import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -101,8 +102,8 @@ public class CompetitorManager implements CompetitorService {
     }
 
     @Override
-    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent) {
-        var authenticatedUser = userService.getAuthenticatedUserEntity();
+    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent, HttpServletRequest request) {
+        var authenticatedUser = userService.getAuthenticatedUserEntity(request);
         var result = competitorDao.findCompetitorsByUser(authenticatedUser);
         return competitorMapper.toDtoList(result, includeUser, includeEvent);
     }

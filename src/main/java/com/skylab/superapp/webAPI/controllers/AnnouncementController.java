@@ -30,7 +30,7 @@ public class AnnouncementController {
     @PostMapping("/addAnnouncement")
     public ResponseEntity<DataResult<AnnouncementDto>> addAnnouncement(@RequestBody CreateAnnouncementRequest createAnnouncementRequest,
                                                   HttpServletRequest request) {
-        var announcement = announcementService.addAnnouncement(createAnnouncementRequest);
+        var announcement = announcementService.addAnnouncement(createAnnouncementRequest, request);
 
 
        return ResponseEntity.status(HttpStatus.CREATED)

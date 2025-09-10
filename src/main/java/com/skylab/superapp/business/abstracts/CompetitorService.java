@@ -4,6 +4,7 @@ import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,7 +16,7 @@ public interface CompetitorService {
     void deleteCompetitor(UUID competitorId);
     CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent);
 
-    List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent);
+    List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent, HttpServletRequest request);
 
 
     List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent);

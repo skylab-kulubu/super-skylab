@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: super-skylab
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+      javax:
+        persistence:
+          validation:
+            mode: none
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    url: jdbc:postgresql://super-skylab-db:5432/superSkyLabDB
+    username: postgres
+    password: postgres
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  mail:
+    host: smtp.office365.com
+    port: 587
+    username: info@yildizskylab.com
+    password: app-password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: rabbitMQ
+    password: rabbitMQ
+    virtual-host: /
+
+server:
+  port: 9010
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+
+api:
+  url: http://localhost:9010
+image:
+  get:
+    url: /api/images/getImageByUrl/
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+keycloak:
+  base-url: http://keycloak:8080
+  realm: e-skylab
+  client-id: super-skylab
+  client-secret: SU7KIyoz92CT9jWVX4UwSrFcjmra4oV9
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+
+

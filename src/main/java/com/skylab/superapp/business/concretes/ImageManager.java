@@ -8,6 +8,7 @@ import com.skylab.superapp.core.mappers.ImageMapper;
 import com.skylab.superapp.dataAccess.ImageDao;
 import com.skylab.superapp.entities.DTOs.Image.ImageDto;
 import com.skylab.superapp.entities.Image;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,12 +32,12 @@ public class ImageManager implements ImageService {
     }
 
     @Override
-    public Image addImage(MultipartFile file) {
+    public Image addImage(MultipartFile file, HttpServletRequest request) {
         if (file == null || file.isEmpty()) {
             throw new ImageCannotBeNullException();
         }
 
-        var userResult = userService.getAuthenticatedUserEntity();
+        var userResult = userService.getAuthenticatedUserEntity(request);
 
         try {
             Image imageToSave = Image.builder()

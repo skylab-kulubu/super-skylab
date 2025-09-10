@@ -7,6 +7,10 @@ import lombok.Setter;
 @Setter
 public class AuthRegisterRequest {
 
+    private String firstName;
+
+    private String lastName;
+
     private String username;
 
     private String email;

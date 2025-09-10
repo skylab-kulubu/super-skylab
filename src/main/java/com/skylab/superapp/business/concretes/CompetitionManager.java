@@ -23,7 +23,6 @@ public class CompetitionManager implements CompetitionService {
     private final CompetitionMapper competitionMapper;
 
 
-
     public CompetitionManager(CompetitionDao competitionDao,@Lazy EventTypeService eventTypeService,
                               CompetitionMapper competitionMapper) {
         this.competitionDao = competitionDao;

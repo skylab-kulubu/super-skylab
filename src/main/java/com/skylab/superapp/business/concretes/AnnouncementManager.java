@@ -12,6 +12,7 @@ import com.skylab.superapp.entities.Announcement;
 import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
 import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
 import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +44,7 @@ public class AnnouncementManager implements AnnouncementService {
 
 
     @Override
-    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest) {
+    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest, HttpServletRequest request) {
         // no need to check tenant, because tenants that doesnt have role wont be able to access this endpoint -yusssss
         /*
         var tenantCheck = userService.tenantCheck(createAnnouncementDto.getTenant(), username);
@@ -53,7 +54,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var author = userService.getAuthenticatedUserEntity();
+        var author = userService.getAuthenticatedUserEntity(request);
         //controlleradvice handles this exception so no need to check any kind of business rules here -yusssss
         /*
         if(!author.isSuccess()){

@@ -40,7 +40,7 @@ public class ImageController {
 
     @PostMapping("/addImage")
     public ResponseEntity<DataResult<ImageDto>> addImage(@RequestParam("image") MultipartFile image, HttpServletRequest request) {
-        var result = imageService.addImage(image);
+        var result = imageService.addImage(image, request);
         var dto = imageMapper.toDto(result);
         dto.setUrl(API_URL + IMAGE_GET_URL + result.getUrl());
 
