@@ -85,7 +85,7 @@ public class KeycloakAdminClientService {
         }
     }
 
-    private void assignRealmRole(String userId, KeycloakRole keycloakRole) {
+    public void assignRealmRole(String userId, KeycloakRole keycloakRole) {
 
         try{
             UserResource usersResource = keycloak.realm(realm).users().get(userId);

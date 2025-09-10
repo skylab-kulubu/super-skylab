@@ -4,8 +4,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.UserMapper;
+import com.skylab.superapp.core.utilities.keycloak.KeycloakAdminClientService;
+import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
 import com.skylab.superapp.core.utilities.keycloak.KeycloakService;
 import com.skylab.superapp.core.utilities.keycloak.dtos.UserKeycloakRequest;
+import com.skylab.superapp.core.utilities.keycloak.dtos.UserUpdateKeycloakRequest;
 import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
@@ -30,20 +33,21 @@ public class UserManager implements UserService {
     private final SecureRandom secureRandom = new SecureRandom();
     private final UserMapper userMapper;
     private final Logger logger = LoggerFactory.getLogger(UserManager.class);
-    private final KeycloakService keycloakService;
+    private final KeycloakAdminClientService keycloakAdminClientService;
 
 
-    public UserManager(UserDao userDao, @Lazy EmailService emailService, UserMapper userMapper, KeycloakService keycloakService) {
+    public UserManager(UserDao userDao, @Lazy EmailService emailService, UserMapper userMapper, KeycloakAdminClientService keycloakAdminClientService) {
         this.userDao = userDao;
         this.emailService = emailService;
         this.userMapper = userMapper;
-        this.keycloakService = keycloakService;
+        this.keycloakAdminClientService = keycloakAdminClientService;
     }
 
     @Override
     @Transactional
     public UserDto addUser(CreateUserRequest createUserRequest) {
         logger.info("Saving user with username: {}", createUserRequest.getUsername());
+
         if(createUserRequest.getUsername() == null || createUserRequest.getPassword() == null) {
             throw new UsernameorOrPasswordCannotBeNullException();
         }
@@ -67,44 +71,63 @@ public class UserManager implements UserService {
         userKeycloakRequest.setFirstName(createUserRequest.getFirstName());
         userKeycloakRequest.setLastName(createUserRequest.getLastName());
 
+
         logger.info("Creating user in keycloak");
+        String keycloakUserId = null;
+        try {
+            logger.info("Creating user in Keycloak for username: {}", userKeycloakRequest.getUsername());
+            keycloakUserId = keycloakAdminClientService.createUser(userKeycloakRequest);
+            logger.info("Created user in Keycloak for username: {}", userKeycloakRequest.getUsername());
 
-        String keycloakUserId =keycloakService.createUser(userKeycloakRequest);
+            User user = User.builder()
+                    .id(UUID.fromString(keycloakUserId))
+                    .username(createUserRequest.getUsername())
+                    .firstName(createUserRequest.getFirstName())
+                    .lastName(createUserRequest.getLastName())
+                    .email(createUserRequest.getEmail())
+                    .linkedin(createUserRequest.getLinkedin())
+                    .birthday(LocalDateTime.now())
+                    .university(createUserRequest.getUniversity())
+                    .faculty(createUserRequest.getFaculty())
+                    .department(createUserRequest.getDepartment())
+                    .build();
 
-        logger.info("User created in keycloak with id: {}", keycloakUserId);
+            User savedUser = userDao.save(user);
+            logger.info("User saved successfully to local database with ID: {}", savedUser.getId());
 
-        User user = User.builder()
-                .id(UUID.fromString(keycloakUserId))
-                .username(createUserRequest.getUsername())
-                .firstName(createUserRequest.getFirstName())
-                .lastName(createUserRequest.getLastName())
-                .email(createUserRequest.getEmail())
-                .linkedin(createUserRequest.getLinkedin())
-                .birthday(LocalDateTime.now())
-                .university(createUserRequest.getUniversity())
-                .faculty(createUserRequest.getFaculty())
-                .department(createUserRequest.getDepartment())
-                .build();
 
-        var savedUser = userDao.save(user);
-        logger.info("User created with username: {} and email: {}", user.getUsername(), user.getEmail());
+            emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserRequest.getPassword() + "\n" +
+                    "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
 
-        //will change these
-        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserRequest.getPassword() + "\n" +
-                "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
+            return userMapper.toDto(savedUser);
 
-        return userMapper.toDto(savedUser);
+        } catch (Exception e){
+            if (keycloakUserId != null){
+                logger.warn("Error occurred after Keycloak user creation. Rolling back Keycloak user with ID: {}", keycloakUserId);
+                keycloakAdminClientService.deleteUser(keycloakUserId);
+            }
+            logger.error("User creation failed: {}", e.getMessage());
+
+            throw new RuntimeException("User creation failed: " + e.getMessage(), e);
+        }
 
     }
 
+    @Transactional
     @Override
     public void deleteUser(UUID id) {
-        var user = userDao.findById(id);
-        if(user.isEmpty()) {
+        logger.info("Deleting user with id: {}", id);
+
+        if (!userDao.existsById(id)) {
             throw new UserNotFoundException();
         }
 
+        logger.info("Deleting user in keycloak");
+        keycloakAdminClientService.deleteUser(id.toString());
+        logger.info("Deleted user in keycloak");
+
         userDao.deleteById(id);
+        logger.info("Deleted user with id: {}", id);
     }
 
     @Override
@@ -162,20 +185,10 @@ public class UserManager implements UserService {
      */
 
     @Override
-    public void addRoleToUser(String username, String role) {
-        var userResult = userDao.findByUsername(username);
-        if(userResult.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-        var user = userResult.get();
+    public void addRoleToUser(String username, KeycloakRole role) {
+        var user = userDao.findByUsername(username).orElseThrow(UserNotFoundException::new);
 
-        List<String> userRoles = keycloakService.getUserRoles(user.getId().toString());
-
-        if (userRoles.contains(role)) {
-            throw new RuntimeException();
-        }
-
-        keycloakService.assignRealmRole(user.getId().toString(), role);
+        keycloakAdminClientService.assignRealmRole(user.getId().toString(), role);
 
         userDao.save(user);
     }
@@ -265,11 +278,15 @@ public class UserManager implements UserService {
     @Override
     public UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest) {
         logger.info("Updating user with id: {}", userId);
-        var userResult = userDao.findById(userId);
-        if (userResult.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-        var user = userResult.get();
+        var user = userDao.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        logger.info("Updating user in keycloak");
+        UserUpdateKeycloakRequest userKeycloakRequest = new UserUpdateKeycloakRequest();
+        userKeycloakRequest.setFirstName(updateUserRequest.getFirstName());
+        userKeycloakRequest.setLastName(updateUserRequest.getLastName());
+
+        keycloakAdminClientService.updateUser(userId.toString(), userKeycloakRequest);
+        logger.info("Updated user in keycloak");
 
         user.setFirstName(updateUserRequest.getFirstName());
         user.setLastName(updateUserRequest.getLastName());
@@ -286,6 +303,17 @@ public class UserManager implements UserService {
                         "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
 
         return userMapper.toDto(updatedUser);
+    }
+
+    @Override
+    public void changePassword(UUID userId, String newPassword) {
+
+        logger.info("Changing password for user with id: {}", userId);
+        var user = userDao.findById(userId).orElseThrow(UserNotFoundException::new);
+
+        keycloakAdminClientService.resetPassword(userId.toString(), newPassword);
+        logger.info("Changed password for user with id: {}", userId);
+
     }
 
     @Override

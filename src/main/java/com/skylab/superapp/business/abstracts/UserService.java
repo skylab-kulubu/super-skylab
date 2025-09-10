@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.abstracts;
 
+import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +14,6 @@ public interface UserService{
 
     void deleteUser(UUID id);
 
-
     List<UserDto> getAllUsers();
 
     UserDto getUserById(UUID id);
@@ -22,7 +22,7 @@ public interface UserService{
 
     UserDto getUserByEmail(String email);
 
-    void addRoleToUser(String username, String role);
+    void addRoleToUser(String username, KeycloakRole role);
 
     void setLastLoginWithUsername(String username);
 
@@ -31,6 +31,8 @@ public interface UserService{
     UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest, HttpServletRequest request);
 
     UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest);
+
+    void changePassword(UUID userId, String newPassword);
 
     UserDto getAuthenticatedUser(HttpServletRequest request);
 
