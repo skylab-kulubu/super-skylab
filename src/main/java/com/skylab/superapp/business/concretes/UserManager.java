@@ -1,12 +1,10 @@
 package com.skylab.superapp.business.concretes;
 
-import com.nimbusds.jwt.SignedJWT;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.keycloak.KeycloakAdminClientService;
 import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
-import com.skylab.superapp.core.utilities.keycloak.KeycloakService;
 import com.skylab.superapp.core.utilities.keycloak.dtos.UserKeycloakRequest;
 import com.skylab.superapp.core.utilities.keycloak.dtos.UserUpdateKeycloakRequest;
 import com.skylab.superapp.core.utilities.mail.EmailService;
@@ -17,6 +15,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -211,27 +212,23 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public User getAuthenticatedUserEntity(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Authorization header missing or invalid");
+    public User getAuthenticatedUserEntity() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user found in context");
         }
 
-        String token = authHeader.substring(7);
-
+        Object principal = authentication.getPrincipal();
         String userId;
-        try{
-            SignedJWT jwt = SignedJWT.parse(token);
-            userId = jwt.getJWTClaimsSet().getSubject();
-        }catch (Exception e){
-            throw new RuntimeException("Invalid JWT token", e);
+
+        if (principal instanceof Jwt jwt){
+            userId= jwt.getSubject();
+        }else {
+            throw new RuntimeException("Principal is not of type Jwt");
         }
 
-
-        var user = userDao.findById(UUID.fromString(userId)).orElseThrow(() ->
-                new UserNotFoundException("User not found with id: " + userId));
-
-        return user;
+        return userDao.findById(UUID.fromString(userId))
+                .orElseThrow(UserNotFoundException::new);
 
     }
 
@@ -254,9 +251,9 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+    public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest) {
         logger.info("Updating authenticated user");
-        var user = getAuthenticatedUserEntity(request);
+        var user = getAuthenticatedUserEntity();
 
         user.setFirstName(updateUserRequest.getFirstName());
         user.setLastName(updateUserRequest.getLastName());
@@ -317,9 +314,9 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public UserDto getAuthenticatedUser(HttpServletRequest request) {
+    public UserDto getAuthenticatedUser() {
         logger.info("Retrieving authenticated user dto");
-        var user = getAuthenticatedUserEntity(request);
+        var user = getAuthenticatedUserEntity();
         return userMapper.toDto(user);
     }
 

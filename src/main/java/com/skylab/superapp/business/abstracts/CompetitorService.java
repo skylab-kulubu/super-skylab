@@ -16,7 +16,7 @@ public interface CompetitorService {
     void deleteCompetitor(UUID competitorId);
     CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent);
 
-    List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent, HttpServletRequest request);
+    List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent);
 
 
     List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent);

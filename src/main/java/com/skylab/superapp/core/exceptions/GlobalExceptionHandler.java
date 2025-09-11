@@ -13,14 +13,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(SuperSkyLabException.class)
-    public ResponseEntity<Result> handleSuperSkyLabException(SuperSkyLabException exception, HttpServletRequest request){
+    public ResponseEntity<Result> handleSuperSkyLabException(SuperSkyLabException exception){
         HttpStatus status = mapErrorCodeToStatus(exception.getErrorCode());
         return ResponseEntity.status(status)
                 .body(new ErrorResult(
                         exception.getMessage(),
                         exception.getErrorCode(),
-                        status,
-                        request.getRequestURI()));
+                        status));
     }
 
     private HttpStatus mapErrorCodeToStatus(ErrorCode errorCode) {

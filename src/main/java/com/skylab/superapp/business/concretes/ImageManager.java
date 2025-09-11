@@ -32,12 +32,12 @@ public class ImageManager implements ImageService {
     }
 
     @Override
-    public Image addImage(MultipartFile file, HttpServletRequest request) {
+    public Image addImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ImageCannotBeNullException();
         }
 
-        var userResult = userService.getAuthenticatedUserEntity(request);
+        var userResult = userService.getAuthenticatedUserEntity();
 
         try {
             Image imageToSave = Image.builder()

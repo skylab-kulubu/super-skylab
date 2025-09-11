@@ -102,8 +102,8 @@ public class CompetitorManager implements CompetitorService {
     }
 
     @Override
-    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent, HttpServletRequest request) {
-        var authenticatedUser = userService.getAuthenticatedUserEntity(request);
+    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent) {
+        var authenticatedUser = userService.getAuthenticatedUserEntity();
         var result = competitorDao.findCompetitorsByUser(authenticatedUser);
         return competitorMapper.toDtoList(result, includeUser, includeEvent);
     }

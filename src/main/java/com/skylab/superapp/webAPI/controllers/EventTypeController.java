@@ -10,7 +10,6 @@ import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,58 +29,56 @@ public class EventTypeController {
 
 
     @GetMapping("/")
-    public ResponseEntity<DataResult<List<EventTypeDto>>> getAllEventTypes(HttpServletRequest request) {
+    public ResponseEntity<DataResult<List<EventTypeDto>>> getAllEventTypes() {
         var result = eventTypeService.getAllEventTypes();
 
         if (result.isEmpty()){
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .body(new SuccessDataResult(EventTypeMessages.EVENT_TYPES_NO_CONTENT,
-                            HttpStatus.OK, request.getRequestURI()));
+                            HttpStatus.OK));
         }
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPES_LISTED,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
 
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResult<EventTypeDto>> getEventTypeById(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<DataResult<EventTypeDto>> getEventTypeById(@PathVariable UUID id) {
         var result = eventTypeService.getEventTypeById(id);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPE_FOUND,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
 
     @PostMapping("/")
-    public ResponseEntity<DataResult<EventTypeDto>> addEventType(@RequestBody CreateEventTypeRequest createEventTypeRequest,
-                                                                 HttpServletRequest request) {
+    public ResponseEntity<DataResult<EventTypeDto>> addEventType(@RequestBody CreateEventTypeRequest createEventTypeRequest) {
         var result = eventTypeService.addEventType(createEventTypeRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPE_ADDED,
-                        HttpStatus.CREATED, request.getRequestURI()));
+                        HttpStatus.CREATED));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<DataResult<EventTypeDto>> updateEventType(@PathVariable UUID id,
-                                                  @RequestBody UpdateEventTypeRequest updateEventTypeRequest,
-                                                  HttpServletRequest request) {
+                                                  @RequestBody UpdateEventTypeRequest updateEventTypeRequest) {
         var result = eventTypeService.updateEventType(id, updateEventTypeRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPE_UPDATED,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteEventType(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<Result> deleteEventType(@PathVariable UUID id) {
         eventTypeService.deleteEventType(id);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(EventTypeMessages.EVENT_TYPE_DELETED, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessResult(EventTypeMessages.EVENT_TYPE_DELETED, HttpStatus.OK));
     }
 
 

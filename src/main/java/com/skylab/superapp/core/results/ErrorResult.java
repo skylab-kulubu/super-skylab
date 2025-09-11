@@ -6,16 +6,16 @@ public class ErrorResult extends Result {
 
 	private String errorCode;
 
-	public ErrorResult(String message, ErrorCode errorCode, HttpStatus httpStatus, String path) {
-		super(false, message, httpStatus, path);
+	public ErrorResult(String message, ErrorCode errorCode, HttpStatus httpStatus) {
+		super(false, message, httpStatus);
 		this.errorCode = errorCode.name();
 	}
 
-	public ErrorResult(String message, HttpStatus httpStatus, String path) {
-		super(false, message, httpStatus, path);
+	public ErrorResult(String message, HttpStatus httpStatus) {
+		super(false, message, httpStatus);
 	}
 
-	public ErrorResult(HttpStatus httpStatus, String path) {
-		super(false, httpStatus, path);
+	public ErrorResult(HttpStatus httpStatus) {
+		super(false, httpStatus);
 	}
 }

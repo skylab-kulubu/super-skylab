@@ -8,7 +8,6 @@ import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Image.ImageDto;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,14 +38,14 @@ public class ImageController {
     }
 
     @PostMapping("/addImage")
-    public ResponseEntity<DataResult<ImageDto>> addImage(@RequestParam("image") MultipartFile image, HttpServletRequest request) {
-        var result = imageService.addImage(image, request);
+    public ResponseEntity<DataResult<ImageDto>> addImage(@RequestParam("image") MultipartFile image) {
+        var result = imageService.addImage(image);
         var dto = imageMapper.toDto(result);
         dto.setUrl(API_URL + IMAGE_GET_URL + result.getUrl());
 
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new SuccessDataResult<>(dto, ImageMessages.ADD_SUCCESS, HttpStatus.CREATED, request.getRequestURI()));
+                .body(new SuccessDataResult<>(dto, ImageMessages.ADD_SUCCESS, HttpStatus.CREATED));
     }
 
     @GetMapping("/getImageByUrl/{url}")
@@ -63,32 +62,32 @@ public class ImageController {
     }
 
     @GetMapping("/getAllImages")
-    public ResponseEntity<DataResult<List<ImageDto>>> getAllImages(HttpServletRequest request) {
+    public ResponseEntity<DataResult<List<ImageDto>>> getAllImages() {
         var images = imageService.getAllImages();
         for (var image : images){
             image.setUrl(API_URL + IMAGE_GET_URL + image.getUrl());
         }
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(images, ImageMessages.GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(images, ImageMessages.GET_SUCCESS, HttpStatus.OK));
     }
 
     @GetMapping("/getImageDetailsByUrl/{url}")
-    public ResponseEntity<?> getImageDetailsByUrl(@PathVariable String url, HttpServletRequest request) {
+    public ResponseEntity<?> getImageDetailsByUrl(@PathVariable String url) {
         var image = imageService.getImageByUrl(url);
         var dto = imageMapper.toDto(image);
 
         dto.setUrl(API_URL + IMAGE_GET_URL + dto.getUrl());
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(dto, ImageMessages.GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(dto, ImageMessages.GET_SUCCESS, HttpStatus.OK));
     }
 
     @DeleteMapping("/deleteImageById/{id}")
-    public ResponseEntity<Result> deleteImageById(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<Result> deleteImageById(@PathVariable UUID id) {
         imageService.deleteImage(id);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(ImageMessages.DELETE_SUCCESS, HttpStatus.OK,request.getRequestURI()));
+                .body(new SuccessResult(ImageMessages.DELETE_SUCCESS, HttpStatus.OK));
     }
 }

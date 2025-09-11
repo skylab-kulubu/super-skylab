@@ -28,13 +28,13 @@ public interface UserService{
 
     List<UserDto> getAllUsersByIds(List<UUID> userIds);
 
-    UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest, HttpServletRequest request);
+    UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 
     UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest);
 
     void changePassword(UUID userId, String newPassword);
 
-    UserDto getAuthenticatedUser(HttpServletRequest request);
+    UserDto getAuthenticatedUser();
 
     User getUserEntityById(UUID id);
 
@@ -42,7 +42,7 @@ public interface UserService{
 
     User getUserEntityByEmail(String email);
 
-    User getAuthenticatedUserEntity(HttpServletRequest request);
+    User getAuthenticatedUserEntity();
 
 
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface AnnouncementService {
 
-    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest, HttpServletRequest request);
+    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest);
 
     void deleteAnnouncement(UUID id);
 

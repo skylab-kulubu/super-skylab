@@ -44,7 +44,7 @@ public class AnnouncementManager implements AnnouncementService {
 
 
     @Override
-    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest, HttpServletRequest request) {
+    public AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest) {
         // no need to check tenant, because tenants that doesnt have role wont be able to access this endpoint -yusssss
         /*
         var tenantCheck = userService.tenantCheck(createAnnouncementDto.getTenant(), username);
@@ -54,7 +54,7 @@ public class AnnouncementManager implements AnnouncementService {
 
          */
 
-        var author = userService.getAuthenticatedUserEntity(request);
+        var author = userService.getAuthenticatedUserEntity();
         //controlleradvice handles this exception so no need to check any kind of business rules here -yusssss
         /*
         if(!author.isSuccess()){

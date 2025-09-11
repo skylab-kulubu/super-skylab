@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface ImageService {
 
-    Image addImage(MultipartFile file, HttpServletRequest request);
+    Image addImage(MultipartFile file);
 
     List<Image> getImages();
 

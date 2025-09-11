@@ -7,11 +7,9 @@ import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
-import com.skylab.superapp.entities.DTOs.User.ChangePasswordRequest;
 import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,70 +29,67 @@ public class UserController {
 
 
     @PostMapping("/addUser")
-    public ResponseEntity<Result> addUser(@RequestBody CreateUserRequest createUserRequest, HttpServletRequest request) {
+    public ResponseEntity<Result> addUser(@RequestBody CreateUserRequest createUserRequest) {
         userService.addUser(createUserRequest);
         return ResponseEntity.status(201)
-                .body(new SuccessResult(UserMessages.USER_ADDED_SUCCESS, HttpStatus.CREATED, request.getRequestURI()));
+                .body(new SuccessResult(UserMessages.USER_ADDED_SUCCESS, HttpStatus.CREATED));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser(HttpServletRequest request) {
-     var result = userService.getAuthenticatedUser(request);
+    public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser() {
+     var result = userService.getAuthenticatedUser();
      return ResponseEntity.status(HttpStatus.OK)
              .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS,
-                     HttpStatus.OK, request.getRequestURI()));
+                     HttpStatus.OK));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@RequestBody UpdateUserRequest updateUserRequest,
-                                                           HttpServletRequest request) {
-       var result =userService.updateAuthenticatedUser(updateUserRequest, request);
+    public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@RequestBody UpdateUserRequest updateUserRequest) {
+       var result =userService.updateAuthenticatedUser(updateUserRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK));
     }
 
 
     @GetMapping("/")
-    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(HttpServletRequest request) {
+    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers() {
         var result = userService.getAllUsers();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.ALL_USERS_RETRIEVED_SUCCESS,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResult<UserDto>> getUserById(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<DataResult<UserDto>> getUserById(@PathVariable UUID id) {
         var result = userService.getUserById(id);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS, HttpStatus.OK));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<DataResult<UserDto>> updateUserById(@PathVariable UUID id,
-                                                 @RequestBody UpdateUserRequest updateUserRequest,
-                                                 HttpServletRequest request) {
+                                                 @RequestBody UpdateUserRequest updateUserRequest) {
         var result = userService.updateUser(id, updateUserRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteUser(@PathVariable UUID id, HttpServletRequest request) {
+    public ResponseEntity<Result> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK));
     }
 
     @PutMapping("/addRole/{username}")
-    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam KeycloakRole role,
-                                                HttpServletRequest request) {
+    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam KeycloakRole role) {
         userService.addRoleToUser(username, role);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK));
     }
 
 

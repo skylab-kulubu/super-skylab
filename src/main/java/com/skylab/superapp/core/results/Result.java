@@ -1,7 +1,10 @@
 package com.skylab.superapp.core.results;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 
@@ -32,17 +35,19 @@ public class Result {
 	public LocalDateTime getTimeStamp() {
 		return timeStamp;
 	}
-	
-	public Result(boolean success, String message, HttpStatus httpStatus, String path) {
+
+	public Result(boolean success, String message, HttpStatus httpStatus) {
 		this.success = success;
 		this.message = message;
 		this.httpStatus = httpStatus;
-		this.path = path;
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+		this.path = request.getRequestURI();
 	}
-	
-	public Result(boolean success, HttpStatus httpStatus, String path) {
+
+	public Result(boolean success, HttpStatus httpStatus) {
 		this.success = success;
 		this.httpStatus = httpStatus;
-		this.path = path;
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+		this.path = request.getRequestURI();
 	}
 }

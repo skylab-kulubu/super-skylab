@@ -21,6 +21,11 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/e-skylab/protocol/openid-connect/certs
   mail:
     host: smtp.office365.com
     port: 587
@@ -42,12 +47,6 @@ spring:
 
 server:
   port: 9010
-
-logging:
-  level:
-    org:
-      hibernate:
-        SQL: DEBUG
 
 api:
   url: http://localhost:9010
@@ -73,5 +72,3 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
-
-

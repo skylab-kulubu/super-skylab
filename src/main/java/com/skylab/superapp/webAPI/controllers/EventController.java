@@ -9,7 +9,6 @@ import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,14 +33,13 @@ public class EventController {
                                                                    @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                                    @RequestParam(defaultValue = "false") boolean includeImages,
                                                                    @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                                   @RequestParam(defaultValue = "false") boolean includeCompetition,
-                                                                   HttpServletRequest request){
+                                                                   @RequestParam(defaultValue = "false") boolean includeCompetition){
         var result = eventService.getAllEvents(includeEventType, includeSession,
                 includeCompetitors, includeImages,
                 includeSeason, includeCompetition);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
     @GetMapping("/{id}")
@@ -51,40 +49,36 @@ public class EventController {
                                                              @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                              @RequestParam(defaultValue = "false") boolean includeImages,
                                                              @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                             @RequestParam(defaultValue = "false") boolean includeCompetition,
-                                                             HttpServletRequest request) {
+                                                             @RequestParam(defaultValue = "false") boolean includeCompetition) {
        var result = eventService.getEventById(id, includeEventType, includeSession,
                 includeCompetitors, includeImages,
                 includeSeason, includeCompetition);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_EVENT_BY_ID,
-                        HttpStatus.OK, request.getRequestURI()));
+                        HttpStatus.OK));
     }
 
     @PostMapping("/")
-    public ResponseEntity<DataResult<EventDto>> addEvent(@RequestBody CreateEventRequest createEventRequest,
-                                                         HttpServletRequest request) {
+    public ResponseEntity<DataResult<EventDto>> addEvent(@RequestBody CreateEventRequest createEventRequest) {
         var eventResult = eventService.addEvent(createEventRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(eventResult, EventMessages.SUCCESS_ADD_EVENT,
-                        HttpStatus.CREATED, request.getRequestURI()));
+                        HttpStatus.CREATED));
     }
 
     @PutMapping("/")
-    public ResponseEntity<DataResult<EventDto>> updateEvent(@RequestBody UpdateEventRequest updateEventRequest,
-                                                            HttpServletRequest request) {
+    public ResponseEntity<DataResult<EventDto>> updateEvent(@RequestBody UpdateEventRequest updateEventRequest) {
          var result = eventService.updateEvent(updateEventRequest);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
     }
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteEvent(@PathVariable UUID id,
-                                         HttpServletRequest request) {
+    public ResponseEntity<Result> deleteEvent(@PathVariable UUID id) {
         eventService.deleteEvent(id);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(EventMessages.SUCCESS_DELETE_EVENT, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessResult(EventMessages.SUCCESS_DELETE_EVENT, HttpStatus.OK));
     }
 
     @GetMapping("/active")
@@ -93,14 +87,13 @@ public class EventController {
                                                                       @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                                       @RequestParam(defaultValue = "false") boolean includeImages,
                                                                       @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                                      @RequestParam(defaultValue = "false") boolean includeCompetition,
-                                                                      HttpServletRequest request) {
+                                                                      @RequestParam(defaultValue = "false") boolean includeCompetition) {
         var result = eventService.getAllEventByIsActive(true, includeEventType, includeSession,
                 includeCompetitors, includeImages,
                 includeSeason, includeCompetition);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
     }
 
     @GetMapping("/getAllByEventType")
@@ -110,8 +103,7 @@ public class EventController {
                                                @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                @RequestParam(defaultValue = "false") boolean includeImages,
                                                @RequestParam(defaultValue = "false") boolean includeSeason,
-                                               @RequestParam(defaultValue = "false") boolean includeCompetition,
-                                               HttpServletRequest request) {
+                                               @RequestParam(defaultValue = "false") boolean includeCompetition) {
 
         var result = eventService.getAllEventsByEventTypeName(eventTypeName,
                 includeEventType, includeSession,
@@ -119,7 +111,7 @@ public class EventController {
                 includeSeason, includeCompetition);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK, request.getRequestURI()));
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
     }
 
     /*
