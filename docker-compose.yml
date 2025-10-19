@@ -2,15 +2,22 @@ version: '3.8'
 
 services:
   super-skylab-app:
-    container_name: super-skylab-app
-    build: .
+    image: super-skylab-app
     ports:
       - "9010:9010"
     depends_on:
       - super-skylab-db
     networks:
         - nginx-network
-
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    environment:
+        JAR_PARAMS: ""
+    command: ["-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-Xshare:on"]
   super-skylab-db:
     container_name: super-skylab-db
     image: postgres:latest
