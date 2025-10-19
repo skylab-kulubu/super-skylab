@@ -44,7 +44,12 @@ spring:
     username: rabbitMQ
     password: rabbitMQ
     virtual-host: /
-
+  docker:
+    compose:
+      lifecycle-management: start_and_stop
+  threads:
+      virtual:
+        enabled: true
 server:
   port: 9010
 
