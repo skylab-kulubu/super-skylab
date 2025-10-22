@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   super-skylab-app:
@@ -8,8 +8,15 @@ services:
     depends_on:
       - super-skylab-db
     networks:
-        - nginx-network
-    command: ["-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-Xshare:on"]
+      - nginx-network
+    command:
+      [
+        "-XX:MaxRAMPercentage=75.0",
+        "-XX:+UseG1GC",
+        "-XX:+UseStringDeduplication",
+        "-XX:+ExitOnOutOfMemoryError",
+        "-Xshare:on",
+      ]
   super-skylab-db:
     container_name: super-skylab-db
     image: postgres:latest
@@ -25,5 +32,5 @@ services:
       - nginx-network
 
 networks:
-    nginx-network:
-      external: true
+  nginx-network:
+    external: true
