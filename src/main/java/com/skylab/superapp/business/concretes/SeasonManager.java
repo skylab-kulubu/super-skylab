@@ -2,6 +2,7 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.SeasonService;
+import com.skylab.superapp.core.constants.SeasonMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.SeasonMapper;
 import com.skylab.superapp.dataAccess.SeasonDao;
@@ -32,7 +33,7 @@ public class SeasonManager implements SeasonService {
     @Override
     public SeasonDto addSeason(CreateSeasonRequest createSeasonRequest) {
         if(createSeasonRequest.getName() == null || createSeasonRequest.getName().isEmpty()) {
-           throw new SeasonNameCannotBeNullOrBlankException();
+           throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         if(seasonDao.existsByName(createSeasonRequest.getName())) {
@@ -61,7 +62,7 @@ public class SeasonManager implements SeasonService {
         var season = getSeasonEntityById(id);
 
         if (season.getName()== null || season.getName().isEmpty()) {
-            throw new SeasonNameCannotBeNullOrBlankException();
+            throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         if (updateSeasonRequest.getStartDate().isAfter(updateSeasonRequest.getEndDate())) {
@@ -84,11 +85,11 @@ public class SeasonManager implements SeasonService {
     @Override
     public SeasonDto getSeasonByName(String name, boolean includeEvents) {
         if(name == null || name.isEmpty()) {
-            throw new SeasonNameCannotBeNullOrBlankException();
+            throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
         var result = seasonDao.findByName(name);
        if (result.isEmpty()){
-           throw new SeasonNotFoundException();
+           throw new ResourceNotFoundException(SeasonMessages.SEASON_NOT_FOUND);
        }
 
         return seasonMapper.toDto(result.get());
@@ -118,7 +119,7 @@ public class SeasonManager implements SeasonService {
         }
 
         if (event.getSeason() != null && event.getSeason().getId() != season.getId()) {
-            throw new EventIsInAnotherSeasonException();
+            throw new BusinessException(SeasonMessages.EVENT_IS_IN_ANOTHER_SEASON);
         }
 
         season.getEvents().add(event);
@@ -148,6 +149,6 @@ public class SeasonManager implements SeasonService {
 
     @Override
     public Season getSeasonEntityById(UUID id) {
-        return seasonDao.findById(id).orElseThrow(SeasonNotFoundException::new);
+        return seasonDao.findById(id).orElseThrow(()-> new ResourceNotFoundException(SeasonMessages.SEASON_NOT_FOUND));
     }
 }

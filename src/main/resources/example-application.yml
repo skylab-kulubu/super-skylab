@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: super-skylab
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+      javax:
+        persistence:
+          validation:
+            mode: none
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    url: jdbc:postgresql://super-skylab-db:5432/superSkyLabDB
+    username: postgres
+    password: postgres
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/e-skylab/protocol/openid-connect/certs
+  mail:
+    host: smtp.office365.com
+    port: 587
+    username: info@yildizskylab.com
+    password: app-password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: rabbitMQ
+    password: rabbitMQ
+    virtual-host: /
+
+  ldap:
+    urls: ldap://ldap-server:3389
+    base: dc=yildizskylab,dc=com
+    username: cn=Directory Manager
+    password: admin
+    base-environment:
+      base-environment:
+        java:
+          naming:
+            ldap:
+              attributes:
+                binary: entryUUID
+
+server:
+  port: 9010
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    servers:
+      - url: http://localhost:8081
+        description: Gateway Server
+      - url: http://localhost:9010
+        description: Direct Access (Development Only)
+
+
+keycloak:
+  base-url: http://keycloak:8080
+  realm: e-skylab
+  client-id: client-id
+  client-secret: secret
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+
+r2:
+  endpoint: r2-endpoint
+  public-url: r2-public-url
+  access-key: access-key
+  secret-key: secret-key
+  bucket-name: bucket-name

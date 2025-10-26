@@ -9,9 +9,11 @@ import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -59,16 +61,17 @@ public class EventController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<DataResult<EventDto>> addEvent(@RequestBody CreateEventRequest createEventRequest) {
-        var eventResult = eventService.addEvent(createEventRequest);
+    public ResponseEntity<DataResult<EventDto>> addEvent(@RequestPart("data") @Valid CreateEventRequest createEventRequest,
+                                                         @RequestPart(value = "coverImage", required = false) MultipartFile coverImageFile) {
+        var eventResult = eventService.addEvent(createEventRequest, coverImageFile);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(eventResult, EventMessages.SUCCESS_ADD_EVENT,
                         HttpStatus.CREATED));
     }
 
-    @PutMapping("/")
-    public ResponseEntity<DataResult<EventDto>> updateEvent(@RequestBody UpdateEventRequest updateEventRequest) {
-         var result = eventService.updateEvent(updateEventRequest);
+    @PatchMapping("/{id}")
+    public ResponseEntity<DataResult<EventDto>> updateEvent(@PathVariable UUID id, @RequestBody UpdateEventRequest updateEventRequest) {
+         var result = eventService.updateEvent(id, updateEventRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
     }
@@ -96,7 +99,7 @@ public class EventController {
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
     }
 
-    @GetMapping("/getAllByEventType")
+    @GetMapping("/event-type")
     public ResponseEntity<?> getAllByEventType(@RequestParam String eventTypeName,
                                                @RequestParam(defaultValue = "false") boolean includeEventType,
                                                @RequestParam(defaultValue = "false") boolean includeSession,
@@ -114,33 +117,4 @@ public class EventController {
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
     }
 
-    /*
-    @PostMapping("/updateBizbizeEvent")
-    public ResponseEntity<?> updateBizbizeEvent(@RequestBody GetBizbizeEventDto getEventDto) {
-        var result = eventService.updateBizbizeEvent(getEventDto);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-
-
-    @GetMapping("/getAllBizbizeEvents")
-    public ResponseEntity<?> getAllBizbizeEvents() {
-        var result = eventService.getAllBizbizeEvents();
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-
-    @PostMapping("/addImagesToEvent")
-    public ResponseEntity<?> addImagesToEvent(@RequestParam int id, @RequestBody List<Integer> imageIds) {
-        var result = eventService.addImagesToEvent(id, imageIds);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-    @GetMapping("/getAllFutureEventsByTenant")
-    public ResponseEntity<?> getAllFutureEventsByTenant(@RequestParam String tenant) {
-        var result = eventService.getAllFutureEventsByEventType(tenant);
-        return ResponseEntity.status(result.getHttpStatus()).body(result);
-    }
-
-     */
 }

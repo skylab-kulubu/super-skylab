@@ -1,8 +1,9 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
-import com.skylab.superapp.core.exceptions.EventNotFoundException;
+import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.ImageAlreadyAddedException;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.dataAccess.EventDao;
 import com.skylab.superapp.entities.Competition;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +44,7 @@ public class EventManager implements EventService {
     }
 
     @Override
-    public EventDto addEvent(CreateEventRequest createEventRequest) {
+    public EventDto addEvent(CreateEventRequest createEventRequest, MultipartFile coverImageFile) {
         logger.info("Adding new event: {}", createEventRequest.getName());
         EventType eventType = null;
         if (createEventRequest.getEventTypeId() != null) {
@@ -53,6 +56,13 @@ public class EventManager implements EventService {
             competition = competitionService.getCompetitionEntityById(createEventRequest.getCompetitionId());
         }
 
+        Image savedCoverImage = null;
+        if (coverImageFile != null && !coverImageFile.isEmpty()) {
+            savedCoverImage = imageService.uploadImage(coverImageFile);
+        }
+
+
+
         Event event = Event.builder()
                 .name(createEventRequest.getName())
                 .description(createEventRequest.getDescription())
@@ -63,7 +73,9 @@ public class EventManager implements EventService {
                 .active(createEventRequest.isActive())
                 .linkedin(createEventRequest.getLinkedin())
                 .competition(competition)
+                .coverImage(savedCoverImage)
                 .build();
+
         logger.info("Event created: {}", event.getName());
         return eventMapper.toDto(eventDao.save(event));
     }
@@ -75,8 +87,8 @@ public class EventManager implements EventService {
     }
 
     @Override
-    public EventDto updateEvent(UpdateEventRequest updateEventRequest) {
-        var event = getEventEntityById(updateEventRequest.getId());
+    public EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest) {
+        var event = getEventEntityById(id);
         logger.info("Updating event id: {}", event.getId());
 
         event.setName(updateEventRequest.getName() == null
@@ -132,20 +144,32 @@ public class EventManager implements EventService {
 
 
     @Override
+    @Transactional
     public void addImagesToEvent(UUID eventId, List<UUID> imageIds) {
         var event = getEventEntityById(eventId);
         var images = imageService.getImagesByIds(imageIds);
 
 
-        List<Image> imageList = new ArrayList<>();
-        for (var image : images) {
-            if (image.getEvent() != null) {
-                throw new ImageAlreadyAddedException();
-            }
-            image.setEvent(event);
-            imageList.add(image);
+        for (Image image : images) {
+            event.getImages().add(image);
         }
-        event.setImages(imageList);
+        eventDao.save(event);
+
+    }
+
+    @Override
+    @Transactional
+    public void removeImagesFromEvent(UUID eventId, List<UUID> imageIds) {
+        Event event = getEventEntityById(eventId);
+
+        List<Image> images = imageService.getImagesByIds(imageIds);
+
+        for (Image image : images) {
+            if (!event.getImages().contains(image)) {
+                throw new ResourceNotFoundException(EventMessages.IMAGE_NOT_FOUND_IN_EVENT);
+            }
+            event.getImages().remove(image);
+        }
 
         eventDao.save(event);
     }
@@ -203,7 +227,7 @@ public class EventManager implements EventService {
 
     @Override
     public Event getEventEntityById(UUID id) {
-        return eventDao.findById(id).orElseThrow(EventNotFoundException::new);
+        return eventDao.findById(id).orElseThrow(()-> new ResourceNotFoundException(EventMessages.EVENT_NOT_FOUND));
     }
 
 }

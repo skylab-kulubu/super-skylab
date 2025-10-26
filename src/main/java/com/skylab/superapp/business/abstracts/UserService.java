@@ -1,9 +1,8 @@
 package com.skylab.superapp.business.abstracts;
 
-import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
 import com.skylab.superapp.entities.DTOs.User.*;
-import com.skylab.superapp.entities.User;
-import jakarta.servlet.http.HttpServletRequest;
+import com.skylab.superapp.entities.UserProfile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,11 +21,7 @@ public interface UserService{
 
     UserDto getUserByEmail(String email);
 
-    void addRoleToUser(String username, KeycloakRole role);
-
-    void setLastLoginWithUsername(String username);
-
-    List<UserDto> getAllUsersByIds(List<UUID> userIds);
+    void addRoleToUser(String username, String role);
 
     UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 
@@ -36,13 +31,11 @@ public interface UserService{
 
     UserDto getAuthenticatedUser();
 
-    User getUserEntityById(UUID id);
+    UserProfile getUserEntityById(UUID id);
 
-    User getUserEntityByUsername(String username);
+    UserProfile getAuthenticatedUserEntity();
 
-    User getUserEntityByEmail(String email);
-
-    User getAuthenticatedUserEntity();
+    void uploadProfilePictureOfAuthenticatedUser(MultipartFile imageFile);
 
 
 }

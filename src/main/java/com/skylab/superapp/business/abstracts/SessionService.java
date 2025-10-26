@@ -11,9 +11,9 @@ import java.util.UUID;
 public interface SessionService {
     SessionDto addSession(CreateSessionRequest createSessionRequest);
 
-    List<SessionDto> getAllSessions(boolean includeSpeakerImage, boolean includeEvent);
+    List<SessionDto> getAllSessions(boolean includeEvent);
 
-    SessionDto getSessionById(UUID id, boolean includeSpeakerImage, boolean includeEvent);
+    SessionDto getSessionById(UUID id, boolean includeEvent);
 
     SessionDto updateSession(UUID id, UpdateSessionRequest updateSessionRequest);
 

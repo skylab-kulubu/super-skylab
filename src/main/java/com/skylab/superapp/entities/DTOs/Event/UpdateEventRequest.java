@@ -10,8 +10,6 @@ import java.util.UUID;
 @Setter
 public class UpdateEventRequest {
 
-    private UUID id;
-
     private String name;
 
     private String description;

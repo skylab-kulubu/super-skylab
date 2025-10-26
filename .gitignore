@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 
 data/
+src/main/resources/application.yml
 
 ### STS ###
 .apt_generated

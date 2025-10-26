@@ -5,11 +5,12 @@ import lombok.*;
 
 import java.util.UUID;
 
-@Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
+@Setter
 @Table(name = "competitors")
 public class Competitor {
 
@@ -19,7 +20,7 @@ public class Competitor {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserProfile user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)

@@ -30,6 +30,10 @@ public class Event {
     @Column(name = "description")
     private String description;
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "cover_image_id")
+    private Image coverImage;
+
     @Column(name = "location")
     private String location;
 
@@ -60,7 +64,12 @@ public class Event {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
     private List<Competitor> competitors;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "event_images",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "image_id")
+    )
     private List<Image> images;
 
     @ManyToOne

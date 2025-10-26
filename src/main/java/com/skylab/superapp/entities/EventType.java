@@ -22,9 +22,4 @@ public class EventType {
     @Column(name ="name")
     private String name;
 
-    @Column(name = "is_competitive")
-    private boolean competitive;
-
-
-
 }

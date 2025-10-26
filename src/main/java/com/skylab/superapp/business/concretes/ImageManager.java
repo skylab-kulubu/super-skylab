@@ -2,98 +2,150 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
-import com.skylab.superapp.core.exceptions.ImageCannotBeNullException;
-import com.skylab.superapp.core.exceptions.ImageNotFoundException;
+import com.skylab.superapp.core.config.r2.FolderType;
+import com.skylab.superapp.core.constants.ImageMessages;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
+import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.ImageMapper;
+import com.skylab.superapp.core.utilities.storage.R2StorageService;
 import com.skylab.superapp.dataAccess.ImageDao;
-import com.skylab.superapp.entities.DTOs.Image.ImageDto;
+import com.skylab.superapp.entities.DTOs.Image.response.UploadImageResponseDto;
 import com.skylab.superapp.entities.Image;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.context.annotation.Lazy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.security.SecureRandom;
-import java.util.Base64;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ImageManager implements ImageService {
 
     private final ImageDao imageDao;
+    private final R2StorageService r2StorageService;
     private final UserService userService;
+    private final Logger logger = LoggerFactory.getLogger(ImageManager.class);
     private final ImageMapper imageMapper;
 
-    public ImageManager(ImageDao imageDao,@Lazy UserService userService, ImageMapper imageMapper) {
+    public ImageManager(ImageDao imageDao, R2StorageService r2StorageService, UserService userService, ImageMapper imageMapper) {
         this.imageDao = imageDao;
+        this.r2StorageService = r2StorageService;
         this.userService = userService;
         this.imageMapper = imageMapper;
     }
 
     @Override
-    public Image addImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new ImageCannotBeNullException();
+    public Image uploadImage(MultipartFile image) {
+
+        logger.info("Uploading image file: {}", image.getOriginalFilename());
+        if (image.isEmpty()){
+            logger.error("Image upload failed: Image file is empty.");
+            throw new ValidationException(ImageMessages.IMAGE_CANNOT_BE_NULL);
         }
 
-        var userResult = userService.getAuthenticatedUserEntity();
+        if (image.getSize() > 10 * 1024 * 1024) {
+            logger.error("Image upload failed: Image file size exceeds the limit of 10 MB.");
+            throw new ValidationException(ImageMessages.IMAGE_SIZE_ERROR);
+        }
 
         try {
-            Image imageToSave = Image.builder()
-                    .type(file.getContentType())
-                    .name(file.getOriginalFilename())
-                    .data(file.getBytes())
-                    .url(generateUrl())
-                    .createdBy(userResult)
-                    .build();
+            byte[] cleanImageBytes = removeMetadata(image);
 
-            return imageDao.save(imageToSave);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save image: " + e.getMessage(), e);
+            String imageKey = r2StorageService.uploadFile(
+                    cleanImageBytes,
+                    image.getOriginalFilename(),
+                    image.getContentType(),
+                    FolderType.IMAGE);
+
+
+            Image newImage = new Image();
+            newImage.setFileName(image.getOriginalFilename());
+            newImage.setFileType(image.getContentType());
+            newImage.setFileUrl(imageKey);
+            newImage.setFileSize((long) cleanImageBytes.length);
+
+            var savedImage = imageDao.save(newImage);
+            logger.info("Image uploaded successfully: {}", savedImage.getFileName());
+            return savedImage;
+        }catch (Exception e) {
+            logger.error("Image upload failed fileName: {}, errorMessage: {}", image.getOriginalFilename(), e.getMessage());
+            throw new RuntimeException(ImageMessages.IMAGE_UPLOAD_ERROR);
         }
+
+
+
     }
 
     @Override
-    public List<Image> getImages() {
-        return imageDao.findAll();
+    public UploadImageResponseDto uploadImageDto(MultipartFile image) {
+        Image savedImage = uploadImage(image);
+        return imageMapper.toUploadImageResponseDto(savedImage);
     }
 
     @Override
-    public Image getImageById(UUID id) {
-        return getImageEntity(id);
-    }
+    public void deleteImage(UUID imageId) {
 
-    @Override
-    public void deleteImage(UUID id) {
-        var image = getImageEntity(id);
-        imageDao.delete(image);
-    }
-
-    @Override
-    public Image getImageByUrl(String url) {
-        return imageDao.findByUrl(url).orElseThrow(ImageNotFoundException::new);
     }
 
     @Override
     public List<Image> getImagesByIds(List<UUID> imageIds) {
-        return imageDao.findAllByIds(imageIds);
+        if (imageIds == null || imageIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Image> images = imageDao.findAllById(imageIds);
+
+        Set<UUID> foundIds = images.stream()
+                .map(Image::getId)
+                .collect(Collectors.toSet());
+
+        List<UUID> missing = imageIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .distinct()
+                .toList();
+
+        if (!missing.isEmpty()) {
+            throw new ResourceNotFoundException("Images not found for ids: " + missing);
+        }
+
+        return images;
     }
 
-    @Override
-    public List<ImageDto> getAllImages() {
-        var list = imageDao.findAll();
-        return imageMapper.toDtoList(list);
+
+    private byte[] removeMetadata(MultipartFile image) throws IOException {
+        BufferedImage originalImage = ImageIO.read(image.getInputStream());
+
+        if (originalImage == null){
+            throw new IOException("Image file is empty.");
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        String formatName = getFileExtension(image.getOriginalFilename()).substring(1);
+
+
+        ImageIO.write(originalImage, formatName, outputStream);
+
+        return outputStream.toByteArray();
     }
 
-    private String generateUrl() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] randomBytes = new byte[128];
-        secureRandom.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().encodeToString(randomBytes);
+    private String getFileExtension(String fileName) {
+
+        if (fileName == null || !fileName.contains(".")) {
+            throw new IllegalArgumentException("File has no extension: " + fileName);
+        }
+
+        return fileName.substring(fileName.lastIndexOf("."));
+
     }
 
-    private Image getImageEntity(UUID id){
-        return imageDao.findById(id).orElseThrow(ImageNotFoundException::new);
-    }
+
 }

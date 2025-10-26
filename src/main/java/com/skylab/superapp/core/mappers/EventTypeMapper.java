@@ -15,8 +15,7 @@ public class EventTypeMapper {
         }
         return new EventTypeDto(
                 eventType.getId(),
-                eventType.getName(),
-                eventType.isCompetitive()
+                eventType.getName()
         );
     }
 

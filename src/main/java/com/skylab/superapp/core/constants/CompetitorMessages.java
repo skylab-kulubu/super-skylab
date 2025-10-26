@@ -1,8 +1,6 @@
 package com.skylab.superapp.core.constants;
 
 public final class CompetitorMessages {
-    private CompetitorMessages() {}
-
     public static final String NAME_CANNOT_BE_NULL = "competitor.name.cannot.be.null";
     public static final String ADDED_SUCCESS = "competitor.added.success";
     public static final String NOT_FOUND = "competitor.not.found";
@@ -23,4 +21,6 @@ public final class CompetitorMessages {
     public static final String COMPETITOR_NOT_PARTICIPATING_IN_EVENT = "competitor.not.participating.in.event";
     public static final String COMPETITOR_LEADERBOARD_SUCCESS = "competitor.leaderboard.success";
     public static final String COMPETITOR_POINTS_SET_SUCCESS = "competitor.points.set.success";
+    public static final String COMPETITION_IS_NOT_COMPETITIVE = "competitor.competition.is.not.competitive";
+    public static final String COMPETITOR_ALREADY_IN_COMPETITION = "competitor.already.in.competition";
 }
