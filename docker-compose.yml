@@ -13,7 +13,7 @@ services:
 
   super-skylab-db:
     container_name: super-skylab-db
-    image: postgres:latest
+    image: postgres:alpine
     environment:
       POSTGRES_DB: superSkyLabDB
       POSTGRES_USER: postgres
@@ -24,10 +24,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - nginx-network
+    healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
 
 networks:
     nginx-network:
-      external: true
-
+      external: tru
 volumes:
   postgres_data:
