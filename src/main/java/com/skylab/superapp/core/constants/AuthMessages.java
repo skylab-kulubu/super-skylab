@@ -3,6 +3,12 @@ package com.skylab.superapp.core.constants;
 public final class AuthMessages {
 
     public static final String USER_REGISTERED_SUCCESSFULLY = "auth.user.registered.successfully";
+    public static final String EMAIL_NOT_NULL = "auth.email.not.null";
+    public static final String USERNAME_NOT_NULL = "auth.username.not.null";
+    public static final String LAST_NAME_NOT_NULL = "auth.last.name.not.null";
+    public static final String FIRST_NAME_NOT_NULL = "auth.first.name.not.null";
+    public static final String PASSWORD_NOT_NULL = "auth.password.not.null";
+    public static final String INVALID_EMAIL_FORMAT = "auth.invalid.email.format";
 
     private AuthMessages() {}
 

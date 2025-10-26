@@ -26,9 +26,8 @@ public class SessionController {
 
 
     @GetMapping("/")
-    public ResponseEntity<DataResult<List<SessionDto>>> getAllSessions(@RequestParam(defaultValue = "false") boolean includeSpeakerImage,
-                                                                       @RequestParam(defaultValue = "false") boolean includeEvent){
-        var result = sessionService.getAllSessions(includeSpeakerImage, includeEvent);
+    public ResponseEntity<DataResult<List<SessionDto>>> getAllSessions(@RequestParam(defaultValue = "false") boolean includeEvent){
+        var result = sessionService.getAllSessions(includeEvent);
         if (result.isEmpty()){
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .body(new SuccessDataResult<>(SessionMessages.SESSIONS_EMPTY,

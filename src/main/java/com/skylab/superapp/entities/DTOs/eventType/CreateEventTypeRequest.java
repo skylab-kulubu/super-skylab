@@ -9,6 +9,4 @@ public class CreateEventTypeRequest {
 
     private String name;
 
-    private boolean competitive;
-
 }

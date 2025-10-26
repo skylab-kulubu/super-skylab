@@ -18,7 +18,7 @@ public class SessionMapper {
         this.eventMapper = eventMapper;
     }
 
-    public SessionDto toDto(Session session, boolean includeSpeakerImage, boolean includeEvent) {
+    public SessionDto toDto(Session session, boolean includeEvent) {
 
         if (session == null) {
             return null;
@@ -28,7 +28,7 @@ public class SessionMapper {
                 session.getTitle(),
                 session.getSpeakerName(),
                 session.getSpeakerLinkedin(),
-                includeSpeakerImage ? imageMapper.toDto(session.getSpeakerImage()) : null,
+                (session.getSpeakerImage() != null) ? imageMapper.toString(session.getSpeakerImage()) : null,
                 session.getDescription(),
                 session.getStartTime(),
                 session.getEndTime(),
@@ -39,17 +39,17 @@ public class SessionMapper {
     }
 
     public SessionDto toDto(Session session) {
-        return toDto(session, false, false);
+        return toDto(session, false);
     }
 
 
-    public List<SessionDto> toDtoList(List<Session> sessions, boolean includeSpeakerImage, boolean includeEvent) {
+    public List<SessionDto> toDtoList(List<Session> sessions, boolean includeEvent) {
         return sessions.stream()
-                .map(session -> toDto(session, includeSpeakerImage, includeEvent))
+                .map(session -> toDto(session, includeEvent))
                 .toList();
     }
 
     public List<SessionDto> toDtoList(List<Session> sessions) {
-        return toDtoList(sessions, false, false);
+        return toDtoList(sessions, false);
     }
 }

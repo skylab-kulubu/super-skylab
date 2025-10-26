@@ -25,7 +25,4 @@ public interface EventTypeService {
     EventType getEventTypeEntityById(UUID eventTypeId);
 
     EventType getEventTypeEntityByName(String eventTypeName);
-
-
-
 }

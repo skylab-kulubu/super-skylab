@@ -2,10 +2,7 @@ package com.skylab.superapp.core.constants;
 
 public final class UserMessages {
 
-
-
-    private UserMessages() {}
-
+    public static final String FIRST_NAME_CANNOT_BE_NULL = "user.first.name.cannot.be.null";
     public static final String USERNAME_CANNOT_BE_NULL = "user.username.cannot.be.null";
     public static final String USERNAME_ALREADY_EXISTS = "user.username.already.exists";
     public static final String USER_ADDED_SUCCESS = "user.added.success";
@@ -41,4 +38,8 @@ public final class UserMessages {
     public static final String ALL_USERS_RETRIEVED_SUCCESS = "user.all.users.retrieved.success";
     public static final String ALL_STAFFS_RETRIEVED_SUCCESS = "user.all.staffs.retrieved.success";
     public static final String STAFFS_RETRIEVED_SUCCESS = "user.staffs.retrieved.success";
+    public static final String LAST_NAME_CANNOT_BE_NULL = "user.last.name.cannot.be.null";
+    public static final String INVALID_EMAIL_FORMAT = "user.invalid.email.format";
+    public static final String PASSWORD_CANNOT_BE_NULL = "user.password.cannot.be.null";
+    public static final String PROFILE_PICTURE_UPDATED_SUCCESS = "user.profile.picture.updated.success";
 }

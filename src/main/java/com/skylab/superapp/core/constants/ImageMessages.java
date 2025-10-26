@@ -3,6 +3,11 @@ package com.skylab.superapp.core.constants;
 public final class ImageMessages {
 
 
+    public static final String IMAGE_SIZE_ERROR =  "image.size.error";
+    public static final String IMAGE_UPLOAD_ERROR = "image.upload.error";
+    public static final String UPLOAD_IMAGE_SUCCESS = "image.upload.success";
+    public static final String DELETE_IMAGE_SUCCESS = "image.delete.success";
+
     private ImageMessages() {}
 
     public static final String IMAGE_CANNOT_BE_NULL = "image.cannot.be.null";

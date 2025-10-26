@@ -1,16 +1,15 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
-import com.skylab.superapp.core.exceptions.CompetitorNotFoundException;
-import com.skylab.superapp.core.exceptions.CompetitorNotParticipatingInEventException;
+import com.skylab.superapp.core.constants.CompetitorMessages;
+import com.skylab.superapp.core.exceptions.BusinessException;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +26,7 @@ public class CompetitorManager implements CompetitorService {
     private final CompetitionService competitionService;
     private final CompetitorMapper competitorMapper;
 
-    @Autowired
+
     public CompetitorManager(CompetitorDao competitorDao,@Lazy UserService userService,
                              @Lazy EventService eventService, @Lazy EventTypeService eventTypeService,
                              @Lazy CompetitionService competitionService, CompetitorMapper competitorMapper) {
@@ -44,12 +43,8 @@ public class CompetitorManager implements CompetitorService {
         var user = userService.getUserEntityById(createCompetitorRequest.getUserId());
         var event = eventService.getEventEntityById(createCompetitorRequest.getEventId());
 
-        if (!event.getType().isCompetitive()){
-            throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
-        }
-
         if (competitorDao.existsByUserAndEvent(user, event)) {
-            throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
+            throw new BusinessException(CompetitorMessages.COMPETITOR_ALREADY_IN_COMPETITION);
         }
 
         var competitor = Competitor.builder()
@@ -73,9 +68,6 @@ public class CompetitorManager implements CompetitorService {
 
         if (updateCompetitorRequest.getEventId() != null) {
             var event = eventService.getEventEntityById(updateCompetitorRequest.getEventId());
-            if (!event.getType().isCompetitive()) {
-                throw new CompetitorNotParticipatingInEventException(); // CHANGE THIS EXCEPTION
-            }
             competitor.setEvent(event);
         }
 
@@ -92,7 +84,7 @@ public class CompetitorManager implements CompetitorService {
 
     @Override
     public void deleteCompetitor(UUID competitorId) {
-        Competitor competitor = getCompetitorEntity(competitorId);
+        Competitor competitor = getCompetitorEntityById(competitorId);
         competitorDao.delete(competitor);
     }
 
@@ -199,13 +191,9 @@ public class CompetitorManager implements CompetitorService {
     @Override
     public Competitor getCompetitorEntityById(UUID id) {
         return competitorDao.findById(id)
-                .orElseThrow(CompetitorNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException(CompetitorMessages.COMPETITOR_NOT_FOUND));
     }
 
 
-    private Competitor getCompetitorEntity(UUID competitorId) {
-        return competitorDao.findById(competitorId)
-                .orElseThrow(CompetitorNotFoundException::new);
-    }
 
 }

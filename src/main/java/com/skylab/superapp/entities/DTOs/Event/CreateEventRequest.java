@@ -1,5 +1,7 @@
 package com.skylab.superapp.entities.DTOs.Event;
 
+import com.skylab.superapp.core.constants.EventMessages;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,12 +12,15 @@ import java.util.UUID;
 @Setter
 public class CreateEventRequest {
 
+    @NotNull(message = EventMessages.NAME_NOT_NULL)
     private String name;
 
     private String description;
 
+    @NotNull(message = EventMessages.LOCATION_NOT_NULL)
     private String location;
 
+    @NotNull(message = EventMessages.EVENT_TYPE_ID_NOT_NULL)
     private UUID eventTypeId;
 
     private String formUrl;
