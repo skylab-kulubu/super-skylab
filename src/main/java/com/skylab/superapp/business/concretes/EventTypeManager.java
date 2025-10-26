@@ -1,8 +1,9 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.EventTypeService;
-import com.skylab.superapp.core.exceptions.EventTypeCannotBeNullOrBlankException;
-import com.skylab.superapp.core.exceptions.EventTypeNotFoundException;
+import com.skylab.superapp.core.constants.EventTypeMessages;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
+import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventTypeMapper;
 import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
@@ -37,7 +38,7 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventTypeDto getEventTypeByName(String eventTypeName) {
-        var result =eventTypeDao.findByName(eventTypeName).orElseThrow(EventTypeNotFoundException::new);
+        var result =eventTypeDao.findByName(eventTypeName).orElseThrow(() -> new ResourceNotFoundException(EventTypeMessages.EVENT_TYPE_NOT_FOUND));
         return eventTypeMapper.toDto(result);
     }
 
@@ -50,12 +51,11 @@ public class EventTypeManager implements EventTypeService {
     @Override
     public EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest) {
         if(createEventTypeRequest.getName() == null || createEventTypeRequest.getName().isEmpty()) {
-            throw new EventTypeCannotBeNullOrBlankException();
+            throw new ValidationException(EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         var eventType = EventType.builder()
                 .name(createEventTypeRequest.getName())
-                .competitive(createEventTypeRequest.isCompetitive())
                 .build();
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
@@ -66,11 +66,10 @@ public class EventTypeManager implements EventTypeService {
         var eventType = getEventTypeEntityById(id);
 
         if(updateEventTypeRequest.getName() == null || updateEventTypeRequest.getName().isEmpty()) {
-            throw new EventTypeCannotBeNullOrBlankException();
+            throw new ValidationException(EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         eventType.setName(updateEventTypeRequest.getName() == null ? eventType.getName() : updateEventTypeRequest.getName());
-        eventType.setCompetitive(updateEventTypeRequest.isCompetitive());
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
     }
@@ -84,16 +83,17 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventType getEventTypeEntityById(UUID eventTypeId) {
-        return eventTypeDao.findById(eventTypeId).orElseThrow(EventTypeNotFoundException::new);
+        return eventTypeDao.findById(eventTypeId).orElseThrow(() -> new ResourceNotFoundException(EventTypeMessages.EVENT_TYPE_NOT_FOUND));
     }
 
     @Override
     public EventType getEventTypeEntityByName(String eventTypeName) {
         if (eventTypeName == null || eventTypeName.isEmpty()) {
-            throw new EventTypeCannotBeNullOrBlankException();
+            throw new ValidationException(EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         return eventTypeDao.findByName(eventTypeName)
-                .orElseThrow(EventTypeNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException(EventTypeMessages.EVENT_TYPE_NOT_FOUND));
     }
+
 }

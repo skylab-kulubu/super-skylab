@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.SessionService;
+import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.SessionMapper;
 import com.skylab.superapp.dataAccess.SessionDao;
@@ -26,13 +27,13 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public List<SessionDto> getAllSessions(boolean includeSpeakerImage, boolean includeEvent) {
-        return sessionMapper.toDtoList(sessionDao.findAll(), includeSpeakerImage, includeEvent);
+    public List<SessionDto> getAllSessions(boolean includeEvent) {
+        return sessionMapper.toDtoList(sessionDao.findAll(), includeEvent);
     }
 
     @Override
-    public SessionDto getSessionById(UUID id, boolean includeSpeakerImage, boolean includeEvent) {
-        return sessionMapper.toDto(getSessionEntityById(id), includeSpeakerImage, includeEvent);
+    public SessionDto getSessionById(UUID id, boolean includeEvent) {
+        return sessionMapper.toDto(getSessionEntityById(id), includeEvent);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class SessionManager implements SessionService {
     @Override
     public SessionDto addSession(CreateSessionRequest createSessionDto) {
         if (createSessionDto.getStartTime() == null || createSessionDto.getEndTime() == null) {
-            throw new SessionDatesCannotBeNullException();
+            throw new ValidationException(SessionMessages.SESSION_DATES_CANNOT_BE_NULL);
         }
 
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
@@ -63,11 +64,11 @@ public class SessionManager implements SessionService {
         }
 
         if (createSessionDto.getTitle() == null || createSessionDto.getTitle().isEmpty()) {
-            throw new SessionTitleCannotBeNullOrBlankException();
+            throw new ValidationException(SessionMessages.SESSION_TITLE_CANNOT_BE_BLANK);
         }
 
         if (createSessionDto.getSpeakerName() == null || createSessionDto.getSpeakerName().isEmpty()) {
-            throw new SessionSpeakerNameCannotBeNullOrBlankException();
+            throw new ValidationException(SessionMessages.SESSION_SPEAKER_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
         Session session = Session.builder()
@@ -86,13 +87,13 @@ public class SessionManager implements SessionService {
 
     @Override
     public void deleteSession(UUID id) {
-        sessionDao.findById(id).orElseThrow(SessionNotFoundException::new);
+        sessionDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND));
         sessionDao.deleteById(id);
     }
 
     @Override
     public Session getSessionEntityById(UUID id) {
         return sessionDao.findById(id)
-                .orElseThrow(SessionNotFoundException::new);
+                .orElseThrow(() -> new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND));
     }
 }

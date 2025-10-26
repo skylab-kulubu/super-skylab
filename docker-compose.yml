@@ -21,10 +21,13 @@ services:
     ports:
       - "5455:5432"
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - nginx-network
 
 networks:
     nginx-network:
       external: true
+
+volumes:
+  postgres_data:

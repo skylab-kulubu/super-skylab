@@ -49,7 +49,7 @@ public class EventMapper {
                 event.isActive(),
                 includeCompetition ? competitionMapper.toDto(event.getCompetition()) : null,
                 includeSession ? sessionMapper.toDtoList(event.getSessions()) : null,
-                includeImages ? imageMapper.toDtoList(event.getImages()) : null,
+                includeImages ? imageMapper.toStringList(event.getImages()) : null,
                 includeCompetitors ? competitorMapper.toDtoList(event.getCompetitors()) : null,
                 includeSeason ? seasonMapper.toDto(event.getSeason()) : null);
     }

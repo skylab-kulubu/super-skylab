@@ -15,6 +15,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "seasons")
 public class Season {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")

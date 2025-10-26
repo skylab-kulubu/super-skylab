@@ -2,16 +2,16 @@ package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.Announcement;
 import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
-import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequest;
+import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequestDto;
 import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface AnnouncementService {
 
-    AnnouncementDto addAnnouncement(CreateAnnouncementRequest createAnnouncementRequest);
+    AnnouncementDto addAnnouncement(CreateAnnouncementRequestDto createAnnouncementRequest, MultipartFile coverImage);
 
     void deleteAnnouncement(UUID id);
 
@@ -19,12 +19,10 @@ public interface AnnouncementService {
 
     List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages);
 
-    AnnouncementDto getAnnouncementById(UUID id, boolean includeUser, boolean includeEventType, boolean includeImages);
+    AnnouncementDto getAnnouncementById(UUID id, boolean includeEventType);
 
     List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser,
                                                            boolean includeEventType, boolean includeImages);
-
-    void addImagesToAnnouncement(UUID id, List<UUID> imageIds);
 
     Announcement getAnnouncementEntityById(UUID id);
 }

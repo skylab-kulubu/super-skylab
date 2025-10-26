@@ -35,7 +35,7 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
     GROUP BY c.user 
     ORDER BY totalPoints DESC
     """)
-    List<User> findLeaderboardWithTotalPointsByEventType(@Param("eventTypeName") String eventTypeName);
+    List<UserProfile> findLeaderboardWithTotalPointsByEventType(@Param("eventTypeName") String eventTypeName);
 
     @Query("SELECT c FROM Competitor c WHERE c.event.id = :eventId AND c.isWinner = true")
     Optional<Competitor> findByEventIdAndIsWinnerTrue(@Param("eventId") UUID eventId);
@@ -61,12 +61,12 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
     Double getTotalPointsByUserIdAndEventTypeId(@Param("userId") UUID userId, @Param("eventTypeId") UUID eventTypeId);
 
     @Query("SELECT COUNT(c) FROM Competitor c WHERE c.user = :user")
-    int getTotalCompetitionCountByUserId(User user);
+    int getTotalCompetitionCountByUserId(UserProfile user);
 
     @Query("SELECT COUNT(c) FROM Competitor c WHERE c.user.id = :userId AND c.event.type.id = :eventTypeId")
     int getTotalCompetitionCountByUserIdAndEventTypeId(@Param("userId") UUID userId, @Param("eventTypeId") UUID eventTypeId);
 
-    List<Competitor> findCompetitorsByUser(User user);
+    List<Competitor> findCompetitorsByUser(UserProfile user);
 
     List<Competitor> findAllByEventType(EventType eventType);
 
@@ -81,9 +81,9 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
 
     @Query("SELECT COALESCE(SUM(c.points), 0) FROM Competitor c WHERE c.event.competition = :competition AND c.user = :user")
     double findUsersTotalPointsInCompetition(
-            User user,
+            UserProfile user,
             Competition competition
     );
 
-    boolean existsByUserAndEvent(User user, Event event);
+    boolean existsByUserAndEvent(UserProfile user, Event event);
 }

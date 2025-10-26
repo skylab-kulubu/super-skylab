@@ -21,35 +21,29 @@ public class AnnouncementMapper {
         this.eventTypeMapper = eventTypeMapper;
     }
 
-    public AnnouncementDto toDto(Announcement announcement, boolean includeUser, boolean includeEventType,
-                                 boolean includeImages) {
+    public AnnouncementDto toDto(Announcement announcement, boolean includeEventType) {
         if (announcement == null) {
             return null;
         }
         return new AnnouncementDto(
                 announcement.getId(),
                 announcement.getTitle(),
-                announcement.getDate(),
                 announcement.getBody(),
-                announcement.isActive(),
-                announcement.getCreatedAt(),
-                includeUser ? userMapper.toDto(announcement.getUser()) : null,
+                announcement.getActive(),
                 includeEventType ? eventTypeMapper.toDto(announcement.getEventType()) : null,
                 announcement.getFormUrl(),
-                includeImages ?
-                        (announcement.getImages() != null ? imageMapper.toDtoList(announcement.getImages()) : List.of())
-                        : null
+                imageMapper.toString(announcement.getCoverImage())
         );
     }
 
     public AnnouncementDto toDto(Announcement announcement) {
-        return toDto(announcement, false, false, false);
+        return toDto(announcement, false);
     }
 
     public List<AnnouncementDto> toDtoList(List<Announcement> announcements,
                                             boolean includeUser, boolean includeEventType, boolean includeImages) {
         return announcements.stream()
-                .map(announcement -> toDto(announcement, includeUser, includeEventType, includeImages))
+                .map(announcement -> toDto(announcement, includeEventType))
                 .toList();
     }
 

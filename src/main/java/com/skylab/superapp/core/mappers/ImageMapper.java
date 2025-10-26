@@ -1,34 +1,39 @@
 package com.skylab.superapp.core.mappers;
 
-import com.skylab.superapp.entities.DTOs.Image.ImageDto;
+import com.skylab.superapp.entities.DTOs.Image.response.UploadImageResponseDto;
 import com.skylab.superapp.entities.Image;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+
 @Component
 public class ImageMapper {
 
-    public ImageDto toDto(Image image) {
-
+    public String toString(Image image){
         if (image == null) {
             return null;
         }
-
-        return ImageDto.builder()
-                .id(image.getId())
-                .name(image.getName())
-                .type(image.getType())
-                .url(image.getUrl())
-                .category(image.getCategory())
-                .eventTypeName(image.getEvent() != null ?
-                        image.getEvent().getType().getName() : null)
-                .build();
+        return "https://cdn.yildizskylab.com/" + image.getFileUrl();
     }
 
-    public List<ImageDto> toDtoList(List<Image> images) {
+    public List<String> toStringList(List<Image> images){
         return images.stream()
-                .map(this::toDto)
+                .map(this::toString)
                 .toList();
+    }
+
+
+    public UploadImageResponseDto toUploadImageResponseDto(Image savedImage) {
+        if (savedImage == null) {
+            return null;
+        }
+        UploadImageResponseDto dto = new UploadImageResponseDto();
+        dto.setId(savedImage.getId());
+        dto.setFileName(savedImage.getFileName());
+        dto.setFileType(savedImage.getFileType());
+        dto.setFileUrl("https://cdn.yildizskylab.com/"+savedImage.getFileUrl());
+        dto.setFileSize(savedImage.getFileSize());
+        return dto;
     }
 }

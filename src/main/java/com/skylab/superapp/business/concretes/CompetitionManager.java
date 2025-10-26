@@ -2,7 +2,8 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.CompetitionService;
 import com.skylab.superapp.business.abstracts.EventTypeService;
-import com.skylab.superapp.core.exceptions.CompetitionNotFoundException;
+import com.skylab.superapp.core.constants.CompetitionMessages;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitionMapper;
 import com.skylab.superapp.dataAccess.CompetitionDao;
 import com.skylab.superapp.entities.Competition;
@@ -83,6 +84,6 @@ public class CompetitionManager implements CompetitionService {
     }
 
     public Competition getCompetitionEntityById(UUID id){
-        return competitionDao.findById(id).orElseThrow(CompetitionNotFoundException::new);
+        return competitionDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(CompetitionMessages.COMPETITION_NOT_FOUND));
     }
 }

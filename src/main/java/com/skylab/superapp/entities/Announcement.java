@@ -26,22 +26,11 @@ public class Announcement {
     @Column(name = "title")
     private String title;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
-    @Column(name = "date")
-    private LocalDateTime date;
-
     @Column(name = "body", columnDefinition = "TEXT")
     private String body;
 
     @Column(name = "is_active")
-    private boolean active;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Boolean active;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
@@ -50,8 +39,9 @@ public class Announcement {
     @Column(name = "form_url")
     private String formUrl;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "announcement", cascade = CascadeType.ALL)
-    private List<Image> images;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "cover_image_id")
+    private Image coverImage;
 
 
 }

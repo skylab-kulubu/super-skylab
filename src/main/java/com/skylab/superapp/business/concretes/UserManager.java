@@ -1,17 +1,17 @@
 package com.skylab.superapp.business.concretes;
 
+import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.UserMapper;
-import com.skylab.superapp.core.utilities.keycloak.KeycloakAdminClientService;
-import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
-import com.skylab.superapp.core.utilities.keycloak.dtos.UserKeycloakRequest;
-import com.skylab.superapp.core.utilities.keycloak.dtos.UserUpdateKeycloakRequest;
+import com.skylab.superapp.core.utilities.ldap.LdapService;
 import com.skylab.superapp.core.utilities.mail.EmailService;
-import com.skylab.superapp.dataAccess.UserDao;
+import com.skylab.superapp.dataAccess.UserProfileDao;
 import com.skylab.superapp.entities.DTOs.User.*;
-import com.skylab.superapp.entities.User;
-import jakarta.servlet.http.HttpServletRequest;
+import com.skylab.superapp.entities.Image;
+import com.skylab.superapp.entities.LdapUser;
+import com.skylab.superapp.entities.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -20,28 +20,34 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserManager implements UserService {
 
-    private final UserDao userDao;
+    private final UserProfileDao userProfileDao;
     private final EmailService emailService;
     private final SecureRandom secureRandom = new SecureRandom();
     private final UserMapper userMapper;
     private final Logger logger = LoggerFactory.getLogger(UserManager.class);
-    private final KeycloakAdminClientService keycloakAdminClientService;
+    private final LdapService ldapService;
+    private final ImageService imageService;
 
 
-    public UserManager(UserDao userDao, @Lazy EmailService emailService, UserMapper userMapper, KeycloakAdminClientService keycloakAdminClientService) {
-        this.userDao = userDao;
+    public UserManager(UserProfileDao userProfileDao, @Lazy EmailService emailService, UserMapper userMapper,
+                       LdapService ldapService, @Lazy ImageService imageService) {
+        this.userProfileDao = userProfileDao;
         this.emailService = emailService;
         this.userMapper = userMapper;
-        this.keycloakAdminClientService = keycloakAdminClientService;
+        this.ldapService = ldapService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -49,69 +55,35 @@ public class UserManager implements UserService {
     public UserDto addUser(CreateUserRequest createUserRequest) {
         logger.info("Saving user with username: {}", createUserRequest.getUsername());
 
-        if(createUserRequest.getUsername() == null || createUserRequest.getPassword() == null) {
-            throw new UsernameorOrPasswordCannotBeNullException();
-        }
 
-        if(createUserRequest.getEmail() == null) {
-            throw new EmailCannotBeNullException();
-        }
-
-        if(userDao.existsByUsername(createUserRequest.getUsername())) {
-            throw new UserAlreadyExistsException();
-        }
-
-        if (userDao.existsByEmail(createUserRequest.getEmail())) {
-            throw new UserAlreadyExistsException();
-        }
-
-        UserKeycloakRequest userKeycloakRequest = new UserKeycloakRequest();
-        userKeycloakRequest.setUsername(createUserRequest.getUsername());
-        userKeycloakRequest.setEmail(createUserRequest.getEmail());
-        userKeycloakRequest.setPassword(createUserRequest.getPassword());
-        userKeycloakRequest.setFirstName(createUserRequest.getFirstName());
-        userKeycloakRequest.setLastName(createUserRequest.getLastName());
+            LdapUser ldapUser = ldapService.createUser(
+                    createUserRequest.getUsername(),
+                    createUserRequest.getFirstName(),
+                    createUserRequest.getLastName(),
+                    createUserRequest.getEmail(),
+                    createUserRequest.getPassword());
+            logger.info("Saved user in LDAP with username: {}", createUserRequest.getUsername());
 
 
-        logger.info("Creating user in keycloak");
-        String keycloakUserId = null;
-        try {
-            logger.info("Creating user in Keycloak for username: {}", userKeycloakRequest.getUsername());
-            keycloakUserId = keycloakAdminClientService.createUser(userKeycloakRequest);
-            logger.info("Created user in Keycloak for username: {}", userKeycloakRequest.getUsername());
-
-            User user = User.builder()
-                    .id(UUID.fromString(keycloakUserId))
-                    .username(createUserRequest.getUsername())
-                    .firstName(createUserRequest.getFirstName())
-                    .lastName(createUserRequest.getLastName())
-                    .email(createUserRequest.getEmail())
-                    .linkedin(createUserRequest.getLinkedin())
-                    .birthday(LocalDateTime.now())
-                    .university(createUserRequest.getUniversity())
-                    .faculty(createUserRequest.getFaculty())
-                    .department(createUserRequest.getDepartment())
-                    .build();
-
-            User savedUser = userDao.save(user);
-            logger.info("User saved successfully to local database with ID: {}", savedUser.getId());
-
-
-            emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ OLUŞTURULDU", "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" + "ŞİFRENİZ: " + createUserRequest.getPassword() + "\n" +
-                    "GİRİŞ YAPTIKTAN SONRA ŞİFRENİZİ DEĞİŞTİRİNİZ!");
-
-            return userMapper.toDto(savedUser);
-
-        } catch (Exception e){
-            if (keycloakUserId != null){
-                logger.warn("Error occurred after Keycloak user creation. Rolling back Keycloak user with ID: {}", keycloakUserId);
-                keycloakAdminClientService.deleteUser(keycloakUserId);
+        UserProfile savedProfile;
+        try{
+            UserProfile userProfile = new UserProfile();
+            userProfile.setLdapSkyNumber(ldapUser.getEmployeeNumber());
+            savedProfile = userProfileDao.save(userProfile);
+            logger.info("Saved user with username: {}", createUserRequest.getUsername());
+        }catch (Exception e){
+            logger.error("Error occurred while saving user profile, removing from ldap: {}", e.getMessage());
+            try{
+                ldapService.deleteUser(ldapUser.getEmployeeNumber());
+                logger.info("Rolled back LDAP user creation for username: {}", createUserRequest.getUsername());
+            }catch (Exception ex){
+                logger.error("Failed to roll back LDAP user creation for username: {}: {}", createUserRequest.getUsername(), ex.getMessage());
             }
-            logger.error("User creation failed: {}", e.getMessage());
-
-            throw new RuntimeException("User creation failed: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to save user profile");
         }
 
+        UserDto userDto = userMapper.toDto(savedProfile, ldapUser);
+        return userDto;
     }
 
     @Transactional
@@ -119,215 +91,199 @@ public class UserManager implements UserService {
     public void deleteUser(UUID id) {
         logger.info("Deleting user with id: {}", id);
 
-        if (!userDao.existsById(id)) {
-            throw new UserNotFoundException();
-        }
+       UserProfile profileToDelete = userProfileDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
-        logger.info("Deleting user in keycloak");
-        keycloakAdminClientService.deleteUser(id.toString());
-        logger.info("Deleted user in keycloak");
+       String employeeNumber = profileToDelete.getLdapSkyNumber();
+       logger.info("Deleting user from LDAP with employee number: {}", employeeNumber);
 
-        userDao.deleteById(id);
-        logger.info("Deleted user with id: {}", id);
+       userProfileDao.delete(profileToDelete);
+
+       logger.info("Deleted user profile from database with id: {}", id);
+
+       try{
+              ldapService.deleteUser(employeeNumber);
+              logger.info("Deleted user from LDAP with employee number: {}", employeeNumber);
+       }catch (Exception exception){
+              logger.error("Error occurred while deleting user from LDAP, employeeNumber: {} Exception: {}", employeeNumber, exception.getMessage());
+              throw new RuntimeException("Failed to delete user from LDAP");
+       }
     }
+
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userMapper.toDtoList(userDao.findAll());
+        var allProfiles = userProfileDao.findAll();
+
+        if (allProfiles.isEmpty()){
+            return List.of();
+        }
+
+        List<String> ldapSkyNumbers = allProfiles.stream()
+                .map(UserProfile::getLdapSkyNumber)
+                .toList();
+
+        List<LdapUser> allIdentities = ldapService.findAllByEmployeeNumbers(ldapSkyNumbers);
+
+        Map<String, LdapUser> identityMap = allIdentities.stream()
+                .collect(Collectors.toMap(LdapUser::getEmployeeNumber, user -> user));
+
+        return allProfiles.stream()
+                .map(profile -> {
+                    LdapUser identity = identityMap.get(profile.getLdapSkyNumber());
+                    if (identity == null){
+                        return null;
+                    }
+                    return userMapper.toDto(profile, identity);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
     }
 
     @Override
     public UserDto getUserById(UUID id) {
-        var result = userDao.findById(id);
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
+        UserProfile profile = userProfileDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
-       return userMapper.toDto(result.get());
+        LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
+
+        return userMapper.toDto(profile, ldapUser);
     }
 
     @Override
     public UserDto getUserByUsername(String username) {
-        var result = userDao.findByUsername(username);
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
-        }
+       LdapUser ldapUser = ldapService.findByUsername(username);
 
-       return userMapper.toDto(result.get());
+       UserProfile profile = userProfileDao.findByLdapSkyNumber(ldapUser.getEmployeeNumber()).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
+
+         return userMapper.toDto(profile, ldapUser);
     }
 
     @Override
     public UserDto getUserByEmail(String email) {
-        var result = userDao.findByEmail(email);
-        if(result.isEmpty()) {
-            throw new UserNotFoundException();
+        LdapUser ldapUser = ldapService.findByEmail(email);
+
+        UserProfile profile = userProfileDao.findByLdapSkyNumber(ldapUser.getEmployeeNumber()).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
+
+        return userMapper.toDto(profile, ldapUser);
+    }
+
+    @Override
+    public void addRoleToUser(String username, String role) {
+        logger.info("Adding role {} to user with username: {}", role, username);
+        LdapUser ldapUser = ldapService.findByUsername(username);
+
+        if (ldapUser == null){
+            logger.info("User with username: {} not found in LDAP", username);
+            throw new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         }
 
-        return userMapper.toDto(result.get());
+        ldapService.addUserToGroup(ldapUser.getEmployeeNumber(), role);
 
     }
-
-    /*
-    // This method is commented out because it is not used in the current implementation.
-    //instead checking users roles to determine tenant access
     @Override
-    public boolean tenantCheck(String tenant, String username) {
-        var user = userDao.findByUsername(username);
-        if(user == null) {
-            throw new UserNotFoundException();
-        }
-        var normalizedTenant = tenant.toUpperCase().trim();
-        var requiredTenantRole = "ROLE_" + normalizedTenant + "_ADMIN";
-        return user.getAuthorities().stream()
-                .map(Role::name)
-                .anyMatch(auth -> auth.equals(requiredTenantRole) || auth.equals("ROLE_ADMIN"));
-    }
-
-     */
-
-    @Override
-    public void addRoleToUser(String username, KeycloakRole role) {
-        var user = userDao.findByUsername(username).orElseThrow(UserNotFoundException::new);
-
-        keycloakAdminClientService.assignRealmRole(user.getId().toString(), role);
-
-        userDao.save(user);
-    }
-
-    @Override
-    public void setLastLoginWithUsername(String username) {
-        var userResult = userDao.findByUsername(username);
-        if(userResult.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-        var user = userResult.get();
-
-        user.setLastLogin(LocalDateTime.now());
-        userDao.save(user);
-    }
-
-    @Override
-    public List<UserDto> getAllUsersByIds(List<UUID> userIds) {
-        return userMapper.toDtoList(userDao.findAllById(userIds));
-    }
-
-    @Override
-    public User getAuthenticatedUserEntity() {
+    public UserProfile getAuthenticatedUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("No authenticated user found in context");
         }
 
         Object principal = authentication.getPrincipal();
-        String userId;
+        String skyNumber;
 
         if (principal instanceof Jwt jwt){
-            userId= jwt.getSubject();
+            skyNumber = jwt.getClaimAsString("sky_number");
+            if (skyNumber == null){
+                logger.error("Jwt does not contain sky_number claim");
+                throw new RuntimeException("Jwt does not contain sky_number claim");
+            }
+
         }else {
             throw new RuntimeException("Principal is not of type Jwt");
         }
 
-        return userDao.findById(UUID.fromString(userId))
-                .orElseThrow(UserNotFoundException::new);
+        return userProfileDao.findByLdapSkyNumber(skyNumber)
+                .orElseThrow(() -> {
+            logger.warn("Authenticated user with sky_number {} not found in local DB.", skyNumber);
+            return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
+        });
 
     }
 
     @Override
-    public User getUserEntityById(UUID id) {
-        return userDao.findById(id)
-                .orElseThrow(UserNotFoundException::new);
+    public void uploadProfilePictureOfAuthenticatedUser(MultipartFile imageFile) {
+        logger.info("Uploading profile picture for authenticated user");
+
+        UserProfile user = getAuthenticatedUserEntity();
+         logger.info("Retrieved authenticated user with id: {}", user.getId());
+
+         Image image = imageService.uploadImage(imageFile);
+
+         user.setProfilePicture(image);
+
+         userProfileDao.save(user);
+
+            logger.info("Profile picture uploaded and associated with user id: {}", user.getId());
+
     }
 
     @Override
-    public User getUserEntityByUsername(String username) {
-        return userDao.findByUsername(username)
-                .orElseThrow(UserNotFoundException::new);
-    }
-
-    @Override
-    public User getUserEntityByEmail(String email) {
-        return userDao.findByEmail(email)
-                .orElseThrow(UserNotFoundException::new);
+    public UserProfile getUserEntityById(UUID id) {
+        return userProfileDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
     }
 
     @Override
     public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest) {
-        logger.info("Updating authenticated user");
-        var user = getAuthenticatedUserEntity();
 
-        user.setFirstName(updateUserRequest.getFirstName());
-        user.setLastName(updateUserRequest.getLastName());
-        user.setLinkedin(updateUserRequest.getLinkedin());
-        user.setUniversity(updateUserRequest.getUniversity());
-        user.setDepartment(updateUserRequest.getDepartment());
-        user.setFaculty(updateUserRequest.getFaculty());
+        UserProfile profile = getAuthenticatedUserEntity();
+        LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
 
-        var updatedUser = userDao.save(user);
-        logger.info("Updated authenticated user with username: {}", updatedUser.getUsername());
 
-        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
-                "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
-                        "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
+        if(updateUserRequest.getFirstName() != null && !updateUserRequest.getFirstName().isBlank()){
+            ldapUser.setFirstName(updateUserRequest.getFirstName());
+        }
 
-        return userMapper.toDto(updatedUser);
+        if (updateUserRequest.getLastName() != null && !updateUserRequest.getLastName().isBlank()){
+            ldapUser.setLastName(updateUserRequest.getLastName());
+        }
+
+        ldapUser.setFullName(ldapUser.getFirstName() + " " + ldapUser.getLastName());
+
+
+        ldapService.updateUserAttributes(ldapUser);
+
+        profile.setLinkedin(updateUserRequest.getLinkedin());
+        profile.setUniversity(updateUserRequest.getUniversity());
+        profile.setFaculty(updateUserRequest.getFaculty());
+        profile.setDepartment(updateUserRequest.getDepartment());
+        userProfileDao.save(profile);
+
+        return userMapper.toDto(profile, ldapUser);
+
+
     }
 
     @Override
     public UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest) {
-        logger.info("Updating user with id: {}", userId);
-        var user = userDao.findById(userId).orElseThrow(UserNotFoundException::new);
-
-        logger.info("Updating user in keycloak");
-        UserUpdateKeycloakRequest userKeycloakRequest = new UserUpdateKeycloakRequest();
-        userKeycloakRequest.setFirstName(updateUserRequest.getFirstName());
-        userKeycloakRequest.setLastName(updateUserRequest.getLastName());
-
-        keycloakAdminClientService.updateUser(userId.toString(), userKeycloakRequest);
-        logger.info("Updated user in keycloak");
-
-        user.setFirstName(updateUserRequest.getFirstName());
-        user.setLastName(updateUserRequest.getLastName());
-        user.setLinkedin(updateUserRequest.getLinkedin());
-        user.setUniversity(updateUserRequest.getUniversity());
-        user.setDepartment(updateUserRequest.getDepartment());
-        user.setFaculty(updateUserRequest.getFaculty());
-
-        var updatedUser = userDao.save(user);
-        logger.info("Updated user with id: {}", updatedUser.getId());
-
-        emailService.sendEmailAsync(user.getEmail(), "SKY LAB HESABINIZ GÜNCELLENDİ",
-                "SKY LAB GİRİŞİ İÇİN KULLANICI ADINIZ: " + user.getUsername() + "\n" +
-                        "HESAP BİLGİLERİNİZ GÜNCELLENDİ!");
-
-        return userMapper.toDto(updatedUser);
+        // TODO
+        return null;
     }
 
     @Override
     public void changePassword(UUID userId, String newPassword) {
 
-        logger.info("Changing password for user with id: {}", userId);
-        var user = userDao.findById(userId).orElseThrow(UserNotFoundException::new);
+        UserProfile profile = userProfileDao.findById(userId).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
-        keycloakAdminClientService.resetPassword(userId.toString(), newPassword);
-        logger.info("Changed password for user with id: {}", userId);
+        ldapService.changePassword(profile.getLdapSkyNumber(), newPassword);
 
     }
 
     @Override
     public UserDto getAuthenticatedUser() {
-        logger.info("Retrieving authenticated user dto");
-        var user = getAuthenticatedUserEntity();
-        return userMapper.toDto(user);
+        UserProfile profile = getAuthenticatedUserEntity();
+        LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
+
+        return userMapper.toDto(profile, ldapUser);
     }
 
-
-    public String generateRandomPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
-        StringBuilder password = new StringBuilder();
-        for (int i = 0; i < 10; i++) {
-            int index = secureRandom.nextInt(chars.length());
-            password.append(chars.charAt(index));
-        }
-        return password.toString();
-    }
 }

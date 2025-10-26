@@ -9,8 +9,6 @@ import java.util.UUID;
 @Setter
 public class UpdateUserRequest {
 
-    private UUID id;
-
     private String firstName;
 
     private String lastName;

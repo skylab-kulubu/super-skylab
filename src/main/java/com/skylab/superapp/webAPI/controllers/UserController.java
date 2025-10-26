@@ -6,13 +6,12 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
-import com.skylab.superapp.core.utilities.keycloak.KeycloakRole;
-import com.skylab.superapp.entities.DTOs.User.CreateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,13 +27,6 @@ public class UserController {
     }
 
 
-    @PostMapping("/addUser")
-    public ResponseEntity<Result> addUser(@RequestBody CreateUserRequest createUserRequest) {
-        userService.addUser(createUserRequest);
-        return ResponseEntity.status(201)
-                .body(new SuccessResult(UserMessages.USER_ADDED_SUCCESS, HttpStatus.CREATED));
-    }
-
     @GetMapping("/me")
     public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser() {
      var result = userService.getAuthenticatedUser();
@@ -49,6 +41,13 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK));
+    }
+
+    @PostMapping("/me/profile-picture")
+    public ResponseEntity<Result> updateProfilePicture(@RequestParam("image") MultipartFile image) {
+        userService.uploadProfilePictureOfAuthenticatedUser(image);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(UserMessages.PROFILE_PICTURE_UPDATED_SUCCESS, HttpStatus.OK));
     }
 
 
@@ -85,49 +84,10 @@ public class UserController {
                 .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK));
     }
 
-    @PutMapping("/addRole/{username}")
-    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam KeycloakRole role) {
+    @PutMapping("/add-role/{username}")
+    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam String role) {
         userService.addRoleToUser(username, role);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK));
     }
-
-
-
-    /*
-    @PostMapping("/resetPassword")
-    public ResponseEntity<Result> resetPassword(@RequestBody CreateUserDto createUserDto, HttpServletRequest request) {
-        userService.resetPassword(createUserDto);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.PASSWORD_RESET_SUCCESS, HttpStatus.OK, request.getRequestURI()));
-    }
-
-     */
-
-
-
-    /*
-
-    @GetMapping("/getStaffByRole")
-    public ResponseEntity<DataResult<List<User>>> getStaffsByRole(@RequestParam Role role, HttpServletRequest request){
-        List<User> result = userService.getStaffsByRole(role);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, UserMessages.STAFFS_RETRIEVED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
-    }
-
-    @GetMapping("/getAllStaffs")
-    public ResponseEntity<DataResult<List<User>>> getAllStaffs(HttpServletRequest request){
-        List<User> result = userService.getAllStaffs();
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, UserMessages.ALL_STAFFS_RETRIEVED_SUCCESS, HttpStatus.OK, request.getRequestURI()));
-    }
-
-
-     */
-
-
-
-
-
-
 }
