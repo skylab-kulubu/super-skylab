@@ -24,4 +24,6 @@ public interface CompetitionService {
 
 
     Competition getCompetitionEntityById(UUID competitionId);
+
+    void addEventToCompetition(UUID competitionId, UUID eventId);
 }

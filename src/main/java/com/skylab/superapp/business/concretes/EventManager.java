@@ -35,7 +35,7 @@ public class EventManager implements EventService {
     private final EventMapper eventMapper;
 
     public EventManager(EventDao eventDao, @Lazy CompetitorService competitorService, @Lazy ImageService imageService,
-                        @Lazy EventTypeService eventTypeService, CompetitionService competitionService, EventMapper eventMapper) {
+                        @Lazy EventTypeService eventTypeService,@Lazy CompetitionService competitionService, EventMapper eventMapper) {
         this.eventDao = eventDao;
         this.imageService = imageService;
         this.eventTypeService = eventTypeService;

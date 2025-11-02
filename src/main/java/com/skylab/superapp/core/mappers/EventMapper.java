@@ -39,6 +39,7 @@ public class EventMapper {
         return new EventDto(
                 event.getId(),
                 event.getName(),
+                imageMapper.toString(event.getCoverImage()),
                 event.getDescription(),
                 event.getLocation(),
                 includeEventType ? eventTypeMapper.toDto(event.getType()) : null,

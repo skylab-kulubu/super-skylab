@@ -25,6 +25,8 @@ public class EventDto {
 
     private String name;
 
+    private String coverImageUrl;
+
     private String description;
 
     private String location;

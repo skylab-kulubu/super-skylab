@@ -1,5 +1,6 @@
 package com.skylab.superapp.entities.DTOs.Event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.skylab.superapp.core.constants.EventMessages;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

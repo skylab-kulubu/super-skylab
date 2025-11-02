@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
+import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.SessionService;
 import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.exceptions.*;
@@ -20,10 +21,12 @@ public class SessionManager implements SessionService {
 
     private final SessionDao sessionDao;
     private final SessionMapper sessionMapper;
+    private final EventService eventService;
 
-    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper) {
+    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService) {
         this.sessionDao = sessionDao;
         this.sessionMapper = sessionMapper;
+        this.eventService = eventService;
     }
 
     @Override
@@ -71,6 +74,8 @@ public class SessionManager implements SessionService {
             throw new ValidationException(SessionMessages.SESSION_SPEAKER_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
 
+        var event = eventService.getEventEntityById(createSessionDto.getEventId());
+
         Session session = Session.builder()
                 .title(createSessionDto.getTitle())
                 .speakerName(createSessionDto.getSpeakerName())
@@ -79,6 +84,7 @@ public class SessionManager implements SessionService {
                 .orderIndex(createSessionDto.getOrderIndex())
                 .startTime(createSessionDto.getStartTime())
                 .endTime(createSessionDto.getEndTime())
+                .event(event)
                 .sessionType(SessionType.valueOf(createSessionDto.getSessionType().name()))
                 .build();
 

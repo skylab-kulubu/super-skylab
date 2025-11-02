@@ -12,16 +12,19 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.OrFilter;
 import org.springframework.ldap.query.LdapQueryBuilder;
+import org.springframework.ldap.query.SearchScope;
 import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.Name;
+import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -220,19 +223,29 @@ public class LdapService {
     }
 
     public List<String> getUserGroups(String employeeNumber){
-        logger.info("Getting groups for user: {}", employeeNumber);
+        logger.info("Getting groups for user (custom LdapTemplate): {}", employeeNumber);
 
         findByEmployeeNumber(employeeNumber);
 
-        Name userDn = LdapNameBuilder
-                .newInstance("employeeNumber=" + employeeNumber + ",ou=people,dc=yildizskylab,dc=com")
-                .build();
+        String userDnString = "employeeNumber=" + employeeNumber + ",ou=people,dc=yildizskylab,dc=com";
 
-        List<LdapGroup> groups = ldapGroupDao.findByMembers(userDn);
+        var query = LdapQueryBuilder.query()
+                .base("ou=groups")
+                .searchScope(SearchScope.ONELEVEL)
+                .attributes("cn")
+                .filter(new EqualsFilter("member", userDnString));
 
-        return groups.stream()
-                .map(LdapGroup::getRoleName)
-                .toList();
+
+        List<String> roles = ldapTemplate.search(query,
+                (Attributes attrs) -> {
+                    if (attrs.get("cn") != null) {
+                        return (String) attrs.get("cn").get();
+                    }
+                    return null;
+                }
+        );
+
+        return roles.stream().filter(Objects::nonNull).toList();
     }
 
     public LdapGroup createGroup(String groupName){

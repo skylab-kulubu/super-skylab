@@ -44,11 +44,11 @@ public class Event {
     @Column(name = "form_url")
     private String formUrl;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "start_date")
     private LocalDateTime startDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "end_date")
     private LocalDateTime endDate;
 

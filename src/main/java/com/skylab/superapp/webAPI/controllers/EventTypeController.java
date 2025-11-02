@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/eventTypes")
+@RequestMapping("/api/event-types")
 public class EventTypeController {
 
     private final EventTypeService eventTypeService;

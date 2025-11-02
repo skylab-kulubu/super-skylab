@@ -87,5 +87,12 @@ public class CompetitionController {
                 .body(new SuccessDataResult<>(competitions, CompetitionMessages.COMPETITION_GET_LIST_SUCCESS, HttpStatus.OK));
     }
 
+    @PostMapping("/{competitionId}/events/{eventId}")
+    public ResponseEntity<Result> addEventToCompetition(@PathVariable UUID competitionId, @PathVariable UUID eventId) {
+        competitionService.addEventToCompetition(competitionId, eventId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(CompetitionMessages.EVENT_ADDED_TO_COMPETITION_SUCCESS, HttpStatus.OK));
+    }
+
 
 }

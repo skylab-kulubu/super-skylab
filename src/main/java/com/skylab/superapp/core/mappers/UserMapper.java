@@ -6,6 +6,8 @@ import com.skylab.superapp.entities.LdapUser;
 import com.skylab.superapp.entities.UserProfile;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class UserMapper {
 
@@ -29,6 +31,14 @@ public class UserMapper {
         userDto.setUniversity(userProfile.getUniversity());
         userDto.setFaculty(userProfile.getFaculty());
         userDto.setDepartment(userProfile.getDepartment());
+
+        if (ldapUser.getEmployeeNumber() != null) {
+            userDto.setRoles(ldapService.getUserGroups(ldapUser.getEmployeeNumber()));
+        } else {
+            userDto.setRoles(List.of());
+        }
+
+
         return userDto;
     }
 
