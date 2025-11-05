@@ -72,6 +72,7 @@ public class EventManager implements EventService {
                 .endDate(createEventRequest.getEndDate())
                 .active(createEventRequest.isActive())
                 .linkedin(createEventRequest.getLinkedin())
+                .location(createEventRequest.getLocation())
                 .competition(competition)
                 .coverImage(savedCoverImage)
                 .build();
