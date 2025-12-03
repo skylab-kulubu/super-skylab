@@ -33,7 +33,7 @@ public class Announcement {
     private Boolean active;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_type_id", nullable = false)
+    @JoinColumn(name = "event_type_id", nullable = true)
     private EventType eventType;
 
     @Column(name = "form_url")

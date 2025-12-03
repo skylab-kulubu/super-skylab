@@ -125,4 +125,12 @@ public class EventController {
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
     }
 
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Result> deleteEvent(@PathVariable UUID id) {
+        eventService.deleteEvent(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(EventMessages.SUCCESS_DELETE_EVENT, HttpStatus.OK));
+    }
+
 }
