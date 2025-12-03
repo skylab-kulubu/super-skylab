@@ -84,8 +84,8 @@ public class UserController {
                 .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK));
     }
 
-    @PutMapping("/add-role/{username}")
-    public ResponseEntity<Result> addRoleToUser(@PathVariable String username, @RequestParam String role) {
+    @PutMapping("/assign-role/{username}")
+    public ResponseEntity<Result> assignRoleToUser(@PathVariable String username, @RequestParam String role) {
         userService.assignRoleToUser(username, role);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK));
