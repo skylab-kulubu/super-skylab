@@ -26,8 +26,11 @@ public class Competitor {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Column(nullable = false)
-    private double points;
+    @Column(name = "score")
+    private Double score;
+
+    @Column(name = "rank")
+    private Integer rank;
 
     @Column(nullable = false)
     private boolean isWinner;

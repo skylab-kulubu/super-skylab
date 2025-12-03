@@ -1,6 +1,7 @@
 package com.skylab.superapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -48,6 +49,7 @@ public class Session {
     @Column(name = "order_index")
     private int orderIndex;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
@@ -55,9 +57,6 @@ public class Session {
     @Column(name = "session_type")
     @Enumerated(EnumType.STRING)
     private SessionType sessionType;
-
-
-
 
 
 }

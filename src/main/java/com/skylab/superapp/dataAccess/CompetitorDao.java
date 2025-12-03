@@ -29,7 +29,7 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
     List<Competitor> findLeaderboardByEventType(@Param("eventTypeName") String eventTypeName);
 
     @Query("""
-    SELECT c.user, SUM(c.points) as totalPoints
+    SELECT c.user, SUM(c.score) as totalPoints
     FROM Competitor c 
     WHERE c.event.type.name = :eventTypeName 
     GROUP BY c.user 
@@ -54,10 +54,10 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
     @Query("SELECT DISTINCT c.user.id FROM Competitor c WHERE c.event.type.id = :eventTypeId")
     List<UUID> findDistinctUserIdsByEventTypeId(@Param("eventTypeId") UUID eventTypeId);
 
-    @Query("SELECT SUM(c.points) FROM Competitor c WHERE c.user.id = :userId")
+    @Query("SELECT SUM(c.score) FROM Competitor c WHERE c.user.id = :userId")
     Double getTotalPointsByUserId(@Param("userId") UUID userId);
 
-    @Query("SELECT SUM(c.points) FROM Competitor c WHERE c.user.id = :userId AND c.event.type.id = :eventTypeId")
+    @Query("SELECT SUM(c.score) FROM Competitor c WHERE c.user.id = :userId AND c.event.type.id = :eventTypeId")
     Double getTotalPointsByUserIdAndEventTypeId(@Param("userId") UUID userId, @Param("eventTypeId") UUID eventTypeId);
 
     @Query("SELECT COUNT(c) FROM Competitor c WHERE c.user = :user")
@@ -70,20 +70,11 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
 
     List<Competitor> findAllByEventType(EventType eventType);
 
-    @Query("SELECT c FROM Competitor c WHERE c.event.competition =:competition ORDER BY c.points DESC")
-    List<Competitor> findLeaderboardByCompetition(Competition competition);
-
     @Query("SELECT c FROM Competitor c WHERE c.event =:event")
     Competitor findCompetitorByEvent(Event event);
 
     @Query("SELECT c FROM Competitor c WHERE c.event =:event and c.isWinner = true")
     Competitor findWinnerOfEvent(Event event);
-
-    @Query("SELECT COALESCE(SUM(c.points), 0) FROM Competitor c WHERE c.event.competition = :competition AND c.user = :user")
-    double findUsersTotalPointsInCompetition(
-            UserProfile user,
-            Competition competition
-    );
 
     boolean existsByUserAndEvent(UserProfile user, Event event);
 }

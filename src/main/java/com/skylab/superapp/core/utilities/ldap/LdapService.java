@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class LdapService {
@@ -154,7 +155,7 @@ public class LdapService {
 
         LdapUser user = findByEmployeeNumber(employeeNumber);
 
-        List<String> userGroups = getUserGroups(employeeNumber);
+        Set<String> userGroups = getUserGroups(employeeNumber);
         logger.info("Removing user {} from {} groups", employeeNumber, userGroups.size());
 
         for (String groupName : userGroups){
@@ -222,7 +223,7 @@ public class LdapService {
         logger.info("User {} removed from group {} successfully", employeeNumber, groupName);
     }
 
-    public List<String> getUserGroups(String employeeNumber){
+    public Set<String> getUserGroups(String employeeNumber){
         logger.info("Getting groups for user (custom LdapTemplate): {}", employeeNumber);
 
         findByEmployeeNumber(employeeNumber);
@@ -245,7 +246,7 @@ public class LdapService {
                 }
         );
 
-        return roles.stream().filter(Objects::nonNull).toList();
+        return roles.stream().filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     public LdapGroup createGroup(String groupName){

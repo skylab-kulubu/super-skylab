@@ -13,6 +13,7 @@ public final class SeasonMessages {
     public static final String SEASONS_ALREADY_CONTAINS_EVENT = "season.seasons.already.contains.event";
     public static final String SEASON_NOT_FOUND_IN_SEASON =  "season.not.found.in.season";
     public static final String SEASON_START_DATE_CANNOT_BE_AFTER_END_DATE = "season.start.date.cannot.be.after.end.date";
+    public static final String SEASON_UPDATED_SUCCESSFULLY = "season.updated.successfully";
 
     private SeasonMessages() {}
 

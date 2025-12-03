@@ -21,7 +21,7 @@ public interface UserService{
 
     UserDto getUserByEmail(String email);
 
-    void addRoleToUser(String username, String role);
+    void assignRoleToUser(String username, String role);
 
     UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 

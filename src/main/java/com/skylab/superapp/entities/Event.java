@@ -34,6 +34,12 @@ public class Event {
     @JoinColumn(name = "cover_image_id")
     private Image coverImage;
 
+    @Column(name = "is_ranked")
+    private boolean isRanked;
+
+    @Column(name = "prize_info")
+    private String prizeInfo;
+
     @Column(name = "location")
     private String location;
 
@@ -62,7 +68,7 @@ public class Event {
     private List<Session> sessions;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
-    private List<Competitor> competitors;
+    private List<Competitor> participants;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -75,11 +81,5 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "competition_id")
-    private Competition competition;
-
-
 
 }

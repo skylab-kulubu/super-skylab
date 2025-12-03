@@ -7,6 +7,9 @@ public final class EventMessages {
     public static final String EVENT_TYPE_ID_NOT_NULL = "event.event.type.id.not.null";
     public static final String LOCATION_NOT_NULL = "event.location.not.null";
     public static final String NAME_NOT_NULL = "event.name.not.null";
+    public static final String USER_NOT_AUTHORIZED_FOR_EVENT_TYPE = "event.user.not.authorized.for.event.type";
+    public static final String SEASON_ID_NOT_NULL = "event.season.id.not.null";
+    public static final String EVENT_NOT_ACTIVE = "event.not.active";
 
     private EventMessages() {}
 

@@ -7,6 +7,7 @@ import com.skylab.superapp.entities.UserProfile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class UserMapper {
@@ -35,7 +36,7 @@ public class UserMapper {
         if (ldapUser.getEmployeeNumber() != null) {
             userDto.setRoles(ldapService.getUserGroups(ldapUser.getEmployeeNumber()));
         } else {
-            userDto.setRoles(List.of());
+            userDto.setRoles(Set.of());
         }
 
 

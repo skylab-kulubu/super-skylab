@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -50,12 +51,11 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest) {
-        if(createEventTypeRequest.getName() == null || createEventTypeRequest.getName().isEmpty()) {
-            throw new ValidationException(EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK);
-        }
+        Set<String> roles = createEventTypeRequest.getAuthorizedRoles() != null ? createEventTypeRequest.getAuthorizedRoles() : Set.of();
 
         var eventType = EventType.builder()
                 .name(createEventTypeRequest.getName())
+                .authorizedRoles(roles)
                 .build();
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
@@ -65,11 +65,13 @@ public class EventTypeManager implements EventTypeService {
     public EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest) {
         var eventType = getEventTypeEntityById(id);
 
-        if(updateEventTypeRequest.getName() == null || updateEventTypeRequest.getName().isEmpty()) {
-            throw new ValidationException(EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK);
+        if(updateEventTypeRequest.getName() != null && !updateEventTypeRequest.getName().isEmpty()) {
+            eventType.setName(updateEventTypeRequest.getName());
         }
 
-        eventType.setName(updateEventTypeRequest.getName() == null ? eventType.getName() : updateEventTypeRequest.getName());
+        if (updateEventTypeRequest.getAuthorizedRoles() != null) {
+            eventType.setAuthorizedRoles(updateEventTypeRequest.getAuthorizedRoles());
+        }
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
     }

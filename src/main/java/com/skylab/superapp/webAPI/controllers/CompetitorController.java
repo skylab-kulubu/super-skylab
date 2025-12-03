@@ -43,6 +43,32 @@ public class CompetitorController {
                         HttpStatus.OK));
     }
 
+    @GetMapping("/leaderboard")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getLeaderboard(@RequestParam String eventTypeName,
+                                                                          @RequestParam(defaultValue = "false") boolean includeUser,
+                                                                          @RequestParam(defaultValue = "false") boolean includeEvent) {
+        var result = competitorService.getLeaderboardByEventType(eventTypeName, includeUser, includeEvent);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
+
+    @GetMapping("/leaderboard/season/{seasonId}")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getSeasonLeaderboard(@PathVariable UUID seasonId,
+                                                                                @RequestParam String eventTypeName) {
+        var result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
+
+    @GetMapping("/event/{eventId}/winner")
+    public ResponseEntity<DataResult<CompetitorDto>> getEventWinner(@PathVariable UUID eventId,
+                                                                    @RequestParam(defaultValue = "false") boolean includeUser,
+                                                                    @RequestParam(defaultValue = "false") boolean includeEvent) {
+        var result = competitorService.getEventWinner(eventId, includeUser, includeEvent);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors(@RequestParam(defaultValue = "false") boolean includeUser,
                                                                             @RequestParam(defaultValue = "false") boolean includeEvent) {
@@ -76,16 +102,6 @@ public class CompetitorController {
         var result = competitorService.getCompetitorsByEventId(eventId, includeUser, includeEvent);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
-    }
-
-
-    @GetMapping("/leaderboard/{competitionId}")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getLeaderboard(@PathVariable UUID competitionId,
-                                                                          @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                          @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getCompetitionLeaderboard(competitionId, includeUser, includeEvent);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_LEADERBOARD_SUCCESS, HttpStatus.OK));
     }
 
 }

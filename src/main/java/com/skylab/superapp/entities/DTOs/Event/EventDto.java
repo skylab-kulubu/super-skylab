@@ -19,42 +19,30 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventDto {
-
     private UUID id;
-
     private String name;
-
     private String coverImageUrl;
-
     private String description;
-
     private String location;
 
     private EventTypeDto type;
 
     private String formUrl;
-
     private LocalDateTime startDate;
-
     private LocalDateTime endDate;
-
     private String linkedin;
-
     private boolean active;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private CompetitionDto competition;
+    private boolean isRanked;
+    private String prizeInfo;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private SeasonDto season;
+
     private List<SessionDto> sessions;
 
     private List<String> imageUrls;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<CompetitorDto> competitors;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private SeasonDto season;
-
 }

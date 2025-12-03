@@ -12,17 +12,15 @@ import java.util.List;
 public class EventMapper {
 
     private final EventTypeMapper eventTypeMapper;
-    private final CompetitionMapper competitionMapper;
     private final CompetitorMapper competitorMapper;
     private final ImageMapper imageMapper;
     private final SessionMapper sessionMapper;
     private final SeasonMapper seasonMapper;
 
-    public EventMapper(@Lazy EventTypeMapper eventTypeMapper, @Lazy CompetitionMapper competitionMapper,
+    public EventMapper(@Lazy EventTypeMapper eventTypeMapper,
                        @Lazy ImageMapper imageMapper, @Lazy SessionMapper sessionMapper,
                        @Lazy SeasonMapper seasonMapper, @Lazy CompetitorMapper competitorMapper) {
         this.eventTypeMapper = eventTypeMapper;
-        this.competitionMapper = competitionMapper;
         this.imageMapper = imageMapper;
         this.sessionMapper = sessionMapper;
         this.seasonMapper = seasonMapper;
@@ -31,7 +29,7 @@ public class EventMapper {
 
     public EventDto toDto(Event event, boolean includeEventType, boolean includeSession,
                           boolean includeCompetitors, boolean includeImages,
-                          boolean includeSeason, boolean includeCompetition) {
+                          boolean includeSeason) {
 
         if (event == null) {
             return null;
@@ -48,30 +46,33 @@ public class EventMapper {
                 event.getEndDate(),
                 event.getLinkedin(),
                 event.isActive(),
-                includeCompetition ? competitionMapper.toDto(event.getCompetition()) : null,
+                event.isRanked(),
+                event.getPrizeInfo(),
+                includeSeason ? seasonMapper.toDto(event.getSeason()) : null,
                 includeSession ? sessionMapper.toDtoList(event.getSessions()) : null,
                 includeImages ? imageMapper.toStringList(event.getImages()) : null,
-                includeCompetitors ? competitorMapper.toDtoList(event.getCompetitors()) : null,
-                includeSeason ? seasonMapper.toDto(event.getSeason()) : null);
+                includeCompetitors ? competitorMapper.toDtoList(event.getParticipants()) : null
+        );
+
     }
 
     public EventDto toDto(Event event) {
-        return toDto(event, false, false, false, false, false, false);
-    }
-
-    public List<EventDto> toDtoList(List<Event> events, boolean includeEventType, boolean includeSession,
-                                    boolean includeCompetitors, boolean includeImages,
-                                    boolean includeSeason, boolean includeCompetition) {
-        return events.stream()
-                .map(event -> toDto(event, includeEventType, includeSession,
-                        includeCompetitors, includeImages, includeSeason, includeCompetition))
-                .toList();
+        return toDto(event, false, false, false, false, false);
     }
 
     public List<EventDto> toDtoList(List<Event> events) {
         return events.stream()
-                .map(event -> toDto(event, false, false,
-                        false, false, false, false))
+                .map(this::toDto)
                 .toList();
     }
+
+    public List<EventDto> toDtoList(List<Event> events, boolean includeEventType, boolean includeSession,
+                                    boolean includeCompetitors, boolean includeImages,
+                                    boolean includeSeason) {
+        return events.stream()
+                .map(event -> toDto(event, includeEventType, includeSession,
+                        includeCompetitors, includeImages, includeSeason))
+                .toList();
+    }
+
 }

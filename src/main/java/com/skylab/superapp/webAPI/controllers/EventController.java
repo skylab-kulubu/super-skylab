@@ -13,14 +13,12 @@ import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +26,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
-
 
     private final EventService eventService;
     private final ObjectMapper objectMapper;
@@ -43,11 +40,10 @@ public class EventController {
                                                                    @RequestParam(defaultValue = "false") boolean includeSession,
                                                                    @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                                    @RequestParam(defaultValue = "false") boolean includeImages,
-                                                                   @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                                   @RequestParam(defaultValue = "false") boolean includeCompetition){
+                                                                   @RequestParam(defaultValue = "false") boolean includeSeason){
         var result = eventService.getAllEvents(includeEventType, includeSession,
                 includeCompetitors, includeImages,
-                includeSeason, includeCompetition);
+                includeSeason);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS,
                         HttpStatus.OK));
@@ -59,11 +55,10 @@ public class EventController {
                                                              @RequestParam(defaultValue = "false") boolean includeSession,
                                                              @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                              @RequestParam(defaultValue = "false") boolean includeImages,
-                                                             @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                             @RequestParam(defaultValue = "false") boolean includeCompetition) {
+                                                             @RequestParam(defaultValue = "false") boolean includeSeason) {
        var result = eventService.getEventById(id, includeEventType, includeSession,
                 includeCompetitors, includeImages,
-                includeSeason, includeCompetition);
+                includeSeason);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_EVENT_BY_ID,
                         HttpStatus.OK));
@@ -90,6 +85,14 @@ public class EventController {
                         HttpStatus.CREATED));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<DataResult<EventDto>> updateEvent(@PathVariable UUID id,
+                                                            @RequestBody UpdateEventRequest updateEventRequest) {
+        var result = eventService.updateEvent(id, updateEventRequest);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
+    }
+
 
 
     @GetMapping("/active")
@@ -97,11 +100,10 @@ public class EventController {
                                                                       @RequestParam(defaultValue = "false") boolean includeSession,
                                                                       @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                                       @RequestParam(defaultValue = "false") boolean includeImages,
-                                                                      @RequestParam(defaultValue = "false") boolean includeSeason,
-                                                                      @RequestParam(defaultValue = "false") boolean includeCompetition) {
+                                                                      @RequestParam(defaultValue = "false") boolean includeSeason) {
         var result = eventService.getAllEventByIsActive(true, includeEventType, includeSession,
                 includeCompetitors, includeImages,
-                includeSeason, includeCompetition);
+                includeSeason);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
@@ -113,13 +115,12 @@ public class EventController {
                                                @RequestParam(defaultValue = "false") boolean includeSession,
                                                @RequestParam(defaultValue = "false") boolean includeCompetitors,
                                                @RequestParam(defaultValue = "false") boolean includeImages,
-                                               @RequestParam(defaultValue = "false") boolean includeSeason,
-                                               @RequestParam(defaultValue = "false") boolean includeCompetition) {
+                                               @RequestParam(defaultValue = "false") boolean includeSeason) {
 
         var result = eventService.getAllEventsByEventTypeName(eventTypeName,
                 includeEventType, includeSession,
                 includeCompetitors, includeImages,
-                includeSeason, includeCompetition);
+                includeSeason);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));

@@ -15,7 +15,8 @@ public class EventTypeMapper {
         }
         return new EventTypeDto(
                 eventType.getId(),
-                eventType.getName()
+                eventType.getName(),
+                eventType.getAuthorizedRoles()
         );
     }
 

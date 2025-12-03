@@ -24,6 +24,9 @@ public class CreateEventRequest {
     @NotNull(message = EventMessages.EVENT_TYPE_ID_NOT_NULL)
     private UUID eventTypeId;
 
+    @NotNull(message = EventMessages.SEASON_ID_NOT_NULL)
+    private UUID seasonId;
+
     private String formUrl;
 
     private LocalDateTime startDate;
@@ -35,5 +38,9 @@ public class CreateEventRequest {
     private boolean active;
 
     private UUID competitionId;
+
+    private boolean isRanked;
+
+    private String prizeInfo;
 
 }

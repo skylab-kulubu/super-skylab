@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -24,6 +25,6 @@ public class UserDto {
     private String faculty;
     private String department;
 
-    private List<String> roles;
+    private Set<String> roles;
 
 }

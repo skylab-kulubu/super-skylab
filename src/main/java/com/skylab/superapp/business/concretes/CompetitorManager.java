@@ -2,6 +2,7 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.CompetitorMessages;
+import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
@@ -10,10 +11,15 @@ import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import com.skylab.superapp.entities.EventType;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,34 +29,44 @@ public class CompetitorManager implements CompetitorService {
     private final UserService userService;
     private final EventService eventService;
     private final EventTypeService eventTypeService;
-    private final CompetitionService competitionService;
     private final CompetitorMapper competitorMapper;
+
+    private static final Set<String> PRIVILEGED_ROLES = Set.of("ADMIN", "YK", "DK");
 
 
     public CompetitorManager(CompetitorDao competitorDao,@Lazy UserService userService,
-                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService,
-                             @Lazy CompetitionService competitionService, CompetitorMapper competitorMapper) {
+                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService, CompetitorMapper competitorMapper) {
         this.competitorDao = competitorDao;
         this.userService = userService;
         this.eventService = eventService;
         this.eventTypeService = eventTypeService;
-        this.competitionService = competitionService;
         this.competitorMapper = competitorMapper;
     }
 
     @Override
+    @Transactional
     public CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest) {
         var user = userService.getUserEntityById(createCompetitorRequest.getUserId());
         var event = eventService.getEventEntityById(createCompetitorRequest.getEventId());
+        var currentUser = userService.getAuthenticatedUser();
+
+        boolean isSelfRegistration = currentUser.getId().equals(user.getId());
+        if (!isSelfRegistration) {
+            checkAuthorization(event.getType());
+        }
 
         if (competitorDao.existsByUserAndEvent(user, event)) {
             throw new BusinessException(CompetitorMessages.COMPETITOR_ALREADY_IN_COMPETITION);
         }
 
+        if (!event.isActive()) {
+            throw new BusinessException(EventMessages.EVENT_NOT_ACTIVE);
+        }
+
         var competitor = Competitor.builder()
                 .user(user)
                 .event(event)
-                .points(createCompetitorRequest.getPoints())
+                .score(isSelfRegistration ? null : createCompetitorRequest.getPoints())
                 .isWinner(createCompetitorRequest.isWinner())
                 .build();
 
@@ -60,6 +76,8 @@ public class CompetitorManager implements CompetitorService {
     @Override
     public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest) {
       var competitor = getCompetitorEntityById(id);
+
+        checkAuthorization(competitor.getEvent().getType());
 
         if (updateCompetitorRequest.getUserId() != null) {
             competitor.setUser(userService.getUserEntityById(updateCompetitorRequest.getUserId()));
@@ -72,7 +90,7 @@ public class CompetitorManager implements CompetitorService {
         }
 
         if (updateCompetitorRequest.getPoints() != 0) {
-            competitor.setPoints(updateCompetitorRequest.getPoints());
+            competitor.setScore(updateCompetitorRequest.getPoints());
         }
 
         competitor.setWinner(updateCompetitorRequest.isWinner());
@@ -85,6 +103,15 @@ public class CompetitorManager implements CompetitorService {
     @Override
     public void deleteCompetitor(UUID competitorId) {
         Competitor competitor = getCompetitorEntityById(competitorId);
+
+        var currentUser = userService.getAuthenticatedUser();
+
+        boolean isSelf = currentUser.getId().equals(competitor.getUser().getId());
+
+        if (!isSelf){
+            checkAuthorization(competitor.getEvent().getType());
+        }
+
         competitorDao.delete(competitor);
     }
 
@@ -117,10 +144,6 @@ public class CompetitorManager implements CompetitorService {
     }
 
 
-    @Override
-    public List<CompetitorDto> getCompetitorsByCompetitionId(UUID competitionId, boolean includeUser, boolean includeEvent) {
-        return competitorMapper.toDtoList(competitorDao.findBySeasonId(competitionId), includeUser, includeEvent);
-    }
 
     @Override
     public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent) {
@@ -137,14 +160,6 @@ public class CompetitorManager implements CompetitorService {
 
 
     @Override
-    public List<CompetitorDto> getCompetitionLeaderboard(UUID competitionId, boolean includeUser, boolean includeEvent) {
-        var competition = competitionService.getCompetitionEntityById(competitionId);
-
-        return competitorMapper.toDtoList(competitorDao.findLeaderboardByCompetition(competition));
-
-    }
-
-    @Override
     public CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent) {
         var event = eventService.getEventEntityById(eventId);
 
@@ -157,27 +172,13 @@ public class CompetitorManager implements CompetitorService {
         var user = userService.getUserEntityById(userId);
         var competitors = competitorDao.findCompetitorsByUser(user);
 
-        var totalPoints = competitors.stream()
-                .mapToDouble(Competitor::getPoints)
+        return competitors.stream()
+                .map(Competitor::getScore)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
                 .sum();
-
-        return totalPoints;
     }
 
-    @Override
-    public double getUsersTotalPointsInCompetition(UUID userId, UUID competitionId) {
-        var user = userService.getUserEntityById(userId);
-        var competition = competitionService.getCompetitionEntityById(competitionId);
-
-        return competitorDao.findUsersTotalPointsInCompetition(user, competition);
-
-    }
-
-    @Override
-    public int getUserCompetitionCount(UUID userId) {
-        var user = userService.getUserEntityById(userId);
-        return competitorDao.getTotalCompetitionCountByUserId(user);
-    }
 
 
     @Override
@@ -192,6 +193,26 @@ public class CompetitorManager implements CompetitorService {
     public Competitor getCompetitorEntityById(UUID id) {
         return competitorDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CompetitorMessages.COMPETITOR_NOT_FOUND));
+    }
+
+    @Override
+    public List<CompetitorDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName) {
+        return competitorMapper.toDtoList(
+                competitorDao.findLeaderboardByEventTypeAndSeasonId(eventTypeName, seasonId),
+                true,
+                true
+        );
+    }
+
+    private void checkAuthorization(EventType eventType) {
+        var currentUser = userService.getAuthenticatedUser();
+        boolean isAuthorized = currentUser.getRoles().stream()
+                .anyMatch(role -> PRIVILEGED_ROLES.contains(role) ||
+                        eventType.getAuthorizedRoles().contains(role));
+
+        if (!isAuthorized) {
+            throw new AccessDeniedException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
+        }
     }
 
 

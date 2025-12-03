@@ -15,6 +15,7 @@ import com.skylab.superapp.entities.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -22,29 +23,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.security.SecureRandom;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class UserManager implements UserService {
 
     private final UserProfileDao userProfileDao;
-    private final EmailService emailService;
-    private final SecureRandom secureRandom = new SecureRandom();
     private final UserMapper userMapper;
     private final Logger logger = LoggerFactory.getLogger(UserManager.class);
     private final LdapService ldapService;
     private final ImageService imageService;
 
 
-    public UserManager(UserProfileDao userProfileDao, @Lazy EmailService emailService, UserMapper userMapper,
+    private static final Set<String> SUPER_ADMIN_ROLES = Set.of("ADMIN", "YK", "DK");
+
+
+    public UserManager(UserProfileDao userProfileDao, UserMapper userMapper,
                        LdapService ldapService, @Lazy ImageService imageService) {
         this.userProfileDao = userProfileDao;
-        this.emailService = emailService;
         this.userMapper = userMapper;
         this.ldapService = ldapService;
         this.imageService = imageService;
@@ -168,16 +165,37 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public void addRoleToUser(String username, String role) {
-        logger.info("Adding role {} to user with username: {}", role, username);
-        LdapUser ldapUser = ldapService.findByUsername(username);
+    public void assignRoleToUser(String username, String role) {
+        logger.info("Attempting to assign role: {} to user with username: {}", role, username);
 
-        if (ldapUser == null){
-            logger.info("User with username: {} not found in LDAP", username);
-            throw new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
+        LdapUser requesterUser = getLdapUserOfAuthenticatedUser();
+        Set<String> requesterUsersRoles = ldapService.getUserGroups(requesterUser.getEmployeeNumber());
+
+        LdapUser targetUser = ldapService.findByUsername(username);
+
+        boolean isAuthorized = false;
+
+        boolean isSuperAdmin = requesterUsersRoles.stream().anyMatch(SUPER_ADMIN_ROLES::contains);
+
+
+        if (isSuperAdmin){
+            isAuthorized = true;
+        }else{
+            String requiredLeaderRole = role + "_LEADER";
+
+            if (requesterUsersRoles.contains(requiredLeaderRole)){
+                isAuthorized = true;
+            }
         }
 
-        ldapService.addUserToGroup(ldapUser.getEmployeeNumber(), role);
+        if (!isAuthorized){
+            logger.warn("User with username: {} is not authorized to assign role: {}", requesterUser.getUsername(), role);
+            throw new AccessDeniedException("You do not have permission to assign this role.");
+        }
+
+
+        ldapService.addUserToGroup(targetUser.getEmployeeNumber(), role);
+        logger.info("Successfully assigned role: {} to user with username: {}", role, username);
 
     }
     @Override
@@ -284,6 +302,26 @@ public class UserManager implements UserService {
         LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
 
         return userMapper.toDto(profile, ldapUser);
+    }
+
+    private LdapUser getLdapUserOfAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Kullanıcı girişi yapılmamış.");
+        }
+
+        Object principal = authentication.getPrincipal();
+        String skyNumber = null;
+
+        if (principal instanceof Jwt jwt){
+            skyNumber = jwt.getClaimAsString("sky_number");
+        }
+
+        if (skyNumber == null) {
+            throw new AccessDeniedException("JWT içerisinde sky_number bulunamadı.");
+        }
+
+        return ldapService.findByEmployeeNumber(skyNumber);
     }
 
 }

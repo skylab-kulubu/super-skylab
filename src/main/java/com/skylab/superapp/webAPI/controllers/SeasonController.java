@@ -8,6 +8,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
+import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,6 +60,21 @@ public class SeasonController {
                 .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<DataResult<SeasonDto>> updateSeason(@PathVariable UUID id,
+                                                              @RequestBody UpdateSeasonRequest updateSeasonRequest) {
+        var result = seasonService.updateSeason(id, updateSeasonRequest);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_UPDATED_SUCCESSFULLY, HttpStatus.OK));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<DataResult<List<SeasonDto>>> getActiveSeasons(@RequestParam(defaultValue = "false") boolean includeEvents) {
+        var result = seasonService.getActiveSeasons(includeEvents);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, SeasonMessages.SEASONS_GET_ALL_SUCCESS, HttpStatus.OK));
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Result> deleteSeason(@PathVariable UUID id) {
@@ -69,19 +85,18 @@ public class SeasonController {
     }
 
 
-    @PostMapping("/removeEventFromSeason")
-    public ResponseEntity<Result> removeEventFromSeason(@RequestParam UUID seasonId, @RequestParam UUID eventId) {
-        seasonService.removeEventFromSeason(seasonId, eventId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(SeasonMessages.EVENT_REMOVED_FROM_SEASON, HttpStatus.OK));
-    }
-
-
-    @PostMapping("/addEventToSeason")
-    public ResponseEntity<Result> addEventToSeason(@RequestParam UUID seasonId, @RequestParam UUID eventId) {
+    @PostMapping("/{seasonId}/events/{eventId}")
+    public ResponseEntity<Result> addEventToSeason(@PathVariable UUID seasonId, @PathVariable UUID eventId) {
         seasonService.addEventToSeason(seasonId, eventId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(SeasonMessages.EVENT_ADDED_TO_SEASON, HttpStatus.OK));
+    }
+
+    @DeleteMapping("/{seasonId}/events/{eventId}")
+    public ResponseEntity<Result> removeEventFromSeason(@PathVariable UUID seasonId, @PathVariable UUID eventId) {
+        seasonService.removeEventFromSeason(seasonId, eventId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(SeasonMessages.EVENT_REMOVED_FROM_SEASON, HttpStatus.OK));
     }
 
 }

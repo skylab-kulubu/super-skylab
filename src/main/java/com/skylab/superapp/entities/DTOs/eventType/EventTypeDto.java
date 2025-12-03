@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -16,5 +17,7 @@ public class EventTypeDto {
     private UUID id;
 
     private String name;
+
+    private Set<String> authorizedRoles;
 
 }

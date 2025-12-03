@@ -10,9 +10,9 @@ import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
-import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +31,7 @@ public class SeasonManager implements SeasonService {
     }
 
     @Override
+    @Transactional
     public SeasonDto addSeason(CreateSeasonRequest createSeasonRequest) {
         if(createSeasonRequest.getName() == null || createSeasonRequest.getName().isEmpty()) {
            throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
@@ -58,20 +59,21 @@ public class SeasonManager implements SeasonService {
     }
 
     @Override
+    @Transactional
     public SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest) {
         var season = getSeasonEntityById(id);
 
-        if (season.getName()== null || season.getName().isEmpty()) {
-            throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
-        }
 
-        if (updateSeasonRequest.getStartDate().isAfter(updateSeasonRequest.getEndDate())) {
+        var newStartDate = updateSeasonRequest.getStartDate() != null ? updateSeasonRequest.getStartDate() : season.getStartDate();
+        var newEndDate = updateSeasonRequest.getEndDate() != null ? updateSeasonRequest.getEndDate() : season.getEndDate();
+
+        if (newStartDate != null && newEndDate != null && newStartDate.isAfter(newEndDate)) {
             throw new SeasonStartDateCannotBeAfterEndDateException();
         }
 
-        season.setName(updateSeasonRequest.getName()==null ? season.getName() : updateSeasonRequest.getName());
-        season.setStartDate(updateSeasonRequest.getStartDate() == null ? season.getStartDate() : updateSeasonRequest.getStartDate());
-        season.setEndDate(updateSeasonRequest.getEndDate() == null ? season.getEndDate() : updateSeasonRequest.getEndDate());
+        if (updateSeasonRequest.getStartDate() != null) season.setStartDate(updateSeasonRequest.getStartDate());
+        if (updateSeasonRequest.getEndDate() != null) season.setEndDate(updateSeasonRequest.getEndDate());
+
         season.setActive(updateSeasonRequest.isActive());
 
         return seasonMapper.toDto(seasonDao.save(season));

@@ -20,7 +20,15 @@ public class UpdateEventRequest {
 
     private String formUrl;
 
+    private String prizeInfo;
+
     private LocalDateTime startDate;
+
+    private boolean isRanked;
+
+    private UUID typeId;
+
+    private UUID seasonId;
 
     private LocalDateTime endDate;
 

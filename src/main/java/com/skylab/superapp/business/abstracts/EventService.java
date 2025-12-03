@@ -19,12 +19,10 @@ public interface EventService {
     EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest);
 
     List<EventDto> getAllEventsByEventType(EventType eventType, boolean includeEventType, boolean includeSession,
-                                           boolean includeCompetitors, boolean includeImages, boolean includeSeason,
-                                           boolean includeCompetition);
+                                           boolean includeCompetitors, boolean includeImages, boolean includeSeason);
 
     EventDto  getEventById(UUID id, boolean includeEventType, boolean includeSession,
-                           boolean includeCompetitors, boolean includeImages, boolean includeSeason,
-                           boolean includeCompetition);
+                           boolean includeCompetitors, boolean includeImages, boolean includeSeason);
 
     Event getEventEntityById(UUID id);
 
@@ -34,18 +32,18 @@ public interface EventService {
 
     List<EventDto> getAllFutureEventsByEventType(String eventType, boolean includeEventType, boolean includeSession,
                                                  boolean includeCompetitors, boolean includeImages,
-                                                 boolean includeSeason, boolean includeCompetition);
+                                                 boolean includeSeason);
 
     List<EventDto> getAllEvents(boolean includeEventType, boolean includeSession,
                                   boolean includeCompetitors, boolean includeImages,
-                                  boolean includeSeason, boolean includeCompetition);
+                                  boolean includeSeason);
 
     List<EventDto> getAllEventsByEventTypeName(String eventTypeName, boolean includeEventType, boolean includeSession,
                                 boolean includeCompetitors, boolean includeImages,
-                                boolean includeSeason, boolean includeCompetition);
+                                boolean includeSeason);
 
     List<EventDto> getAllEventByIsActive(boolean isActive, boolean includeEventType, boolean includeSession,
                                          boolean includeCompetitors, boolean includeImages,
-                                         boolean includeSeason, boolean includeCompetition);
+                                         boolean includeSeason);
 }
 
