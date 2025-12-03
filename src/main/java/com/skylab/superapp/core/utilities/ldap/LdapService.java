@@ -87,7 +87,7 @@ public class LdapService {
 
         logger.info("User created in LDAP: {} ({})", username, employeeNumber);
 
-        addUserToGroup(employeeNumber, "user");
+        addUserToGroup(employeeNumber, "USER");
 
         return fixEmployeeNumber(savedUser);
     }
