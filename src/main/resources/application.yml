@@ -12,7 +12,6 @@ spring:
             mode: none
     hibernate:
       ddl-auto: update
-    show-sql: true
   datasource:
     url: jdbc:postgresql://super-skylab-db:5432/superSkyLabDB
     username: postgres
