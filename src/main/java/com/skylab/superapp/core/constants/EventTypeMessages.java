@@ -8,6 +8,7 @@ public final class EventTypeMessages {
     public static final String EVENT_TYPE_UPDATED = "event.type.updated";
     public static final String EVENT_TYPE_DELETED = "event.type.deleted";
     public static final String EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK = "event.type.name.cannot.be.null.or.blank";
+    public static final String COORDINATORS_FOUND = "event.type.coordinators.found";
 
     private EventTypeMessages() {}
 

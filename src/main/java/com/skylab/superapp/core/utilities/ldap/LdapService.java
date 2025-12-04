@@ -8,6 +8,8 @@ import com.skylab.superapp.entities.LdapGroup;
 import com.skylab.superapp.entities.LdapUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.OrFilter;
@@ -18,14 +20,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.Name;
+import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -360,4 +360,59 @@ public class LdapService {
         logger.info("User attributes updated in LDAP: {}", user.getEmployeeNumber());
         return user;
     }
+
+    @Cacheable(value = "ldapGroupMembers", key = "#groupName")
+    public List<LdapUser> getUsersByGroupName(String groupName) {
+        logger.info("Fetching users for group: {} from LDAP (Cached)", groupName);
+
+        var query = LdapQueryBuilder.query()
+                .base("ou=groups")
+                .where("objectClass").is("groupOfNames")
+                .and("cn").is(groupName);
+
+        try {
+            List<String> employeeNumbers = ldapTemplate.search(query, (AttributesMapper<List<String>>) attributes -> {
+                List<String> ids = new ArrayList<>();
+                if (attributes.get("member") == null) return ids;
+
+                NamingEnumeration<?> members = attributes.get("member").getAll();
+                while (members.hasMore()) {
+                    String memberDn = (String) members.next();
+
+                    if (memberDn.contains("Directory Manager")) continue;
+
+                    String empNo = extractEmployeeNumberFromString(memberDn);
+                    if (empNo != null) {
+                        ids.add(empNo);
+                    }
+                }
+                return ids;
+            }).stream().flatMap(List::stream).collect(Collectors.toList());
+
+            if (employeeNumbers.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return findAllByEmployeeNumbers(employeeNumbers);
+
+        } catch (Exception e) {
+            logger.error("Error fetching group members for {}: {}", groupName, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private String extractEmployeeNumberFromString(String dnString) {
+        try {
+            if (dnString.startsWith("employeeNumber=")) {
+                int commaIndex = dnString.indexOf(',');
+                if (commaIndex > 0) {
+                    return dnString.substring(15, commaIndex);
+                }
+            }
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+
 }

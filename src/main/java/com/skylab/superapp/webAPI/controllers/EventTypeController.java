@@ -7,14 +7,17 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
+import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
+import jakarta.mail.search.SearchTerm;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -79,6 +82,13 @@ public class EventTypeController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(EventTypeMessages.EVENT_TYPE_DELETED, HttpStatus.OK));
+    }
+
+    @GetMapping("/{eventTypeName}/coordinators")
+    public ResponseEntity<DataResult<Set<UserDto>>> getCoordinatorsByEventType(@PathVariable String eventTypeName) {
+        Set<UserDto> result = eventTypeService.getCoordinatorsByEventTypeName(eventTypeName);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventTypeMessages.COORDINATORS_FOUND, HttpStatus.OK));
     }
 
 
