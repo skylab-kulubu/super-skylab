@@ -8,6 +8,7 @@ import com.skylab.superapp.entities.LdapGroup;
 import com.skylab.superapp.entities.LdapUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
@@ -166,6 +167,7 @@ public class LdapService {
         logger.info("User with employee number: {} deleted successfully", employeeNumber);
     }
 
+    @CacheEvict(value = "ldapGroupMembers", key = "#groupName")
     public void addUserToGroup(String employeeNumber, String groupName){
         logger.info("Adding user {} to group: {}", employeeNumber, groupName);
 
