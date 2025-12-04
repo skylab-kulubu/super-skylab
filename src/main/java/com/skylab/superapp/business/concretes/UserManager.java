@@ -309,6 +309,40 @@ public class UserManager implements UserService {
     }
 
     @Override
+    public Map<UUID, UserDto> mapProfilesToUsers(List<UserProfile> profiles) {
+        if (profiles == null || profiles.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<String> skyNumbers = profiles.stream()
+                .map(UserProfile::getLdapSkyNumber)
+                .distinct()
+                .toList();
+
+        List<LdapUser> ldapUsers = ldapService.findAllByEmployeeNumbers(skyNumbers);
+        Map<String, LdapUser> ldapUserMap = ldapUsers.stream()
+                .collect(Collectors.toMap(LdapUser::getEmployeeNumber, u -> u));
+
+        Map<String, Set<String>> rolesMap = ldapService.getAllUserRoles();
+
+
+        return profiles.stream()
+                .filter(p -> ldapUserMap.containsKey(p.getLdapSkyNumber()))
+                .collect(Collectors.toMap(
+                        UserProfile::getId,
+                        profile -> {
+                            String skyNum = profile.getLdapSkyNumber();
+                            return userMapper.toDto(
+                                    profile,
+                                    ldapUserMap.get(skyNum),
+                                    rolesMap.getOrDefault(skyNum, Collections.emptySet())
+                            );
+                        },
+                        (existing, replacement) -> existing
+                ));
+    }
+
+    @Override
     public UserProfile getUserEntityById(UUID id) {
         return userProfileDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));

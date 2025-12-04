@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface UserService{
@@ -24,6 +25,8 @@ public interface UserService{
     UserDto getUserByEmail(String email);
 
     List<UserDto> getUsersByRoleNames(Collection<String> roles);
+
+    Map<UUID, UserDto> mapProfilesToUsers(List<UserProfile> profiles);
 
     void assignRoleToUser(String username, String role);
 

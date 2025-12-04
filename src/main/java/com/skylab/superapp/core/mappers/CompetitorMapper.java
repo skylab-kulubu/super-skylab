@@ -2,30 +2,29 @@ package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
+import com.skylab.superapp.entities.DTOs.User.UserDto;
+import com.skylab.superapp.entities.LdapUser;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.*;
 
 @Component
 public class CompetitorMapper {
 
-    private final UserMapper userMapper;
     private final EventMapper eventMapper;
 
 
-    public CompetitorMapper(@Lazy UserMapper userMapper, @Lazy EventMapper eventMapper) {
-        this.userMapper = userMapper;
+    public CompetitorMapper(@Lazy EventMapper eventMapper) {
         this.eventMapper = eventMapper;
     }
 
-    public CompetitorDto toDto(Competitor competitor, boolean includeUser, boolean includeEvent) {
-        if (competitor == null) {
-            return null;
-        }
+    public CompetitorDto toDto(Competitor competitor, UserDto userDto, boolean includeEvent) {
+        if (competitor == null) return null;
+
         return new CompetitorDto(
                 competitor.getId(),
-                includeUser ? userMapper.toDto(competitor.getUser()) : null,
+                userDto,
                 includeEvent ? eventMapper.toDto(competitor.getEvent()) : null,
                 competitor.getScore(),
                 competitor.getRank(),
@@ -33,19 +32,20 @@ public class CompetitorMapper {
         );
     }
 
-    public CompetitorDto toDto(Competitor competitor) {
-        return toDto(competitor, false, false);
-    }
+    public List<CompetitorDto> toDtoList(List<Competitor> competitors,
+                                         Map<UUID, UserDto> userDtoMap,
+                                         boolean includeUser,
+                                         boolean includeEvent) {
+        if (competitors == null || competitors.isEmpty()) return List.of();
 
-    public List<CompetitorDto> toDtoList(List<Competitor> competitors) {
         return competitors.stream()
-                .map(competitor -> toDto(competitor, false, false))
-                .toList();
-    }
-
-    public List<CompetitorDto> toDtoList(List<Competitor> competitors, boolean includeUser, boolean includeEvent) {
-        return competitors.stream()
-                .map(competitor -> toDto(competitor, includeUser, includeEvent))
+                .map(competitor -> {
+                    UserDto userDto = null;
+                    if (includeUser && competitor.getUser() != null) {
+                        userDto = userDtoMap.get(competitor.getUser().getId());
+                    }
+                    return toDto(competitor, userDto, includeEvent);
+                })
                 .toList();
     }
 }

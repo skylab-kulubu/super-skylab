@@ -6,20 +6,20 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
+import com.skylab.superapp.core.utilities.ldap.LdapService;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.*;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.EventType;
+import com.skylab.superapp.entities.LdapUser;
+import com.skylab.superapp.entities.UserProfile;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +35,7 @@ public class CompetitorManager implements CompetitorService {
 
 
     public CompetitorManager(CompetitorDao competitorDao,@Lazy UserService userService,
-                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService, CompetitorMapper competitorMapper) {
+                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService, CompetitorMapper competitorMapper){
         this.competitorDao = competitorDao;
         this.userService = userService;
         this.eventService = eventService;
@@ -70,7 +70,7 @@ public class CompetitorManager implements CompetitorService {
                 .isWinner(createCompetitorRequest.isWinner())
                 .build();
 
-        return competitorMapper.toDto(competitorDao.save(competitor));
+        return convertToDto(competitorDao.save(competitor), true, true);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class CompetitorManager implements CompetitorService {
 
         competitor.setWinner(updateCompetitorRequest.isWinner());
 
-        return competitorMapper.toDto(competitorDao.save(competitor));
+        return convertToDto(competitorDao.save(competitor), true, true);
 
     }
 
@@ -117,39 +117,35 @@ public class CompetitorManager implements CompetitorService {
 
     @Override
     public CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent) {
-       return competitorMapper.toDto(getCompetitorEntityById(id));
+        return convertToDto(getCompetitorEntityById(id), includeUser, includeEvent);
     }
 
     @Override
     public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent) {
         var authenticatedUser = userService.getAuthenticatedUserEntity();
         var result = competitorDao.findCompetitorsByUser(authenticatedUser);
-        return competitorMapper.toDtoList(result, includeUser, includeEvent);
+        return convertToDtoList(result, includeUser, includeEvent);
     }
-
 
     @Override
     public List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent) {
-        return competitorMapper.toDtoList(competitorDao.findAll(), includeUser, includeEvent);
+        return convertToDtoList(competitorDao.findAll(), includeUser, includeEvent);
     }
 
     @Override
     public List<CompetitorDto> getCompetitorsByEventId(UUID eventId, boolean includeUser, boolean includeEvent) {
-       return competitorMapper.toDtoList(competitorDao.findByEventId(eventId), includeUser, includeEvent);
+        return convertToDtoList(competitorDao.findByEventId(eventId), includeUser, includeEvent);
     }
 
     @Override
     public List<CompetitorDto> getCompetitorsByUserId(UUID userId, boolean includeUser, boolean includeEvent) {
-        return competitorMapper.toDtoList(competitorDao.findByUserId(userId), includeUser, includeEvent);
+        return convertToDtoList(competitorDao.findByUserId(userId), includeUser, includeEvent);
     }
-
-
 
     @Override
     public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent) {
         var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
-
-        return competitorMapper.toDtoList(competitorDao.findAllByEventType(eventType), includeUser, includeEvent);
+        return convertToDtoList(competitorDao.findAllByEventType(eventType), includeUser, includeEvent);
     }
 
 
@@ -198,9 +194,7 @@ public class CompetitorManager implements CompetitorService {
     @Override
     public CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent) {
         var event = eventService.getEventEntityById(eventId);
-
-        return competitorMapper.toDto(competitorDao.findWinnerOfEvent(event), includeUser, includeEvent);
-
+        return convertToDto(competitorDao.findWinnerOfEvent(event), includeUser, includeEvent);
     }
 
     @Override
@@ -246,6 +240,31 @@ public class CompetitorManager implements CompetitorService {
         for (int i = 0; i < leaderboard.size(); i++) {
             leaderboard.get(i).setRank(i + 1);
         }
+    }
+
+    private List<CompetitorDto> convertToDtoList(List<Competitor> competitors, boolean includeUser, boolean includeEvent) {
+        if (competitors.isEmpty()) return List.of();
+
+        Map<UUID, UserDto> userDtoMap = new HashMap<>();
+
+        if (includeUser) {
+            List<UserProfile> profiles = competitors.stream()
+                    .map(Competitor::getUser)
+                    .distinct()
+                    .toList();
+
+            userDtoMap = userService.mapProfilesToUsers(profiles);
+        }
+
+        return competitorMapper.toDtoList(competitors, userDtoMap, includeUser, includeEvent);
+    }
+
+    private CompetitorDto convertToDto(Competitor competitor, boolean includeUser, boolean includeEvent) {
+        UserDto userDto = null;
+        if (includeUser && competitor.getUser() != null) {
+            userDto = userService.getUserById(competitor.getUser().getId());
+        }
+        return competitorMapper.toDto(competitor, userDto, includeEvent);
     }
 
 

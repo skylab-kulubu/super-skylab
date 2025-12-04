@@ -5,6 +5,7 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.dataAccess.EventDao;
+import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
@@ -19,9 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class EventManager implements EventService {
@@ -33,17 +36,20 @@ public class EventManager implements EventService {
     private final EventMapper eventMapper;
     private final UserService userService;
     private final SeasonService seasonService;
+    private final CompetitorService competitorService;
 
     private static final Set<String> PRIVILEGED_ROLES = Set.of("ADMIN", "YK", "DK");
 
     public EventManager(EventDao eventDao, @Lazy CompetitorService competitorService, @Lazy ImageService imageService,
-                        @Lazy EventTypeService eventTypeService, EventMapper eventMapper, UserService userService, SeasonService seasonService) {
+                        @Lazy EventTypeService eventTypeService, EventMapper eventMapper, UserService userService, SeasonService seasonService,
+                        @Lazy CompetitorService competitorService1) {
         this.eventDao = eventDao;
         this.imageService = imageService;
         this.eventTypeService = eventTypeService;
         this.eventMapper = eventMapper;
         this.userService = userService;
         this.seasonService = seasonService;
+        this.competitorService = competitorService;
     }
 
     @Override
@@ -140,8 +146,7 @@ public class EventManager implements EventService {
         var eventTypeResult = eventTypeService.getEventTypeEntityById(eventType.getId());
 
         var list = eventDao.findAllByType(eventTypeResult);
-        return eventMapper.toDtoList(list, includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDtoList(list, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
     @Override
@@ -149,8 +154,7 @@ public class EventManager implements EventService {
                                  boolean includeCompetitors, boolean includeImages,
                                  boolean includeSeason) {
 
-        return eventMapper.toDto(getEventEntityById(id), includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDto(getEventEntityById(id), includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
 
@@ -199,8 +203,7 @@ public class EventManager implements EventService {
 
         var events = eventDao.findAllByType(eventTypeResult);
 
-        return eventMapper.toDtoList(events, includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
     @Override
@@ -212,8 +215,7 @@ public class EventManager implements EventService {
         var events = eventDao.findAll();
 
 
-        return eventMapper.toDtoList(events, includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
     @Override
@@ -225,8 +227,7 @@ public class EventManager implements EventService {
         var eventType = eventTypeService.getEventTypeEntityByName(eventTypeName);
         var events = eventDao.findAllByType(eventType);
 
-        return eventMapper.toDtoList(events, includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
     @Override
@@ -236,8 +237,7 @@ public class EventManager implements EventService {
 
         var events = eventDao.findAllByActive(isActive);
 
-        return eventMapper.toDtoList(events, includeEventType, includeSession,
-                includeCompetitors, includeImages, includeSeason);
+        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
     }
 
 
@@ -260,5 +260,29 @@ public class EventManager implements EventService {
             throw new ResourceNotFoundException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
         }
     }
+
+    private EventDto convertToDto(Event event, boolean includeEventType, boolean includeSession,
+                                  boolean includeCompetitors, boolean includeImages, boolean includeSeason) {
+        if (event == null) return null;
+
+        List<CompetitorDto> competitorDtos = null;
+
+        if (includeCompetitors) {
+            competitorDtos = competitorService.getCompetitorsByEventId(event.getId(), true, false);
+        }
+
+        return eventMapper.toDto(event, includeEventType, includeSession, competitorDtos, includeImages, includeSeason);
+    }
+
+    private List<EventDto> convertToDtoList(List<Event> events, boolean includeEventType, boolean includeSession,
+                                            boolean includeCompetitors, boolean includeImages, boolean includeSeason) {
+        if (events == null || events.isEmpty()) return Collections.emptyList();
+
+        return events.stream()
+                .map(event -> convertToDto(event, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason))
+                .collect(Collectors.toList());
+    }
+
+
 
 }
