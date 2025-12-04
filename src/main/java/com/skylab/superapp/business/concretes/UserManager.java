@@ -79,7 +79,7 @@ public class UserManager implements UserService {
             throw new RuntimeException("Failed to save user profile");
         }
 
-        UserDto userDto = userMapper.toDto(savedProfile, ldapUser);
+        UserDto userDto = userMapper.toDto(savedProfile, ldapUser, Set.of("USER"));
         return userDto;
     }
 
@@ -110,30 +110,22 @@ public class UserManager implements UserService {
     @Override
     public List<UserDto> getAllUsers() {
         var allProfiles = userProfileDao.findAll();
+        if (allProfiles.isEmpty()) return List.of();
 
-        if (allProfiles.isEmpty()){
-            return List.of();
-        }
-
-        List<String> ldapSkyNumbers = allProfiles.stream()
-                .map(UserProfile::getLdapSkyNumber)
-                .toList();
-
-        List<LdapUser> allIdentities = ldapService.findAllByEmployeeNumbers(ldapSkyNumbers);
-
-        Map<String, Set<String>> allUserRoles = ldapService.getAllUserRoles();
+        List<String> skyNumbers = allProfiles.stream().map(UserProfile::getLdapSkyNumber).toList();
+        List<LdapUser> allIdentities = ldapService.findAllByEmployeeNumbers(skyNumbers);
 
         Map<String, LdapUser> identityMap = allIdentities.stream()
-                .collect(Collectors.toMap(LdapUser::getEmployeeNumber, user -> user));
+                .collect(Collectors.toMap(LdapUser::getEmployeeNumber, u -> u));
+
+        Map<String, Set<String>> allRolesMap = ldapService.getAllUserRoles();
 
         return allProfiles.stream()
                 .map(profile -> {
                     LdapUser identity = identityMap.get(profile.getLdapSkyNumber());
-                    if (identity == null){
-                        return null;
-                    }
+                    if (identity == null) return null;
 
-                    Set<String> roles = allUserRoles.getOrDefault(profile.getLdapSkyNumber(), Collections.emptySet());
+                    Set<String> roles = allRolesMap.getOrDefault(profile.getLdapSkyNumber(), Collections.emptySet());
 
                     return userMapper.toDto(profile, identity, roles);
                 })
@@ -143,20 +135,26 @@ public class UserManager implements UserService {
 
     @Override
     public UserDto getUserById(UUID id) {
-        UserProfile profile = userProfileDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
+        UserProfile profile = userProfileDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
         LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
 
-        return userMapper.toDto(profile, ldapUser);
+        Set<String> roles = ldapService.getUserGroups(ldapUser.getEmployeeNumber());
+
+        return userMapper.toDto(profile, ldapUser, roles);
     }
 
     @Override
     public UserDto getUserByUsername(String username) {
-       LdapUser ldapUser = ldapService.findByUsername(username);
+        LdapUser ldapUser = ldapService.findByUsername(username);
 
-       UserProfile profile = userProfileDao.findByLdapSkyNumber(ldapUser.getEmployeeNumber()).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
+        UserProfile profile = userProfileDao.findByLdapSkyNumber(ldapUser.getEmployeeNumber())
+                .orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
-         return userMapper.toDto(profile, ldapUser);
+        Set<String> roles = ldapService.getUserGroups(ldapUser.getEmployeeNumber());
+
+        return userMapper.toDto(profile, ldapUser, roles);
     }
 
     @Override
@@ -165,7 +163,9 @@ public class UserManager implements UserService {
 
         UserProfile profile = userProfileDao.findByLdapSkyNumber(ldapUser.getEmployeeNumber()).orElseThrow(() -> new ResourceNotFoundException(UserMessages.USER_NOT_FOUND));
 
-        return userMapper.toDto(profile, ldapUser);
+        Set<String> roles = ldapService.getUserGroups(ldapUser.getEmployeeNumber());
+
+        return userMapper.toDto(profile, ldapUser, roles);
     }
 
     @Override
@@ -266,11 +266,44 @@ public class UserManager implements UserService {
         Map<String, UserProfile> profileMap = userProfiles.stream()
                 .collect(Collectors.toMap(UserProfile::getLdapSkyNumber, profile -> profile));
 
+        Map<String, Set<String>> allRolesMap = ldapService.getAllUserRoles();
+
         return ldapUsers.stream()
                 .map(ldapUser -> {
                     UserProfile profile = profileMap.getOrDefault(ldapUser.getEmployeeNumber(), new UserProfile());
 
-                    return userMapper.toDto(profile, ldapUser);
+                    Set<String> roles = allRolesMap.getOrDefault(ldapUser.getEmployeeNumber(), Collections.emptySet());
+
+                    return userMapper.toDto(profile, ldapUser, roles);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDto> getUsersByRoleNames(Collection<String> roles) {
+        logger.info("Getting users by role names list: {}", roles);
+
+        List<LdapUser> ldapUsers = ldapService.getUsersByGroupNames(roles);
+
+        if (ldapUsers.isEmpty()){
+            return Collections.emptyList();
+        }
+
+        List<String> skyNumbers = ldapUsers.stream()
+                .map(LdapUser::getEmployeeNumber)
+                .collect(Collectors.toList());
+
+        List<UserProfile> userProfiles = userProfileDao.findAllByLdapSkyNumberIn(skyNumbers);
+        Map<String, UserProfile> profileMap = userProfiles.stream()
+                .collect(Collectors.toMap(UserProfile::getLdapSkyNumber, profile -> profile));
+
+        Map<String, Set<String>> allRolesMap = ldapService.getAllUserRoles();
+
+        return ldapUsers.stream()
+                .map(ldapUser -> {
+                    UserProfile profile = profileMap.getOrDefault(ldapUser.getEmployeeNumber(), new UserProfile());
+                    Set<String> userRoles = allRolesMap.getOrDefault(ldapUser.getEmployeeNumber(), Collections.emptySet());
+                    return userMapper.toDto(profile, ldapUser, userRoles);
                 })
                 .collect(Collectors.toList());
     }
@@ -283,10 +316,8 @@ public class UserManager implements UserService {
 
     @Override
     public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest) {
-
         UserProfile profile = getAuthenticatedUserEntity();
         LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
-
 
         if(updateUserRequest.getFirstName() != null && !updateUserRequest.getFirstName().isBlank()){
             ldapUser.setFirstName(updateUserRequest.getFirstName());
@@ -298,7 +329,6 @@ public class UserManager implements UserService {
 
         ldapUser.setFullName(ldapUser.getFirstName() + " " + ldapUser.getLastName());
 
-
         ldapService.updateUserAttributes(ldapUser);
 
         profile.setLinkedin(updateUserRequest.getLinkedin());
@@ -307,9 +337,9 @@ public class UserManager implements UserService {
         profile.setDepartment(updateUserRequest.getDepartment());
         userProfileDao.save(profile);
 
-        return userMapper.toDto(profile, ldapUser);
+        Set<String> roles = ldapService.getUserGroups(ldapUser.getEmployeeNumber());
 
-
+        return userMapper.toDto(profile, ldapUser, roles);
     }
 
     @Override
@@ -332,7 +362,9 @@ public class UserManager implements UserService {
         UserProfile profile = getAuthenticatedUserEntity();
         LdapUser ldapUser = ldapService.findByEmployeeNumber(profile.getLdapSkyNumber());
 
-        return userMapper.toDto(profile, ldapUser);
+        Set<String> roles = ldapService.getUserGroups(ldapUser.getEmployeeNumber());
+
+        return userMapper.toDto(profile, ldapUser, roles);
     }
 
     private LdapUser getLdapUserOfAuthenticatedUser() {

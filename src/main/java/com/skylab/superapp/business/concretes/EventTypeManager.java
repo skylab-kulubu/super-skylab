@@ -111,22 +111,13 @@ public class EventTypeManager implements EventTypeService {
         logger.info("Getting coordinators by event type name: {}", eventTypeName);
 
         EventType eventType = getEventTypeEntityByName(eventTypeName);
-
         Set<String> roles = eventType.getAuthorizedRoles();
 
         if (roles == null || roles.isEmpty()) {
             return Collections.emptySet();
         }
+        List<UserDto> users = userService.getUsersByRoleNames(roles);
 
-        Set<UserDto> coordinators = new HashSet<>();
-
-        for (String role : roles) {
-            List<UserDto> users = userService.getUsersByRoleName(role);
-
-            coordinators.addAll(users);
-        }
-
-        return coordinators;
+        return new HashSet<>(users);
     }
-
 }

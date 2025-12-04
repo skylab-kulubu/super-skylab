@@ -12,6 +12,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.filter.AndFilter;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.OrFilter;
 import org.springframework.ldap.query.LdapQueryBuilder;
@@ -462,6 +463,55 @@ public class LdapService {
         }
     }
 
+    public List<LdapUser> getUsersByGroupNames(Collection<String> groupNames) {
+        if (groupNames == null || groupNames.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        OrFilter groupOrFilter = new OrFilter();
+        groupNames.forEach(name -> groupOrFilter.or(new EqualsFilter("cn", name)));
+
+        AndFilter mainFilter = new AndFilter();
+        mainFilter.and(new EqualsFilter("objectClass", "groupOfNames"));
+        mainFilter.and(groupOrFilter);
+
+        var query = LdapQueryBuilder.query()
+                .base("ou=groups")
+                .filter(mainFilter);
+
+        try {
+            List<String> allMemberDns = ldapTemplate.search(query, (AttributesMapper<List<String>>) attributes -> {
+                        List<String> dns = new ArrayList<>();
+                        if (attributes.get("member") != null) {
+                            NamingEnumeration<?> members = attributes.get("member").getAll();
+                            while (members.hasMore()) {
+                                String dn = (String) members.next();
+                                dns.add(dn);
+                            }
+                        }
+                        return dns;
+                    }).stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+
+            Set<String> distinctEmployeeNumbers = allMemberDns.stream()
+                    .filter(dn -> !dn.contains("Directory Manager"))
+                    .map(this::extractEmployeeNumberFromString)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            if (distinctEmployeeNumbers.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return findAllByEmployeeNumbers(new ArrayList<>(distinctEmployeeNumbers));
+
+        } catch (Exception e) {
+            logger.error("Error fetching users by group names list: {}", groupNames, e);
+            return Collections.emptyList();
+        }
+    }
+
     private String extractEmployeeNumberFromString(String dnString) {
         try {
             if (dnString.startsWith("employeeNumber=")) {
@@ -485,7 +535,7 @@ public class LdapService {
 
             if (attributes.get("uid") != null)
                 user.setUsername((String) attributes.get("uid").get());
-            else if (attributes.get("cn") != null) // Fallback
+            else if (attributes.get("cn") != null)
                 user.setUsername((String) attributes.get("cn").get());
 
             if (attributes.get("givenName") != null)

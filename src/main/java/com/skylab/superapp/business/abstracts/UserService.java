@@ -5,6 +5,7 @@ import com.skylab.superapp.entities.LdapUser;
 import com.skylab.superapp.entities.UserProfile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ public interface UserService{
     UserDto getUserByUsername(String username);
 
     UserDto getUserByEmail(String email);
+
+    List<UserDto> getUsersByRoleNames(Collection<String> roles);
 
     void assignRoleToUser(String username, String role);
 
