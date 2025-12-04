@@ -3,6 +3,7 @@ package com.skylab.superapp.business.abstracts;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.LeaderboardDto;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -24,7 +25,7 @@ public interface CompetitorService {
     List<CompetitorDto> getCompetitorsByUserId(UUID userId, boolean includeUser, boolean includeEvent);
     List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent);
 
-    List<CompetitorDto> getLeaderboardByEventType(String eventTypeName, boolean includeUser, boolean includeEvent);
+    List<LeaderboardDto> getLeaderboardByEventType(String eventTypeName);
 
     CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent);
 
@@ -35,5 +36,5 @@ public interface CompetitorService {
     Competitor getCompetitorEntityById(UUID id);
 
 
-    List<CompetitorDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName);
+    List<LeaderboardDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName);
 }

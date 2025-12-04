@@ -8,6 +8,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.LeaderboardDto;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,18 +64,18 @@ public class CompetitorController {
     }
 
     @GetMapping("/leaderboard")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getLeaderboard(@RequestParam String eventTypeName,
-                                                                          @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                          @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getLeaderboardByEventType(eventTypeName, includeUser, includeEvent);
+    public ResponseEntity<DataResult<List<LeaderboardDto>>> getLeaderboard(@RequestParam String eventTypeName,
+                                                                           @RequestParam(defaultValue = "false") boolean includeUser,
+                                                                           @RequestParam(defaultValue = "false") boolean includeEvent) {
+        List<LeaderboardDto> result = competitorService.getLeaderboardByEventType(eventTypeName);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
     @GetMapping("/leaderboard/season/{seasonId}")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getSeasonLeaderboard(@PathVariable UUID seasonId,
+    public ResponseEntity<DataResult<List<LeaderboardDto>>> getSeasonLeaderboard(@PathVariable UUID seasonId,
                                                                                 @RequestParam String eventTypeName) {
-        var result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
+        List<LeaderboardDto> result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }

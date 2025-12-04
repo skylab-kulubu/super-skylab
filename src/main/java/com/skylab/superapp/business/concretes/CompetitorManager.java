@@ -8,9 +8,8 @@ import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
-import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
-import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
-import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import com.skylab.superapp.entities.DTOs.Competitor.*;
+import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.EventType;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class CompetitorManager implements CompetitorService {
@@ -154,8 +154,44 @@ public class CompetitorManager implements CompetitorService {
 
 
     @Override
-    public List<CompetitorDto> getLeaderboardByEventType(String eventTypeName, boolean includeUser, boolean includeEvent) {
-        return competitorMapper.toDtoList(competitorDao.findLeaderboardByEventType(eventTypeName), includeUser, includeEvent);
+    public List<LeaderboardDto> getLeaderboardByEventType(String eventTypeName) {
+        List<LeaderboardScoreDto> scores = competitorDao.getLeaderboardScoresByEventType(eventTypeName);
+
+        List<LeaderboardDto> leaderboard = scores.stream().map(score -> {
+            UserDto userDto = userService.getUserById(score.getUserId());
+
+            return new LeaderboardDto(
+                    userDto,
+                    score.getTotalScore(),
+                    score.getEventCount(),
+                    0
+            );
+        }).collect(Collectors.toList());
+
+        assignRanks(leaderboard);
+
+        return leaderboard;
+    }
+
+    @Override
+    public List<LeaderboardDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName) {
+        List<LeaderboardScoreDto> scores = competitorDao.getLeaderboardScoresBySeasonAndEventType(eventTypeName, seasonId);
+
+        List<LeaderboardDto> leaderboard = scores.stream()
+                .map(score -> {
+                    UserDto userDto = userService.getUserById(score.getUserId());
+
+                    return new LeaderboardDto(
+                            userDto,
+                            score.getTotalScore(),
+                            score.getEventCount(),
+                            0
+                    );
+                })
+                .collect(Collectors.toList());
+        assignRanks(leaderboard);
+
+        return leaderboard;
     }
 
 
@@ -195,15 +231,6 @@ public class CompetitorManager implements CompetitorService {
                 .orElseThrow(() -> new ResourceNotFoundException(CompetitorMessages.COMPETITOR_NOT_FOUND));
     }
 
-    @Override
-    public List<CompetitorDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName) {
-        return competitorMapper.toDtoList(
-                competitorDao.findLeaderboardByEventTypeAndSeasonId(eventTypeName, seasonId),
-                true,
-                true
-        );
-    }
-
     private void checkAuthorization(EventType eventType) {
         var currentUser = userService.getAuthenticatedUser();
         boolean isAuthorized = currentUser.getRoles().stream()
@@ -212,6 +239,12 @@ public class CompetitorManager implements CompetitorService {
 
         if (!isAuthorized) {
             throw new AccessDeniedException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
+        }
+    }
+
+    private void assignRanks(List<LeaderboardDto> leaderboard) {
+        for (int i = 0; i < leaderboard.size(); i++) {
+            leaderboard.get(i).setRank(i + 1);
         }
     }
 
