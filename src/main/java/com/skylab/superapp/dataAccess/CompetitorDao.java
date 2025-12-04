@@ -21,7 +21,6 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
             "COUNT(c)) " +
             "FROM Competitor c " +
             "WHERE c.event.type.name = :eventTypeName " +
-            "AND c.score IS NOT NULL " +
             "GROUP BY c.user.id " +
             "ORDER BY SUM(c.score) DESC")
     List<LeaderboardScoreDto> getLeaderboardScoresByEventType(@Param("eventTypeName") String eventTypeName);
@@ -33,7 +32,6 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
             "FROM Competitor c " +
             "WHERE c.event.type.name = :eventTypeName " +
             "AND c.event.season.id = :seasonId " +
-            "AND c.score IS NOT NULL " +
             "GROUP BY c.user.id " +
             "ORDER BY SUM(c.score) DESC")
     List<LeaderboardScoreDto> getLeaderboardScoresBySeasonAndEventType(@Param("eventTypeName") String eventTypeName,

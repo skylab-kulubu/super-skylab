@@ -264,7 +264,7 @@ public class UserManager implements UserService {
 
         return ldapUsers.stream()
                 .map(ldapUser -> {
-                    UserProfile profile = profileMap.getOrDefault(ldapUser.getEmail(), new UserProfile());
+                    UserProfile profile = profileMap.getOrDefault(ldapUser.getEmployeeNumber(), new UserProfile());
 
                     return userMapper.toDto(profile, ldapUser);
                 })
