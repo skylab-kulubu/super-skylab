@@ -90,4 +90,11 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK));
     }
+
+    @PutMapping("/remove-role/{username}")
+    public ResponseEntity<Result> removeRoleFromUser(@PathVariable String username, @RequestParam String role) {
+        userService.removeRoleFromUser(username, role);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(UserMessages.ROLE_REMOVED_SUCCESS, HttpStatus.OK));
+    }
 }

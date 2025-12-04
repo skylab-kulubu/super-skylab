@@ -47,4 +47,5 @@ public interface UserService{
 
     List<UserDto> getUsersByRoleName(String role);
 
+    void removeRoleFromUser(String username, String role);
 }

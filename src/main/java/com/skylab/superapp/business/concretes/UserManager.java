@@ -6,7 +6,6 @@ import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.ldap.LdapService;
-import com.skylab.superapp.core.utilities.mail.EmailService;
 import com.skylab.superapp.dataAccess.UserProfileDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
@@ -277,6 +276,39 @@ public class UserManager implements UserService {
                     return userMapper.toDto(profile, ldapUser, roles);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void removeRoleFromUser(String username, String role) {
+        logger.info("Removing role {} from username: {}", role, username);
+
+
+        LdapUser requesterUser = getLdapUserOfAuthenticatedUser();
+        Set<String> requesterUsersRoles = ldapService.getUserGroups(requesterUser.getEmployeeNumber());
+
+        LdapUser targetUser = ldapService.findByUsername(username);
+
+        boolean isAuthorized = false;
+
+        boolean isSuperAdmin = requesterUsersRoles.stream().anyMatch(SUPER_ADMIN_ROLES::contains);
+
+        if (isSuperAdmin){
+            isAuthorized = true;
+        }else {
+            String requiredLeaderRole = role + "_LEADER";
+
+            if (requesterUsersRoles.contains(requiredLeaderRole)){
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized){
+            logger.warn("User with username: {} is not authorized to remove role: {}", requesterUser.getUsername(), role);
+            throw new AccessDeniedException("You do not have permission to remove this role.");
+        }
+
+        ldapService.removeUserFromGroup(targetUser.getEmployeeNumber(), role);
+        logger.info("Successfully removed role: {} from user with username: {}", role, username);
     }
 
     @Override
