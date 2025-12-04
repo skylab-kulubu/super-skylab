@@ -44,6 +44,16 @@ public class CompetitorController {
                         HttpStatus.OK));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id,
+                                                                       @RequestParam(defaultValue = "false") boolean includeUser,
+                                                                       @RequestParam(defaultValue = "false") boolean includeEvent) {
+        var result = competitorService.getCompetitorById(id, includeUser, includeEvent);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS,
+                        HttpStatus.OK));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Result> deleteCompetitor(@PathVariable UUID id) {
         competitorService.deleteCompetitor(id);
