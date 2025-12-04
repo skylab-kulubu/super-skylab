@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.Name;
 import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
@@ -334,19 +335,36 @@ public class LdapService {
             return List.of();
         }
 
-        OrFilter orFilter = new OrFilter();
-        ldapSkyNumbers.forEach(num -> orFilter.or(new EqualsFilter("employeeNumber", num)));
+        int batchSize = 50;
+        List<LdapUser> allUsers = new ArrayList<>();
 
-        List<LdapUser> users = ldapUserDao.findAll(LdapQueryBuilder.query().filter(orFilter));
-        users.forEach(this::fixEmployeeNumber);
+        for (int i = 0; i < ldapSkyNumbers.size(); i += batchSize) {
+            List<String> batch = ldapSkyNumbers.subList(i, Math.min(i + batchSize, ldapSkyNumbers.size()));
 
-        return users;
+            OrFilter orFilter = new OrFilter();
+            batch.forEach(num -> orFilter.or(new EqualsFilter("employeeNumber", num)));
+
+            try {
+                List<LdapUser> batchUsers = ldapTemplate.search(
+                        LdapQueryBuilder.query().base("ou=people").filter(orFilter),
+                        new LdapUserAttributesMapper()
+                );
+                allUsers.addAll(batchUsers);
+            } catch (Exception e) {
+                logger.error("Error fetching batch users from LDAP", e);
+            }
+        }
+
+        return allUsers;
     }
 
     public LdapUser updateUserAttributes(LdapUser user) {
         logger.info("Updating attributes for user in LDAP: {}", user.getEmployeeNumber());
 
-        Name dn = LdapNameBuilder.newInstance(user.getDn().toString()).build();
+        Name dn = LdapNameBuilder.newInstance()
+                .add("ou", "people")
+                .add("employeeNumber", user.getEmployeeNumber())
+                .build();
 
         ModificationItem[] mods = new ModificationItem[] {
                 new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
@@ -414,6 +432,35 @@ public class LdapService {
         } catch (Exception e) {
         }
         return null;
+    }
+
+    private static class LdapUserAttributesMapper implements AttributesMapper<LdapUser> {
+        @Override
+        public LdapUser mapFromAttributes(Attributes attributes) throws NamingException {
+            LdapUser user = new LdapUser();
+
+            if (attributes.get("employeeNumber") != null)
+                user.setEmployeeNumber((String) attributes.get("employeeNumber").get());
+
+            if (attributes.get("uid") != null)
+                user.setUsername((String) attributes.get("uid").get());
+            else if (attributes.get("cn") != null) // Fallback
+                user.setUsername((String) attributes.get("cn").get());
+
+            if (attributes.get("givenName") != null)
+                user.setFirstName((String) attributes.get("givenName").get());
+
+            if (attributes.get("sn") != null)
+                user.setLastName((String) attributes.get("sn").get());
+
+            if (attributes.get("cn") != null)
+                user.setFullName((String) attributes.get("cn").get());
+
+            if (attributes.get("mail") != null)
+                user.setEmail((String) attributes.get("mail").get());
+
+            return user;
+        }
     }
 
 
