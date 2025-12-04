@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.User.*;
+import com.skylab.superapp.entities.LdapUser;
 import com.skylab.superapp.entities.UserProfile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,5 +38,7 @@ public interface UserService{
 
     void uploadProfilePictureOfAuthenticatedUser(MultipartFile imageFile);
 
+
+    List<UserDto> getUsersByRoleName(String role);
 
 }

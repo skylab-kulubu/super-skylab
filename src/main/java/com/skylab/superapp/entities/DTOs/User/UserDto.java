@@ -1,5 +1,6 @@
 package com.skylab.superapp.entities.DTOs.User;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,9 +13,12 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UserDto {
 
+    @EqualsAndHashCode.Include
     private UUID id;
+
     private String username;
     private String email;
     private String firstName;

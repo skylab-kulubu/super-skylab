@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.EventTypeService;
+import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.EventTypeMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
@@ -28,14 +29,13 @@ public class EventTypeManager implements EventTypeService {
     private final EventTypeMapper eventTypeMapper;
 
     private final Logger logger = LoggerFactory.getLogger(EventTypeManager.class);
-    private final LdapService ldapService;
+    private final UserService userService;
 
     @Autowired
-    public EventTypeManager(EventTypeDao eventTypeDao,
-                            EventTypeMapper eventTypeMapper, LdapService ldapService) {
+    public EventTypeManager(EventTypeDao eventTypeDao, EventTypeMapper eventTypeMapper, UserService userService) {
         this.eventTypeDao = eventTypeDao;
         this.eventTypeMapper = eventTypeMapper;
-        this.ldapService = ldapService;
+        this.userService = userService;
     }
 
 
@@ -121,25 +121,12 @@ public class EventTypeManager implements EventTypeService {
         Set<UserDto> coordinators = new HashSet<>();
 
         for (String role : roles) {
-            List<LdapUser> ldapUsers = ldapService.getUsersByGroupName(role);
+            List<UserDto> users = userService.getUsersByRoleName(role);
 
-            for (LdapUser ldapUser : ldapUsers) {
-                coordinators.add(mapLdapUserToDto(ldapUser));
-            }
+            coordinators.addAll(users);
         }
 
-        return coordinators.stream()
-                .distinct()
-                .collect(Collectors.toSet());
-
-    }
-
-    private UserDto mapLdapUserToDto(LdapUser source) {
-        UserDto dto = new UserDto();
-        dto.setFirstName(source.getFirstName());
-        dto.setLastName(source.getLastName());
-        dto.setEmail(source.getEmail());
-        return dto;
+        return coordinators;
     }
 
 }
