@@ -6,6 +6,7 @@ import com.skylab.superapp.entities.LdapUser;
 import com.skylab.superapp.entities.UserProfile;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +19,24 @@ public class UserMapper {
     public UserMapper(LdapService ldapService, ImageMapper imageMapper) {
         this.ldapService = ldapService;
         this.imageMapper = imageMapper;
+    }
+
+    public UserDto toDto(UserProfile userProfile, LdapUser ldapUser, Set<String> roles){
+        UserDto userDto = new UserDto();
+        userDto.setId(userProfile.getId());
+        userDto.setUsername(ldapUser.getUsername());
+        userDto.setEmail(ldapUser.getEmail());
+        userDto.setFirstName(ldapUser.getFirstName());
+        userDto.setLastName(ldapUser.getLastName());
+        userDto.setProfilePictureUrl(imageMapper.toString(userProfile.getProfilePicture()));
+        userDto.setLinkedin(userProfile.getLinkedin());
+        userDto.setUniversity(userProfile.getUniversity());
+        userDto.setFaculty(userProfile.getFaculty());
+        userDto.setDepartment(userProfile.getDepartment());
+
+        userDto.setRoles(roles != null ? roles : Collections.emptySet());
+
+        return userDto;
     }
 
     public UserDto toDto(UserProfile userProfile, LdapUser ldapUser){

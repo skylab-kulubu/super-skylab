@@ -315,6 +315,47 @@ public class LdapService {
         logger.info("Cleanup completed. Total dangling references removed: {}", cleanedCount);
     }
 
+    public Map<String, Set<String>> getAllUserRoles() {
+        Map<String, Set<String>> userRolesMap = new HashMap<>();
+
+        var query = LdapQueryBuilder.query()
+                .base("ou=groups")
+                .searchScope(SearchScope.ONELEVEL)
+                .attributes("cn", "member")
+                .where("objectClass").is("groupOfNames");
+
+        try {
+            ldapTemplate.search(query, (Attributes attrs) -> {
+                try {
+                    String roleName = (String) attrs.get("cn").get();
+
+                    if (attrs.get("member") != null) {
+                        NamingEnumeration<?> members = attrs.get("member").getAll();
+                        while (members.hasMore()) {
+                            String memberDn = (String) members.next();
+
+
+                            if (memberDn.contains("Directory Manager")) continue;
+
+                            String empNo = extractEmployeeNumberFromString(memberDn);
+
+                            if (empNo != null) {
+                                userRolesMap.computeIfAbsent(empNo, k -> new HashSet<>()).add(roleName);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error mapping roles in bulk", e);
+                }
+                return null;
+            });
+        } catch (Exception e) {
+            logger.error("Error fetching all user roles", e);
+        }
+
+        return userRolesMap;
+    }
+
     private String extractEmployeeNumber(Name dn) {
         try {
             String dnString = dn.toString();

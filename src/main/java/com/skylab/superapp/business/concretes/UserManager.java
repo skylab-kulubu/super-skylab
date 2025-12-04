@@ -121,6 +121,8 @@ public class UserManager implements UserService {
 
         List<LdapUser> allIdentities = ldapService.findAllByEmployeeNumbers(ldapSkyNumbers);
 
+        Map<String, Set<String>> allUserRoles = ldapService.getAllUserRoles();
+
         Map<String, LdapUser> identityMap = allIdentities.stream()
                 .collect(Collectors.toMap(LdapUser::getEmployeeNumber, user -> user));
 
@@ -130,11 +132,13 @@ public class UserManager implements UserService {
                     if (identity == null){
                         return null;
                     }
-                    return userMapper.toDto(profile, identity);
+
+                    Set<String> roles = allUserRoles.getOrDefault(profile.getLdapSkyNumber(), Collections.emptySet());
+
+                    return userMapper.toDto(profile, identity, roles);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
     }
 
     @Override
