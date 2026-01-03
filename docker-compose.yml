@@ -4,12 +4,12 @@ services:
   super-skylab-app:
     container_name: super-skylab-app
     build: .
-    ports:
-      - "9010:9010"
+    #ports:
+    #  - "9010:9010"
     depends_on:
       - super-skylab-db
     networks:
-        - nginx-network
+        - skynet
 
   super-skylab-db:
     container_name: super-skylab-db
@@ -18,15 +18,15 @@ services:
       POSTGRES_DB: superSkyLabDB
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5455:5432"
+    #ports:
+    #  - "5455:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - nginx-network
+      - skynet
 
 networks:
-    nginx-network:
+  skynet:
       external: true
 
 volumes:
