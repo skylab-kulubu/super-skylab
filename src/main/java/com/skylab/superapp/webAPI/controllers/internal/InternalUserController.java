@@ -26,7 +26,7 @@ public class InternalUserController {
         this.userService = userService;
     }
 
-    @GetMapping("/authenticated-user")
+    @GetMapping("/authenticated")
     public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser() {
         var result = userService.getAuthenticatedUser();
         return ResponseEntity.status(HttpStatus.OK)
