@@ -37,7 +37,7 @@ public class InternalUserController {
 
 
 
-    @GetMapping("/by-id/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<DataResult<UserDto>> getUserById(@PathVariable UUID id) {
         var result = userService.getUserById(id);
         return ResponseEntity.status(HttpStatus.OK)
