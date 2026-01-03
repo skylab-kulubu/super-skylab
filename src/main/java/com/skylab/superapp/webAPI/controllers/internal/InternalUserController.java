@@ -26,7 +26,7 @@ public class InternalUserController {
         this.userService = userService;
     }
 
-    @GetMapping("/authenticated")
+    @GetMapping("/authenticated-user")
     public ResponseEntity<DataResult<UserDto>> getAuthenticatedUser() {
         var result = userService.getAuthenticatedUser();
         return ResponseEntity.status(HttpStatus.OK)
@@ -36,7 +36,8 @@ public class InternalUserController {
 
 
 
-    @GetMapping("/{id}")
+
+    @GetMapping("/by-id/{id}")
     public ResponseEntity<DataResult<UserDto>> getUserById(@PathVariable UUID id) {
         var result = userService.getUserById(id);
         return ResponseEntity.status(HttpStatus.OK)
