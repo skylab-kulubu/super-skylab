@@ -469,48 +469,26 @@ public class LdapService {
             return Collections.emptyList();
         }
 
-        OrFilter groupOrFilter = new OrFilter();
-        groupNames.forEach(name -> groupOrFilter.or(new EqualsFilter("cn", name)));
 
-        AndFilter mainFilter = new AndFilter();
-        mainFilter.and(new EqualsFilter("objectClass", "groupOfNames"));
-        mainFilter.and(groupOrFilter);
+        Map<String, LdapUser> uniqueUsersMap = new HashMap<>();
 
-        var query = LdapQueryBuilder.query()
-                .base("ou=groups")
-                .filter(mainFilter);
+        for (String groupName : groupNames) {
+            if (groupName == null || groupName.isBlank()) continue;
 
-        try {
-            List<String> allMemberDns = ldapTemplate.search(query, (AttributesMapper<List<String>>) attributes -> {
-                        List<String> dns = new ArrayList<>();
-                        if (attributes.get("member") != null) {
-                            NamingEnumeration<?> members = attributes.get("member").getAll();
-                            while (members.hasMore()) {
-                                String dn = (String) members.next();
-                                dns.add(dn);
-                            }
-                        }
-                        return dns;
-                    }).stream()
-                    .flatMap(List::stream)
-                    .collect(Collectors.toList());
-
-            Set<String> distinctEmployeeNumbers = allMemberDns.stream()
-                    .filter(dn -> !dn.contains("Directory Manager"))
-                    .map(this::extractEmployeeNumberFromString)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-
-            if (distinctEmployeeNumbers.isEmpty()) {
-                return Collections.emptyList();
+            try {
+                List<LdapUser> usersInGroup = getUsersByGroupName(groupName.trim());
+                
+                for (LdapUser user : usersInGroup) {
+                    if (user.getEmployeeNumber() != null) {
+                        uniqueUsersMap.putIfAbsent(user.getEmployeeNumber(), user);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Error fetching users for group: {}", groupName, e);
             }
-
-            return findAllByEmployeeNumbers(new ArrayList<>(distinctEmployeeNumbers));
-
-        } catch (Exception e) {
-            logger.error("Error fetching users by group names list: {}", groupNames, e);
-            return Collections.emptyList();
         }
+
+        return new ArrayList<>(uniqueUsersMap.values());
     }
 
     public List<LdapUser> searchUsersByEmail(String emailPart) {
