@@ -51,7 +51,7 @@ public class UserController {
     }
 
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) List<String> roles
