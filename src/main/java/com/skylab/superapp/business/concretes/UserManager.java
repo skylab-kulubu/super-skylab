@@ -108,27 +108,59 @@ public class UserManager implements UserService {
 
     @Override
     public List<UserDto> getAllUsers() {
-        var allProfiles = userProfileDao.findAll();
-        if (allProfiles.isEmpty()) return List.of();
+        return getAllUsers(null, null);
+    }
 
-        List<String> skyNumbers = allProfiles.stream().map(UserProfile::getLdapSkyNumber).toList();
-        List<LdapUser> allIdentities = ldapService.findAllByEmployeeNumbers(skyNumbers);
+    @Override
+    public List<UserDto> getAllUsers(String email, List<String> roles) {
+        List<LdapUser> ldapUsers;
 
-        Map<String, LdapUser> identityMap = allIdentities.stream()
-                .collect(Collectors.toMap(LdapUser::getEmployeeNumber, u -> u));
+        boolean hasEmail = email != null && !email.isBlank();
+        boolean hasRoles = roles != null && !roles.isEmpty();
+
+        if (hasRoles) {
+            ldapUsers = ldapService.getUsersByGroupNames(roles);
+            if (hasEmail) {
+                String emailLower = email.toLowerCase(Locale.ENGLISH);
+                ldapUsers = ldapUsers.stream()
+                        .filter(u -> u.getEmail() != null && u.getEmail().toLowerCase(Locale.ENGLISH).contains(emailLower))
+                        .collect(Collectors.toList());
+            }
+        } else if (hasEmail) {
+            ldapUsers = ldapService.searchUsersByEmail(email);
+        } else {
+            var allProfiles = userProfileDao.findAll();
+            if (allProfiles.isEmpty()) return List.of();
+
+            List<String> skyNumbers = allProfiles.stream().map(UserProfile::getLdapSkyNumber).toList();
+            ldapUsers = ldapService.findAllByEmployeeNumbers(skyNumbers);
+        }
+
+        if (ldapUsers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+
+        List<String> skyNumbers = ldapUsers.stream()
+                .map(LdapUser::getEmployeeNumber)
+                .collect(Collectors.toList());
+
+        List<UserProfile> userProfiles = userProfileDao.findAllByLdapSkyNumberIn(skyNumbers);
+        Map<String, UserProfile> profileMap = userProfiles.stream()
+                .collect(Collectors.toMap(UserProfile::getLdapSkyNumber, profile -> profile));
+
 
         Map<String, Set<String>> allRolesMap = ldapService.getAllUserRoles();
 
-        return allProfiles.stream()
-                .map(profile -> {
-                    LdapUser identity = identityMap.get(profile.getLdapSkyNumber());
-                    if (identity == null) return null;
+        return ldapUsers.stream()
+                .map(ldapUser -> {
+                    UserProfile profile = profileMap.getOrDefault(ldapUser.getEmployeeNumber(), new UserProfile());
 
-                    Set<String> roles = allRolesMap.getOrDefault(profile.getLdapSkyNumber(), Collections.emptySet());
+                    
+                    Set<String> userRoles = allRolesMap.getOrDefault(ldapUser.getEmployeeNumber(), Collections.emptySet());
 
-                    return userMapper.toDto(profile, identity, roles);
+                    return userMapper.toDto(profile, ldapUser, userRoles);
                 })
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

@@ -18,6 +18,8 @@ public interface UserService{
 
     List<UserDto> getAllUsers();
 
+    List<UserDto> getAllUsers(String email, List<String> roles);
+
     UserDto getUserById(UUID id);
 
     UserDto getUserByUsername(String username);

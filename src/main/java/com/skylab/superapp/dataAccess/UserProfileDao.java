@@ -2,6 +2,7 @@ package com.skylab.superapp.dataAccess;
 
 import com.skylab.superapp.entities.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Repository
-public interface UserProfileDao extends JpaRepository<UserProfile, UUID> {
+public interface UserProfileDao extends JpaRepository<UserProfile, UUID> , JpaSpecificationExecutor<UserProfile> {
     Optional<UserProfile> findById(UUID id);
 
     Optional<UserProfile> findByLdapSkyNumber(String ldapSkyNumber);

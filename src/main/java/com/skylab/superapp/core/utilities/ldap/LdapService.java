@@ -14,6 +14,7 @@ import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.filter.AndFilter;
 import org.springframework.ldap.filter.EqualsFilter;
+import org.springframework.ldap.filter.LikeFilter;
 import org.springframework.ldap.filter.OrFilter;
 import org.springframework.ldap.query.LdapQueryBuilder;
 import org.springframework.ldap.query.SearchScope;
@@ -508,6 +509,25 @@ public class LdapService {
 
         } catch (Exception e) {
             logger.error("Error fetching users by group names list: {}", groupNames, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public List<LdapUser> searchUsersByEmail(String emailPart) {
+        logger.info("Searching users by email part: {}", emailPart);
+
+        if (emailPart == null || emailPart.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        var query = LdapQueryBuilder.query()
+                .base("ou=people")
+                .filter(new LikeFilter("mail", "*" + emailPart + "*"));
+
+        try {
+            return ldapTemplate.search(query, new LdapUserAttributesMapper());
+        } catch (Exception e) {
+            logger.error("Error searching users by email part: {}", emailPart, e);
             return Collections.emptyList();
         }
     }
