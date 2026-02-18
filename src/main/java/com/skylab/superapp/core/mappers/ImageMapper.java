@@ -30,10 +30,10 @@ public class ImageMapper {
         }
         UploadImageResponseDto dto = new UploadImageResponseDto();
         dto.setId(savedImage.getId());
-        dto.setFileName(savedImage.getFileName());
-        dto.setFileType(savedImage.getFileType());
-        dto.setFileUrl("https://cdn.yildizskylab.com/"+savedImage.getFileUrl());
-        dto.setFileSize(savedImage.getFileSize());
+        dto.setName(savedImage.getFileName());
+        dto.setType(savedImage.getFileType());
+        dto.setUrl("https://cdn.yildizskylab.com/"+savedImage.getFileUrl());
+        dto.setSize(savedImage.getFileSize());
         return dto;
     }
 }

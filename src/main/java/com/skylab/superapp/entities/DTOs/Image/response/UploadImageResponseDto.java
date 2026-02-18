@@ -13,12 +13,12 @@ public class UploadImageResponseDto {
 
     private UUID id;
 
-    private String fileName;
+    private String name;
 
-    private String fileType;
+    private String type;
 
-    private String fileUrl;
+    private String url;
 
-    private Long fileSize;
+    private Long size;
 
 }
