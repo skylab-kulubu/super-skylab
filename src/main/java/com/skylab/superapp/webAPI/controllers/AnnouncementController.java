@@ -29,7 +29,7 @@ public class AnnouncementController {
         this.announcementService = announcementService;
     }
 
-    @PostMapping(value = "/", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<DataResult<AnnouncementDto>> addAnnouncement(
             @RequestPart("data") @Valid CreateAnnouncementRequestDto createAnnouncementRequest,
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
@@ -65,7 +65,7 @@ public class AnnouncementController {
                 .body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_GET_SUCCESS, HttpStatus.OK));
     }
 
-    @GetMapping("/")
+    @GetMapping()
     public ResponseEntity<DataResult<List<AnnouncementDto>>> getAllAnnouncements(@RequestParam(defaultValue = "false") boolean includeUser,
                                                                                  @RequestParam(defaultValue = "false") boolean includeEventType,
                                                                                  @RequestParam(defaultValue = "false") boolean includeImages) {

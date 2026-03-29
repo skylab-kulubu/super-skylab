@@ -35,7 +35,7 @@ public class EventController {
         this.objectMapper = objectMapper;
     }
 
-    @GetMapping("/")
+    @GetMapping()
     public ResponseEntity<DataResult<List<EventDto>>> getAllEvents(@RequestParam(defaultValue = "false") boolean includeEventType,
                                                                    @RequestParam(defaultValue = "false") boolean includeSession,
                                                                    @RequestParam(defaultValue = "false") boolean includeCompetitors,
@@ -65,7 +65,7 @@ public class EventController {
     }
 
 
-    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Add new event",
             description = "Adds a new event with optional cover image"

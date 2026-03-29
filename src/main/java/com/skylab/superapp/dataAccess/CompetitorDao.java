@@ -43,12 +43,12 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
     @Query("SELECT c FROM Competitor c WHERE c.user.id = :userId")
     List<Competitor> findByUserId(@Param("userId") UUID userId);
 
-    List<Competitor> findCompetitorsByUser(UserProfile user);
+    List<Competitor> findCompetitorsByUser(User user);
 
     List<Competitor> findAllByEventType(EventType eventType);
 
     @Query("SELECT c FROM Competitor c WHERE c.event =:event and c.isWinner = true")
     Competitor findWinnerOfEvent(Event event);
 
-    boolean existsByUserAndEvent(UserProfile user, Event event);
+    boolean existsByUserAndEvent(User user, Event event);
 }

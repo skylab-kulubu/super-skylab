@@ -27,7 +27,7 @@ public class CompetitorController {
         this.competitorService = competitorService;
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@RequestBody CreateCompetitorRequest createCompetitorRequest) {
         var result = competitorService.addCompetitor(createCompetitorRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -36,7 +36,7 @@ public class CompetitorController {
 
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors(@RequestParam(defaultValue = "false") boolean includeUser,
                                                                              @RequestParam(defaultValue = "false") boolean includeEvent) {
         var result = competitorService.getAllCompetitors(includeUser, includeEvent);

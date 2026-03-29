@@ -26,7 +26,7 @@ public class SeasonController {
         this.seasonService = seasonService;
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<DataResult<List<SeasonDto>>> getAllSeasons(@RequestParam(defaultValue = "false") boolean includeEvents) {
         var result = seasonService.getAllSeasons(includeEvents);
 
@@ -53,7 +53,7 @@ public class SeasonController {
 
 
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<DataResult<SeasonDto>> addSeason(@RequestBody CreateSeasonRequest createSeasonRequest) {
         var result = seasonService.addSeason(createSeasonRequest);
         return ResponseEntity.status(HttpStatus.CREATED)

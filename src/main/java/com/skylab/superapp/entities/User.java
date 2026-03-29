@@ -12,16 +12,31 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "user_profiles")
-public class UserProfile {
+@Table(name = "users")
+public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "ldap_sky_number")
-    private String ldapSkyNumber;
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "sky_number")
+    private String skyNumber;
+
+    @Column(name = "is_ldap_user")
+    @Builder.Default
+    private boolean isLdapUser = false;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_picture_id", referencedColumnName = "id")
@@ -41,9 +56,6 @@ public class UserProfile {
 
     @Column(name = "department")
     private String department;
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
 
 }
 

@@ -1,4 +1,4 @@
-package com.skylab.superapp.core.utilities.ldap;
+package com.skylab.superapp.core.identity.ldap;
 
 public class LdapMessages {
     public static final String USER_NOT_FOUND = "LDAP user not found.";

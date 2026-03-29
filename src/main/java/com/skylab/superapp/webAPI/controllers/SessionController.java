@@ -25,7 +25,7 @@ public class SessionController {
     }
 
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<DataResult<List<SessionDto>>> getAllSessions(@RequestParam(defaultValue = "false") boolean includeEvent){
         var result = sessionService.getAllSessions(includeEvent);
         if (result.isEmpty()){
@@ -39,7 +39,7 @@ public class SessionController {
                         HttpStatus.OK));
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<DataResult<SessionDto>> addSession(@RequestBody CreateSessionRequest createSessionRequest){
         var result = sessionService.addSession(createSessionRequest);
 

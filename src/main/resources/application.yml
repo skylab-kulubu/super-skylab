@@ -16,15 +16,37 @@ spring:
     url: jdbc:postgresql://super-skylab-db:5432/superSkyLabDB
     username: postgres
     password: postgres
+  keycloak-datasource:
+    url: jdbc:postgresql://keycloak-db:5432/keycloak
+    username: keycloak
+    password: keycloak
+    driver-class-name: org.postgresql.Driver
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+
+
+
   security:
     oauth2:
       resourceserver:
         jwt:
+          issuer-uri: http://localhost:8080/realms/e-skylab
           jwk-set-uri: http://keycloak:8080/realms/e-skylab/protocol/openid-connect/certs
+
+
+
+  ldap:
+    urls: ldap://ldap-server:3389
+    base: dc=yildizskylab,dc=com
+    username: cn=Directory Manager
+    password: admin
+    base-environment:
+      java.naming.ldap.attributes.binary: entryUUID
+
+
   mail:
     host: smtp.office365.com
     port: 587
@@ -44,18 +66,16 @@ spring:
     password: rabbitMQ
     virtual-host: /
 
-  ldap:
-    urls: ldap://ldap-server:3389
-    base: dc=yildizskylab,dc=com
-    username: cn=Directory Manager
-    password: admin
-    base-environment:
-      base-environment:
-        java:
-          naming:
-            ldap:
-              attributes:
-                binary: entryUUID
+keycloak:
+  server-url: http://keycloak:8080
+  internal-url: http://keycloak:8080
+  realm: e-skylab
+  client-id: super-skylab-cli
+  client-secret: mVYEv3uHgnZ2p4sTyF0me93dW3TqjCpd
+  admin-username: admin
+  admin-password: admin
+  ldap-provider-id: -yjSIG5dQRerbMvkGOKruQ
+
 
 server:
   port: 9010
@@ -66,12 +86,6 @@ springdoc:
     enabled: true
     path: /v3/api-docs
 
-
-keycloak:
-  base-url: http://e.yildizskylab.com:8080
-  realm: e-skylab
-  client-id: client-id
-  client-secret: secret
 
 eureka:
   client:

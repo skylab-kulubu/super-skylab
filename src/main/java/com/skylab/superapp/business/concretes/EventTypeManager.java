@@ -6,21 +6,18 @@ import com.skylab.superapp.core.constants.EventTypeMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventTypeMapper;
-import com.skylab.superapp.core.utilities.ldap.LdapService;
 import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
-import com.skylab.superapp.entities.LdapUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class EventTypeManager implements EventTypeService {

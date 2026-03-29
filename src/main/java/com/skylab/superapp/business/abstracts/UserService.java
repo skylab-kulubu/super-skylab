@@ -1,53 +1,39 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.User.*;
-import com.skylab.superapp.entities.LdapUser;
-import com.skylab.superapp.entities.UserProfile;
+import com.skylab.superapp.entities.Image;
+import com.skylab.superapp.entities.User;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public interface UserService{
 
-    UserDto addUser(CreateUserRequest createUpdateRequest);
-
-    void deleteUser(UUID id);
+    User getAuthenticatedUserEntity();
 
     List<UserDto> getAllUsers();
 
-    List<UserDto> getAllUsers(String email, List<String> roles);
-
     UserDto getUserById(UUID id);
-
-    UserDto getUserByUsername(String username);
-
-    UserDto getUserByEmail(String email);
-
-    List<UserDto> getUsersByRoleNames(Collection<String> roles);
-
-    Map<UUID, UserDto> mapProfilesToUsers(List<UserProfile> profiles);
-
-    void assignRoleToUser(String username, String role);
 
     UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 
-    UserDto updateUser(UUID userId, UpdateUserRequest updateUserRequest);
+    void promoteUserToLdap(UUID userId, String targetRole, String initialPassword);
 
-    void changePassword(UUID userId, String newPassword);
 
     UserDto getAuthenticatedUser();
 
-    UserProfile getUserEntityById(UUID id);
+    List<UserDto> getAllUsersByIds(List<UUID> ids);
 
-    UserProfile getAuthenticatedUserEntity();
+    Image uploadProfilePictureOfAuthenticatedUser(MultipartFile image);
 
-    void uploadProfilePictureOfAuthenticatedUser(MultipartFile imageFile);
+    UserDto updateUser(UUID id, UpdateUserRequest updateUserRequest);
 
+    void deleteUser(UUID id);
 
-    List<UserDto> getUsersByRoleName(String role);
+    List<UserDto> getUsersByRoleNames(Set<String> roles);
 
-    void removeRoleFromUser(String username, String role);
+    User getUserEntityById(UUID id);
+
 }

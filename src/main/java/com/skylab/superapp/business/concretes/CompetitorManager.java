@@ -6,22 +6,25 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
-import com.skylab.superapp.core.utilities.ldap.LdapService;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.*;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.EventType;
-import com.skylab.superapp.entities.LdapUser;
-import com.skylab.superapp.entities.UserProfile;
+import com.skylab.superapp.entities.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CompetitorManager implements CompetitorService {
 
@@ -226,14 +229,28 @@ public class CompetitorManager implements CompetitorService {
     }
 
     private void checkAuthorization(EventType eventType) {
-        var currentUser = userService.getAuthenticatedUser();
-        boolean isAuthorized = currentUser.getRoles().stream()
-                .anyMatch(role -> PRIVILEGED_ROLES.contains(role) ||
-                        eventType.getAuthorizedRoles().contains(role));
+        log.info("Checking authorization");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Kullanıcı girişi yapılmamış!");
+        }
+
+        Set<String> userRoles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(role -> role.replace("ROLE_", ""))
+                .collect(Collectors.toSet());
+
+        boolean isAuthorized = userRoles.stream()
+                .anyMatch(role ->
+                        PRIVILEGED_ROLES.contains(role) ||
+                                eventType.getAuthorizedRoles().contains(role)
+                );
 
         if (!isAuthorized) {
             throw new AccessDeniedException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
         }
+
     }
 
     private void assignRanks(List<LeaderboardDto> leaderboard) {
@@ -248,12 +265,15 @@ public class CompetitorManager implements CompetitorService {
         Map<UUID, UserDto> userDtoMap = new HashMap<>();
 
         if (includeUser) {
-            List<UserProfile> profiles = competitors.stream()
-                    .map(Competitor::getUser)
+            List<UUID> userIds = competitors.stream()
+                    .map(competitor -> competitor.getUser().getId())
                     .distinct()
                     .toList();
 
-            userDtoMap = userService.mapProfilesToUsers(profiles);
+            List<UserDto> userDtos = userService.getAllUsersByIds(userIds);
+
+            userDtoMap = userDtos.stream()
+                    .collect(Collectors.toMap(UserDto::getId, userDto -> userDto));
         }
 
         return competitorMapper.toDtoList(competitors, userDtoMap, includeUser, includeEvent);

@@ -2,6 +2,7 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.EventMessages;
+import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.dataAccess.EventDao;
@@ -16,6 +17,10 @@ import com.skylab.superapp.entities.Season;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -247,17 +252,31 @@ public class EventManager implements EventService {
     }
 
     private void checkUserAuthorization(EventType eventType) {
-        boolean authorizedUser = userService.getAuthenticatedUser()
-                .getRoles()
-                .stream()
-                .anyMatch(role ->
-                        PRIVILEGED_ROLES.contains(role) ||
-                                eventType.getAuthorizedRoles().contains(role)
-                );
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!authorizedUser) {
-            logger.error("User not authorized for event type: {}", eventType.getName());
-            throw new ResourceNotFoundException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
+        if (authentication == null) {
+
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new AccessDeniedException("Kullanıcı girişi yapılmamış!");
+            }
+
+            Set<String> userRoles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .map(role -> role.replace("ROLE_", ""))
+                    .collect(Collectors.toSet());
+
+
+            boolean authorizedUser = userRoles.stream()
+                    .anyMatch(role ->
+                            PRIVILEGED_ROLES.contains(role) ||
+                                    eventType.getAuthorizedRoles().contains(role)
+                    );
+
+
+            if (!authorizedUser) {
+                logger.error("User not authorized for event type: {}. User roles: {}", eventType.getName(), userRoles);
+                throw new AccessDeniedException(UserMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
+            }
         }
     }
 

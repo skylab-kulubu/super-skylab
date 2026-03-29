@@ -1,13 +1,9 @@
 package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import com.skylab.superapp.entities.LdapUser;
-import com.skylab.superapp.entities.UserProfile;
+import com.skylab.superapp.entities.User;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 @Component
 public class UserMapper {
@@ -18,26 +14,29 @@ public class UserMapper {
         this.imageMapper = imageMapper;
     }
 
-    public UserDto toDto(UserProfile userProfile, LdapUser ldapUser, Set<String> roles) {
-        if (userProfile == null || ldapUser == null) {
+    public UserDto toDto(User user) {
+        if (user == null) {
             return null;
         }
 
         UserDto userDto = new UserDto();
-        userDto.setId(userProfile.getId());
-        userDto.setUsername(ldapUser.getUsername());
-        userDto.setEmail(ldapUser.getEmail());
-        userDto.setFirstName(ldapUser.getFirstName());
-        userDto.setLastName(ldapUser.getLastName());
+        userDto.setId(user.getId());
+        userDto.setEmail(user.getEmail());
+        userDto.setFirstName(user.getFirstName());
+        userDto.setLastName(user.getLastName());
 
-        userDto.setProfilePictureUrl(imageMapper.toString(userProfile.getProfilePicture()));
+        userDto.setSkyNumber(user.getSkyNumber());
 
-        userDto.setLinkedin(userProfile.getLinkedin());
-        userDto.setUniversity(userProfile.getUniversity());
-        userDto.setFaculty(userProfile.getFaculty());
-        userDto.setDepartment(userProfile.getDepartment());
+        userDto.setLdapUser(user.isLdapUser());
 
-        userDto.setRoles(roles != null ? roles : Collections.emptySet());
+        if (user.getProfilePicture() != null) {
+            userDto.setProfilePictureUrl(imageMapper.toString(user.getProfilePicture()));
+        }
+
+        userDto.setLinkedin(user.getLinkedin());
+        userDto.setUniversity(user.getUniversity());
+        userDto.setFaculty(user.getFaculty());
+        userDto.setDepartment(user.getDepartment());
 
         return userDto;
     }

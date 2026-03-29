@@ -6,6 +6,7 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
+import com.skylab.superapp.entities.DTOs.User.PromoteUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class UserController {
                      HttpStatus.OK));
     }
 
-    @PutMapping("/me")
+    @PatchMapping("/me")
     public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@RequestBody UpdateUserRequest updateUserRequest) {
        var result =userService.updateAuthenticatedUser(updateUserRequest);
 
@@ -52,11 +53,8 @@ public class UserController {
 
 
     @GetMapping
-    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) List<String> roles
-    ) {
-        var result = userService.getAllUsers(email, roles);
+    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers() {
+        var result = userService.getAllUsers();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.ALL_USERS_RETRIEVED_SUCCESS,
                         HttpStatus.OK));
@@ -69,7 +67,7 @@ public class UserController {
                 .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS, HttpStatus.OK));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<DataResult<UserDto>> updateUserById(@PathVariable UUID id,
                                                  @RequestBody UpdateUserRequest updateUserRequest) {
         var result = userService.updateUser(id, updateUserRequest);
@@ -87,17 +85,15 @@ public class UserController {
                 .body(new SuccessResult(UserMessages.USER_DELETED_SUCCESS, HttpStatus.OK));
     }
 
-    @PutMapping("/assign-role/{username}")
-    public ResponseEntity<Result> assignRoleToUser(@PathVariable String username, @RequestParam String role) {
-        userService.assignRoleToUser(username, role);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.ROLE_ADDED_SUCCESS, HttpStatus.OK));
-    }
 
-    @PutMapping("/remove-role/{username}")
-    public ResponseEntity<Result> removeRoleFromUser(@PathVariable String username, @RequestParam String role) {
-        userService.removeRoleFromUser(username, role);
+    @PostMapping("/{id}/promote")
+    public ResponseEntity<Result> promoteUserToLdap(@PathVariable UUID id, @RequestBody PromoteUserRequest promoteUserRequest){
+
+        userService.promoteUserToLdap(id, promoteUserRequest.getTargetRole(), promoteUserRequest.getInitialPassword());
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(UserMessages.ROLE_REMOVED_SUCCESS, HttpStatus.OK));
+                .body(new SuccessResult(UserMessages.USER_PROMOTED_SUCCESS, HttpStatus.OK));
+
+
     }
 }

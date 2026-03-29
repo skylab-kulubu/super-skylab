@@ -42,4 +42,8 @@ public final class UserMessages {
     public static final String INVALID_EMAIL_FORMAT = "user.invalid.email.format";
     public static final String PASSWORD_CANNOT_BE_NULL = "user.password.cannot.be.null";
     public static final String PROFILE_PICTURE_UPDATED_SUCCESS = "user.profile.picture.updated.success";
+    public static final String PRINCIPAL_IS_NOT_JWT = "user.principal.is.not.jwt";
+    public static final String USER_ALREADY_LDAP_USER = "user.already.ldap.user";
+    public static final String USER_PROMOTED_SUCCESS = "user.promoted.success";
+    public static final String USER_NOT_AUTHORIZED_FOR_EVENT_TYPE = "user.not.authorized.for.event.type";
 }

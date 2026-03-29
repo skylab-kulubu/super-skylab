@@ -31,7 +31,7 @@ public class EventTypeController {
     }
 
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<DataResult<List<EventTypeDto>>> getAllEventTypes() {
         var result = eventTypeService.getAllEventTypes();
 
@@ -57,7 +57,7 @@ public class EventTypeController {
     }
 
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<DataResult<EventTypeDto>> addEventType(@RequestBody CreateEventTypeRequest createEventTypeRequest) {
         var result = eventTypeService.addEventType(createEventTypeRequest);
 

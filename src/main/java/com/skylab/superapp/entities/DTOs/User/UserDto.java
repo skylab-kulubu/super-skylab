@@ -19,16 +19,20 @@ public class UserDto {
     @EqualsAndHashCode.Include
     private UUID id;
 
-    private String username;
     private String email;
     private String firstName;
     private String lastName;
+
+    private String skyNumber;
+    private boolean isLdapUser;
+
+    private String username;
+
     private String profilePictureUrl;
     private String linkedin;
     private String university;
     private String faculty;
     private String department;
 
-    private Set<String> roles;
 
 }

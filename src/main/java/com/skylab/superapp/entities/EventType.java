@@ -32,4 +32,7 @@ public class EventType {
     @Column(name = "role_name")
     private Set<String> authorizedRoles;
 
+    // WEBLAB - WEBLAB_LEADER
+
+
 }

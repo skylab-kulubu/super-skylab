@@ -3,7 +3,6 @@ package com.skylab.superapp.core.mappers;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import com.skylab.superapp.entities.LdapUser;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 

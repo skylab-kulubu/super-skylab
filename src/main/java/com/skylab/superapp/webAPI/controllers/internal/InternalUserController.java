@@ -7,11 +7,9 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -35,13 +33,21 @@ public class InternalUserController {
     }
 
 
-
-
     @GetMapping("/{id}")
     public ResponseEntity<DataResult<UserDto>> getUserById(@PathVariable UUID id) {
         var result = userService.getUserById(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS, HttpStatus.OK));
+    }
+
+
+
+    @GetMapping("/batch")
+    public ResponseEntity<DataResult<List<UserDto>>> getUsersByIds(@RequestBody List<UUID> ids){
+        var result = userService.getAllUsersByIds(ids);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
     }
 
 
