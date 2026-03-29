@@ -75,11 +75,12 @@ public class KeycloakAdminService {
                         providerId, userId.toString());
             } catch (Exception ignored) {}
 
-            logger.info("Successfully linked Keycloak user {} to LDAP. No clones allowed! 😎", userId);
+            //LMAO
+            logger.info("Successfully linked Keycloak user {} to LDAP.", userId);
 
         } catch (Exception e) {
-            logger.error("🚨 DB Hatası: {}", e.getMessage());
-            throw new RuntimeException("Linkleme başarısız!", e);
+            logger.error("DB error: {}", e.getMessage());
+            throw new RuntimeException("Exception while trying to link: ", e);
         }
     }
 
@@ -99,7 +100,7 @@ public class KeycloakAdminService {
                 logger.warn("User {} not found in Keycloak. It might have already been deleted.", id);
             } else {
                 logger.error("Failed to delete user {} from Keycloak. HTTP Status: {}", id, response.getStatus());
-                throw new RuntimeException("Keycloak'tan kullanıcı silinirken beklenmeyen bir hata oluştu.");
+                throw new RuntimeException("An error occurred while deleting user from Keycloak! HTTP Status: " + response.getStatus());
             }
 
 
