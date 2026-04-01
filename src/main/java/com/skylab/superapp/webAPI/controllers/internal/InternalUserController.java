@@ -42,7 +42,7 @@ public class InternalUserController {
 
 
 
-    @GetMapping("/batch")
+    @PostMapping("/batch")
     public ResponseEntity<DataResult<List<UserDto>>> getUsersByIds(@RequestBody List<UUID> ids){
         var result = userService.getAllUsersByIds(ids);
 
