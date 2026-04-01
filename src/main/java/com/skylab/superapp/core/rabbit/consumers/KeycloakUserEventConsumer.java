@@ -30,7 +30,7 @@ public class KeycloakUserEventConsumer {
     }
 
 
-    @RabbitListener(queues = "skylab.user.events")
+    @RabbitListener(queues = "skylab.user.events", containerFactory = "keycloakListenerContainerFactory")
     @Transactional
     public void handleKeycloakUserEvent(Message message) {
         try {
@@ -81,20 +81,22 @@ public class KeycloakUserEventConsumer {
                 isUpdated = true;
             }
 
-            String newDepartment = representationNode.path("attributes").path("department").get(0).asText();
-            if (!newDepartment.equals(localUser.getDepartment()) && !newDepartment.isEmpty()) {
+            JsonNode attributesNode = representationNode.path("attributes");
+
+            String newDepartment = getAttributeSafe(attributesNode, "department");
+            if (!newDepartment.isEmpty() && !newDepartment.equals(localUser.getDepartment())) {
                 localUser.setDepartment(newDepartment);
                 isUpdated = true;
             }
 
-            String newUniversity = representationNode.path("attributes").path("university").get(0).asText();
-            if (!newUniversity.equals(localUser.getUniversity()) && !newUniversity.isEmpty()) {
+            String newUniversity = getAttributeSafe(attributesNode, "university");
+            if (!newUniversity.isEmpty() && !newUniversity.equals(localUser.getUniversity())) {
                 localUser.setUniversity(newUniversity);
                 isUpdated = true;
             }
 
-            String newFaculty = representationNode.path("attributes").path("faculty").get(0).asText();
-            if (!newFaculty.equals(localUser.getFaculty()) && !newFaculty.isEmpty()) {
+            String newFaculty = getAttributeSafe(attributesNode, "faculty");
+            if (!newFaculty.isEmpty() && !newFaculty.equals(localUser.getFaculty())) {
                 localUser.setFaculty(newFaculty);
                 isUpdated = true;
             }
@@ -112,6 +114,15 @@ public class KeycloakUserEventConsumer {
 
 
 
+    private String getAttributeSafe(JsonNode attributesNode, String attributeName) {
+        if(attributesNode != null && !attributesNode.isMissingNode()) {
+            JsonNode targetNode = attributesNode.path(attributeName);
+            if (targetNode.isArray() && !targetNode.isEmpty()) {
+                return targetNode.get(0).asText();
+            }
+        }
+        return "";
+    }
 
 
 }
