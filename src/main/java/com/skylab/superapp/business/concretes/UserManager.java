@@ -8,6 +8,7 @@ import com.skylab.superapp.core.identity.UserIdentityGenerator;
 import com.skylab.superapp.core.identity.keycloak.KeycloakAdminService;
 import com.skylab.superapp.core.identity.ldap.LdapService;
 import com.skylab.superapp.core.mappers.UserMapper;
+import com.skylab.superapp.core.utilities.microsoftGraph.MicrosoftGraphService;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
@@ -39,15 +40,17 @@ public class UserManager implements UserService {
     private final UserIdentityGenerator userIdentityGenerator;
     private final LdapService ldapService;
     private final KeycloakAdminService keycloakAdminService;
+    private final MicrosoftGraphService microsoftGraphService;
 
 
-    public UserManager(UserDao userDao, UserMapper userMapper, @Lazy ImageService imageService, UserIdentityGenerator userIdentityGenerator, LdapService ldapService, KeycloakAdminService keycloakAdminService) {
+    public UserManager(UserDao userDao, UserMapper userMapper, @Lazy ImageService imageService, UserIdentityGenerator userIdentityGenerator, LdapService ldapService, KeycloakAdminService keycloakAdminService, MicrosoftGraphService microsoftGraphService) {
         this.userDao = userDao;
         this.userMapper = userMapper;
         this.imageService = imageService;
         this.userIdentityGenerator = userIdentityGenerator;
         this.ldapService = ldapService;
         this.keycloakAdminService = keycloakAdminService;
+        this.microsoftGraphService = microsoftGraphService;
     }
 
 
@@ -78,12 +81,31 @@ public class UserManager implements UserService {
 
             keycloakAdminService.updateUserAttribute(userId, "skyNumber", generatedSkyNumber);
 
+
+            String userDepartment = null;
+            try {
+                String msToken = keycloakAdminService.getObsBrokerToken(jwt.getTokenValue());
+                if (msToken != null) {
+                    userDepartment = microsoftGraphService.fetchUserDepartment(msToken);
+
+                    if (userDepartment != null && !userDepartment.isBlank()) {
+                        keycloakAdminService.updateUserAttribute(userId, "department", userDepartment);
+                        logger.info("Department '{}' successfully synced to Keycloak for user {}", userDepartment, userId);
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Token brokering başarısız, bölüm null kalacak.", e);
+            }
+
+
             User newUser = User.builder()
                     .id(userId)
                     .firstName(jwt.getClaimAsString("given_name"))
                     .lastName(jwt.getClaimAsString("family_name"))
                     .email(jwt.getClaimAsString("email"))
                     .username(jwt.getClaimAsString("preferred_username"))
+                    .department(userDepartment)
+                    .university(jwt.getClaimAsString("university"))
                     .skyNumber(generatedSkyNumber)
                     .isLdapUser(false)
                     .build();

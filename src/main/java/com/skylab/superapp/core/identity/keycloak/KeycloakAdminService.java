@@ -8,8 +8,13 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -150,5 +155,39 @@ public class KeycloakAdminService {
         userResource.update(user);
 
         logger.info("Successfully updated Keycloak user {} attribute {} to {}", userId, attributeKey, attributeValue);
+    }
+
+    public String getObsBrokerToken(String userJwt) {
+        logger.info("Getting OBS broker token from Keycloak for user with JWT");
+
+        String brokerUrl = keycloakProperties.getServerUrl() +
+                "/realms/" + keycloakProperties.getRealm() +
+                "/broker/OBS/token";
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(userJwt);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    brokerUrl,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+
+            if (response.getBody() != null && response.getBody().containsKey("access_token")) {
+                logger.info("Successfully retrieved OBS token from Keycloak broker.");
+                return (String) response.getBody().get("access_token");
+            }
+
+        } catch (Exception e) {
+            logger.error("Error occured, details::", e);
+        }
+
+        return null;
     }
 }
