@@ -190,4 +190,17 @@ public class KeycloakAdminService {
 
         return null;
     }
+
+
+    public UserRepresentation getUserById(String userId) {
+        try {
+            return keycloak.realm(keycloakProperties.getRealm())
+                    .users()
+                    .get(userId)
+                    .toRepresentation();
+        } catch (Exception e) {
+            logger.error("Error fetching user by ID {} from Keycloak: {}", userId, e.getMessage());
+            return null;
+        }
+    }
 }

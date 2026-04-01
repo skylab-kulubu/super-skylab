@@ -14,6 +14,7 @@ import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
 import com.skylab.superapp.entities.User;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -314,6 +315,55 @@ public class UserManager implements UserService {
             logger.error("User with id: {} not found in database", id);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
+    }
+
+    @Override
+    @Transactional
+    public void syncUserFromKeycloak(String userId, UserRepresentation keycloakUser) {
+        UUID uuid = UUID.fromString(userId);
+
+        User localUser = userDao.findById(uuid).orElseGet(() -> {
+            logger.info("New user detected via sync: {}. Creating local shadow copy.", userId);
+            return User.builder().id(uuid).build();
+        });
+
+        Map<String, List<String>> attributes = keycloakUser.getAttributes();
+        String skyNumberInKeycloak = getAttributeSafe(attributes, "skyNumber");
+        if (skyNumberInKeycloak.isEmpty()) {
+            skyNumberInKeycloak = getAttributeSafe(attributes, "sky_number");
+        }
+
+        if (!skyNumberInKeycloak.isEmpty()) {
+            localUser.setSkyNumber(skyNumberInKeycloak);
+        } else if (localUser.getSkyNumber() == null) {
+            String newSkyNumber = userIdentityGenerator.generateNextSkyNumber();
+            localUser.setSkyNumber(newSkyNumber);
+
+            keycloakAdminService.updateUserAttribute(uuid, "skyNumber", newSkyNumber);
+            logger.info("Assigned NEW SkyNumber {} to user {}", newSkyNumber, userId);
+        }
+
+        localUser.setFirstName(keycloakUser.getFirstName());
+        localUser.setLastName(keycloakUser.getLastName());
+        localUser.setEmail(keycloakUser.getEmail());
+        localUser.setUsername(keycloakUser.getUsername());
+
+        if (attributes != null) {
+            localUser.setDepartment(getAttributeSafe(attributes, "department"));
+            localUser.setUniversity(getAttributeSafe(attributes, "university"));
+            localUser.setFaculty(getAttributeSafe(attributes, "faculty"));
+        }
+
+        userDao.save(localUser);
+        logger.info("User {} successfully synced and saved via UserManager", userId);
+    }
+
+    private String getAttributeSafe(Map<String, List<String>> attributes, String key) {
+        if (attributes != null && attributes.containsKey(key)) {
+            List<String> values = attributes.get(key);
+            if (values != null && !values.isEmpty()) return values.get(0);
+        }
+        return "";
     }
 
 

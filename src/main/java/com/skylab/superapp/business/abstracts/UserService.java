@@ -3,6 +3,7 @@ package com.skylab.superapp.business.abstracts;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
 import com.skylab.superapp.entities.User;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -35,5 +36,7 @@ public interface UserService{
     List<UserDto> getUsersByRoleNames(Set<String> roles);
 
     User getUserEntityById(UUID id);
+
+    void syncUserFromKeycloak(String userId, UserRepresentation keycloakUser);
 
 }
