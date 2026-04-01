@@ -8,6 +8,7 @@ import com.skylab.superapp.entities.User;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -31,8 +32,11 @@ public class KeycloakUserEventConsumer {
 
     @RabbitListener(queues = "skylab.user.events")
     @Transactional
-    public void handleKeycloakUserEvent(String messagePayload) {
+    public void handleKeycloakUserEvent(Message message) {
         try {
+
+            String messagePayload = new String(message.getBody());
+
             JsonNode rootNode = objectMapper.readTree(messagePayload);
 
             String resourceType = rootNode.path("resourceType").asText();
