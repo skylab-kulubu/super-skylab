@@ -60,7 +60,7 @@ spring:
           starttls:
             enable: true
   rabbitmq:
-    host: rabbitmq
+    host: super-skylab-rabbitmq
     port: 5672
     username: rabbitMQ
     password: rabbitMQ
