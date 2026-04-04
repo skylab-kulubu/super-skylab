@@ -3,7 +3,6 @@ package com.skylab.superapp.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -14,7 +13,7 @@ import java.util.UUID;
 @Entity
 @Builder
 @Table(name = "event_types")
-public class EventType {
+public class EventType extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,8 +30,6 @@ public class EventType {
     )
     @Column(name = "role_name")
     private Set<String> authorizedRoles;
-
-    // WEBLAB - WEBLAB_LEADER
 
 
 }

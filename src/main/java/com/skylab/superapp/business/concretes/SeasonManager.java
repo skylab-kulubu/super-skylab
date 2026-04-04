@@ -10,6 +10,8 @@ import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ public class SeasonManager implements SeasonService {
     private final EventService eventService;
     private final SeasonMapper seasonMapper;
 
+    private static final Logger logger = LoggerFactory.getLogger(SeasonManager.class);
+
     public SeasonManager(SeasonDao seasonDao, @Lazy EventService eventService, SeasonMapper seasonMapper) {
         this.seasonDao = seasonDao;
         this.eventService = eventService;
@@ -33,11 +37,10 @@ public class SeasonManager implements SeasonService {
     @Override
     @Transactional
     public SeasonDto addSeason(CreateSeasonRequest createSeasonRequest) {
-        if(createSeasonRequest.getName() == null || createSeasonRequest.getName().isEmpty()) {
-           throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
-        }
+        logger.info("Adding new season with name: {}", createSeasonRequest.getName());
 
         if(seasonDao.existsByName(createSeasonRequest.getName())) {
+            logger.error("Season with name: {} already exists", createSeasonRequest.getName());
             throw new SeasonNameAlreadyExistsException();
         }
 
@@ -48,20 +51,31 @@ public class SeasonManager implements SeasonService {
                 .active(createSeasonRequest.isActive())
                 .build();
 
-        return seasonMapper.toDto(seasonDao.save(season));
+        var savedSeason = seasonDao.save(season);
+
+        logger.info("Season with name: {} created successfully with id: {}", savedSeason.getName(), savedSeason.getId());
+
+        return seasonMapper.toDto(savedSeason);
     }
 
     @Override
     public void deleteSeason(UUID id) {
+        logger.info("Deleting season with id: {}", id);
         var season = getSeasonEntityById(id);
+        logger.info("Season with id: {} found, proceeding to delete", id);
 
         seasonDao.delete(season);
+
+        logger.info("Season with id: {} deleted successfully", id);
     }
 
     @Override
     @Transactional
     public SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest) {
+        logger.info("Updating season with id: {}", id);
         var season = getSeasonEntityById(id);
+
+        logger.info("Season with id: {} found, proceeding to update", id);
 
 
         var newStartDate = updateSeasonRequest.getStartDate() != null ? updateSeasonRequest.getStartDate() : season.getStartDate();
@@ -76,51 +90,81 @@ public class SeasonManager implements SeasonService {
 
         season.setActive(updateSeasonRequest.isActive());
 
-        return seasonMapper.toDto(seasonDao.save(season));
+        var savedSeason = seasonDao.save(season);
+        logger.info("Season with id: {} updated successfully", id);
+
+        return seasonMapper.toDto(savedSeason);
     }
 
     @Override
-    public List<SeasonDto> getAllSeasons(boolean includeEvents) {
-       return seasonMapper.toDtoList(seasonDao.findAll(), includeEvents);
+    public List<SeasonDto> getAllSeasons() {
+        logger.info("Getting all seasons");
+
+        var seasons = seasonDao.findAll();
+
+        logger.info("{} seasons found", seasons.size());
+
+       return seasonMapper.toDtoList(seasons);
     }
 
     @Override
-    public SeasonDto getSeasonByName(String name, boolean includeEvents) {
+    public SeasonDto getSeasonByName(String name) {
+        logger.info("Getting season with name: {}", name);
         if(name == null || name.isEmpty()) {
+            logger.error("Season name cannot be null or empty");
             throw new ValidationException(SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK);
         }
         var result = seasonDao.findByName(name);
        if (result.isEmpty()){
+           logger.error("Season with name: {} not found", name);
            throw new ResourceNotFoundException(SeasonMessages.SEASON_NOT_FOUND);
        }
+
+       logger.info("Season with name: {} found, returning season", name);
 
         return seasonMapper.toDto(result.get());
     }
 
     @Override
-    public SeasonDto getSeasonById(UUID id, boolean includeEvents) {
+    public SeasonDto getSeasonById(UUID id) {
+        logger.info("Getting season with id: {}", id);
         var season = getSeasonEntityById(id);
-        return seasonMapper.toDto(season, includeEvents);
+
+        logger.info("Season with id: {} found, returning season", id);
+        return seasonMapper.toDto(season);
     }
 
 
     @Override
-    public List<SeasonDto> getActiveSeasons(boolean includeEvents) {
-        return seasonMapper.toDtoList(seasonDao.findAllByActive(true), includeEvents);
+    public List<SeasonDto> getActiveSeasons() {
+        logger.info("Getting all active seasons");
+
+        var activeSeasons = seasonDao.findAllByActive(true);
+
+        logger.info("{} active seasons found", activeSeasons.size());
+
+        return seasonMapper.toDtoList(activeSeasons);
     }
 
     @Transactional
     @Override
     public void addEventToSeason(UUID seasonId, UUID eventId) {
+        logger.info("Adding event with id: {} to season with id: {}", eventId, seasonId);
+
         var season = getSeasonEntityById(seasonId);
+        logger.info("Season with id: {} found, proceeding to add event", seasonId);
+
         var event = eventService.getEventEntityById(eventId);
+        logger.info("Event with id: {} found, proceeding to add event to season", eventId);
 
 
         if (season.getEvents().contains(event)) {
+            logger.info("Season with id: {} already contains event with id: {}", seasonId, eventId);
             throw new SeasonAlreadyContainsEventException();
         }
 
         if (event.getSeason() != null && event.getSeason().getId() != season.getId()) {
+            logger.info("Event with id: {} already belongs to another season with id: {}", eventId, event.getSeason().getId());
             throw new BusinessException(SeasonMessages.EVENT_IS_IN_ANOTHER_SEASON);
         }
 
@@ -129,16 +173,21 @@ public class SeasonManager implements SeasonService {
 
         seasonDao.save(season);
 
+        logger.info("Event with id: {} added to season with id: {} successfully", eventId, seasonId);
+
     }
 
     @Transactional
     @Override
     public void removeEventFromSeason(UUID seasonId, UUID eventId) {
+        logger.info("Removing event with id: {} from season with id: {}", eventId, seasonId);
         var season = getSeasonEntityById(seasonId);
-        var event = eventService.getEventEntityById(eventId); // Renamed
-
+        logger.info("Season with id: {} found, proceeding to remove event", seasonId);
+        var event = eventService.getEventEntityById(eventId);
+        logger.info("Event with id: {} found, proceeding to remove event from season", eventId);
 
         if (!season.getEvents().contains(event) || event.getSeason() == null || event.getSeason().getId() != season.getId() ) {
+            logger.error("Season with id: {} does not contain event with id: {}", seasonId, eventId);
             throw new SeasonDoesNotContainEventException();
         }
 
@@ -147,10 +196,16 @@ public class SeasonManager implements SeasonService {
 
         seasonDao.save(season);
 
+        logger.info("Event with id: {} removed from season with id: {} successfully", eventId, seasonId);
+
     }
 
     @Override
     public Season getSeasonEntityById(UUID id) {
-        return seasonDao.findById(id).orElseThrow(()-> new ResourceNotFoundException(SeasonMessages.SEASON_NOT_FOUND));
+        logger.info("Getting season entity with id: {}", id);
+        return seasonDao.findById(id).orElseThrow(()-> {
+            logger.error("Season with id: {} not found", id);
+            return new ResourceNotFoundException(SeasonMessages.SEASON_NOT_FOUND);
+        });
     }
 }

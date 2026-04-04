@@ -10,6 +10,8 @@ import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.LeaderboardDto;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,111 +19,75 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/competitors")
+@RequiredArgsConstructor
 public class CompetitorController {
 
     private final CompetitorService competitorService;
 
-    public CompetitorController(CompetitorService competitorService) {
-        this.competitorService = competitorService;
-    }
-
     @PostMapping
-    public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@RequestBody CreateCompetitorRequest createCompetitorRequest) {
-        var result = competitorService.addCompetitor(createCompetitorRequest);
+    public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@RequestBody CreateCompetitorRequest request) {
+        log.info("REST request to add new competitor for user id: {} to event id: {}", request.getUserId(), request.getEventId());
+        var result = competitorService.addCompetitor(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS,
-                        HttpStatus.CREATED));
-
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.CREATED));
     }
 
     @GetMapping
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors(@RequestParam(defaultValue = "false") boolean includeUser,
-                                                                             @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getAllCompetitors(includeUser, includeEvent);
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors() {
+        log.info("REST request to get all competitors");
+        var result = competitorService.getAllCompetitors();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS,
-                        HttpStatus.OK));
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id,
-                                                                       @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                       @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getCompetitorById(id, includeUser, includeEvent);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS,
-                        HttpStatus.OK));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteCompetitor(@PathVariable UUID id) {
-        competitorService.deleteCompetitor(id);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(CompetitorMessages.COMPETITOR_DELETE_SUCCESS,
-                        HttpStatus.OK));
-    }
-
-    @GetMapping("/leaderboard")
-    public ResponseEntity<DataResult<List<LeaderboardDto>>> getLeaderboard(@RequestParam String eventTypeName,
-                                                                           @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                           @RequestParam(defaultValue = "false") boolean includeEvent) {
-        List<LeaderboardDto> result = competitorService.getLeaderboardByEventType(eventTypeName);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
-    }
-
-    @GetMapping("/leaderboard/season/{seasonId}")
-    public ResponseEntity<DataResult<List<LeaderboardDto>>> getSeasonLeaderboard(@PathVariable UUID seasonId,
-                                                                                @RequestParam String eventTypeName) {
-        List<LeaderboardDto> result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
-    }
-
-    @GetMapping("/event/{eventId}/winner")
-    public ResponseEntity<DataResult<CompetitorDto>> getEventWinner(@PathVariable UUID eventId,
-                                                                    @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                    @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getEventWinner(eventId, includeUser, includeEvent);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
-    }
-
-    @GetMapping("/my")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors(@RequestParam(defaultValue = "false") boolean includeUser,
-                                                                            @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getMyCompetitors(includeUser, includeEvent);
+    public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id) {
+        log.info("REST request to get competitor by id: {}", id);
+        var result = competitorService.getCompetitorById(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@PathVariable UUID id,
-                                                                       @RequestBody UpdateCompetitorRequest updateCompetitorRequest) {
-        var result = competitorService.updateCompetitor(id, updateCompetitorRequest);
+    public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@PathVariable UUID id, @RequestBody UpdateCompetitorRequest request) {
+        log.info("REST request to update competitor with id: {}", id);
+        var result = competitorService.updateCompetitor(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.OK));
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByUserId(@PathVariable UUID userId,
-                                                                                  @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                                  @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getCompetitorsByUserId(userId, includeUser, includeEvent);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Result> deleteCompetitor(@PathVariable UUID id) {
+        log.info("REST request to delete competitor with id: {}", id);
+        competitorService.deleteCompetitor(id);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(CompetitorMessages.COMPETITOR_DELETE_SUCCESS, HttpStatus.OK));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors() {
+        log.info("REST request to get competitors for current authenticated user");
+        var result = competitorService.getMyCompetitors();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
-
-    @GetMapping("/event/{eventId}")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByEventId(@PathVariable UUID eventId,
-                                                                                   @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                                   @RequestParam(defaultValue = "false") boolean includeEvent) {
-        var result = competitorService.getCompetitorsByEventId(eventId, includeUser, includeEvent);
+    @GetMapping("/leaderboard/type/{eventTypeName}")
+    public ResponseEntity<DataResult<List<LeaderboardDto>>> getLeaderboard(@PathVariable String eventTypeName) {
+        log.info("REST request to get global leaderboard for event type: {}", eventTypeName);
+        List<LeaderboardDto> result = competitorService.getLeaderboardByEventType(eventTypeName);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
+    @GetMapping("/leaderboard/season/{seasonId}/type/{eventTypeName}")
+    public ResponseEntity<DataResult<List<LeaderboardDto>>> getSeasonLeaderboard(@PathVariable UUID seasonId, @PathVariable String eventTypeName) {
+        log.info("REST request to get season leaderboard for season id: {} and event type: {}", seasonId, eventTypeName);
+        List<LeaderboardDto> result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
 }

@@ -2,11 +2,10 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.EventMessages;
-import com.skylab.superapp.core.constants.UserMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
+import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.EventDao;
-import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
@@ -14,68 +13,46 @@ import com.skylab.superapp.entities.Event;
 import com.skylab.superapp.entities.EventType;
 import com.skylab.superapp.entities.Image;
 import com.skylab.superapp.entities.Season;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class EventManager implements EventService {
 
     private final EventDao eventDao;
     private final ImageService imageService;
     private final EventTypeService eventTypeService;
-    private final Logger logger = LoggerFactory.getLogger(EventManager.class);
     private final EventMapper eventMapper;
-    private final UserService userService;
     private final SeasonService seasonService;
-    private final CompetitorService competitorService;
+    private final EventSecurityUtils eventSecurityUtils;
 
-    private static final Set<String> PRIVILEGED_ROLES = Set.of("ADMIN", "YK", "DK");
-
-    public EventManager(EventDao eventDao, @Lazy CompetitorService competitorService, @Lazy ImageService imageService,
-                        @Lazy EventTypeService eventTypeService, EventMapper eventMapper, UserService userService, SeasonService seasonService,
-                        @Lazy CompetitorService competitorService1) {
-        this.eventDao = eventDao;
-        this.imageService = imageService;
-        this.eventTypeService = eventTypeService;
-        this.eventMapper = eventMapper;
-        this.userService = userService;
-        this.seasonService = seasonService;
-        this.competitorService = competitorService;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
 
     @Override
     @Transactional
     public EventDto addEvent(CreateEventRequest createEventRequest, MultipartFile coverImageFile) {
-        logger.info("Adding new event: {}", createEventRequest.getName());
-
+        logger.info("Attempting to add new event: {}", createEventRequest.getName());
         EventType eventType = eventTypeService.getEventTypeEntityById(createEventRequest.getEventTypeId());
 
-        checkUserAuthorization(eventType);
+        eventSecurityUtils.checkAuthorization(eventType);
 
-        Season season = null;
-        if(createEventRequest.getSeasonId() != null) {
-            season = seasonService.getSeasonEntityById(createEventRequest.getSeasonId());
-        }
+        Season season = createEventRequest.getSeasonId() != null
+                ? seasonService.getSeasonEntityById(createEventRequest.getSeasonId())
+                : null;
 
-        Image savedCoverImage = null;
-        if (coverImageFile != null && !coverImageFile.isEmpty()) {
-            savedCoverImage = imageService.uploadImage(coverImageFile);
-        }
-
+        Image savedCoverImage = (coverImageFile != null && !coverImageFile.isEmpty())
+                ? imageService.uploadImage(coverImageFile)
+                : null;
 
         Event event = Event.builder()
                 .name(createEventRequest.getName())
@@ -93,30 +70,29 @@ public class EventManager implements EventService {
                 .prizeInfo(createEventRequest.getPrizeInfo())
                 .build();
 
-        logger.info("Event created: {}", event.getName());
+        logger.info("Event successfully persisted with id: {}", event.getId());
         return eventMapper.toDto(eventDao.save(event));
     }
 
     @Override
     @Transactional
     public void deleteEvent(UUID id) {
-        logger.info("Deleting event with id: {}", id);
+        logger.info("Attempting to delete event with id: {}", id);
         Event event = getEventEntityById(id);
 
-        checkUserAuthorization(event.getType());
+        eventSecurityUtils.checkAuthorization(event.getType());
 
         eventDao.delete(event);
-
-        logger.info("Event deleted with id: {}", id);
+        logger.info("Event successfully deleted with id: {}", id);
     }
 
     @Override
     @Transactional
     public EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest) {
-        logger.info("Updating event id: {}", id);
-        var event = getEventEntityById(id);
+        logger.info("Attempting to update event id: {}", id);
+        Event event = getEventEntityById(id);
 
-        checkUserAuthorization(event.getType());
+        eventSecurityUtils.checkAuthorization(event.getType());
 
         if (updateEventRequest.getName() != null) event.setName(updateEventRequest.getName());
         if (updateEventRequest.getDescription() != null) event.setDescription(updateEventRequest.getDescription());
@@ -125,183 +101,97 @@ public class EventManager implements EventService {
         if (updateEventRequest.getEndDate() != null) event.setEndDate(updateEventRequest.getEndDate());
         if (updateEventRequest.getLinkedin() != null) event.setLinkedin(updateEventRequest.getLinkedin());
         if (updateEventRequest.getLocation() != null) event.setLocation(updateEventRequest.getLocation());
-
         if (updateEventRequest.getPrizeInfo() != null) event.setPrizeInfo(updateEventRequest.getPrizeInfo());
+
         event.setRanked(updateEventRequest.isRanked());
         event.setActive(updateEventRequest.isActive());
 
         if (updateEventRequest.getTypeId() != null) {
-            EventType newType = eventTypeService.getEventTypeEntityById(updateEventRequest.getTypeId());
-            event.setType(newType);
+            event.setType(eventTypeService.getEventTypeEntityById(updateEventRequest.getTypeId()));
         }
-
         if (updateEventRequest.getSeasonId() != null) {
-            Season newSeason = seasonService.getSeasonEntityById(updateEventRequest.getSeasonId());
-            event.setSeason(newSeason);
+            event.setSeason(seasonService.getSeasonEntityById(updateEventRequest.getSeasonId()));
         }
 
+        logger.info("Event updated successfully: {}", id);
         return eventMapper.toDto(eventDao.save(event));
     }
 
-
     @Override
-    public List<EventDto> getAllEventsByEventType(EventType eventType, boolean includeEventType, boolean includeSession,
-                                                  boolean includeCompetitors, boolean includeImages,
-                                                  boolean includeSeason) {
-        var eventTypeResult = eventTypeService.getEventTypeEntityById(eventType.getId());
-
-        var list = eventDao.findAllByType(eventTypeResult);
-        return convertToDtoList(list, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public List<EventDto> getAllEventsByEventType(EventType eventType) {
+        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityById(eventType.getId())));
     }
 
     @Override
-    public EventDto getEventById(UUID id, boolean includeEventType, boolean includeSession,
-                                 boolean includeCompetitors, boolean includeImages,
-                                 boolean includeSeason) {
-
-        return convertToDto(getEventEntityById(id), includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public EventDto getEventById(UUID id) {
+        return eventMapper.toDto(getEventEntityById(id), true, true, null, true, true);
     }
-
 
     @Override
     @Transactional
     public void addImagesToEvent(UUID eventId, List<UUID> imageIds) {
-        var event = getEventEntityById(eventId);
+        logger.info("Adding {} images to event id: {}", imageIds.size(), eventId);
+        Event event = getEventEntityById(eventId);
 
-        checkUserAuthorization(event.getType());
+        eventSecurityUtils.checkAuthorization(event.getType());
 
-
-        var images = imageService.getImagesByIds(imageIds);
-
-
-        for (Image image : images) {
-            event.getImages().add(image);
-        }
+        event.getImages().addAll(imageService.getImagesByIds(imageIds));
         eventDao.save(event);
-
     }
 
     @Override
     @Transactional
     public void removeImagesFromEvent(UUID eventId, List<UUID> imageIds) {
+        logger.info("Removing {} images from event id: {}", imageIds.size(), eventId);
         Event event = getEventEntityById(eventId);
 
-        checkUserAuthorization(event.getType());
+        eventSecurityUtils.checkAuthorization(event.getType());
 
         List<Image> images = imageService.getImagesByIds(imageIds);
-
         for (Image image : images) {
             if (!event.getImages().contains(image)) {
+                logger.warn("Image {} not found in event {}. Aborting removal.", image.getId(), eventId);
                 throw new ResourceNotFoundException(EventMessages.IMAGE_NOT_FOUND_IN_EVENT);
             }
             event.getImages().remove(image);
         }
-
         eventDao.save(event);
+
+        logger.info("Images removed successfully from event id: {}", eventId);
     }
 
     @Override
-    public List<EventDto> getAllFutureEventsByEventType(String eventType, boolean includeEventType, boolean includeSession,
-                                                        boolean includeCompetitors, boolean includeImages,
-                                                        boolean includeSeason) {
-        var eventTypeResult = eventTypeService.getEventTypeEntityByName(eventType);
-
-        var events = eventDao.findAllByType(eventTypeResult);
-
-        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public List<EventDto> getAllFutureEventsByEventType(String eventType) {
+        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventType)));
     }
 
     @Override
-    public List<EventDto> getAllEvents(boolean includeEventType, boolean includeSession,
-                                         boolean includeCompetitors, boolean includeImages,
-                                         boolean includeSeason) {
-
-
-        var events = eventDao.findAll();
-
-
-        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public List<EventDto> getAllEvents() {
+        return convertToDtoList(eventDao.findAll());
     }
 
     @Override
-    public List<EventDto> getAllEventsByEventTypeName(String eventTypeName, boolean includeEventType,
-                                                      boolean includeSession, boolean includeCompetitors,
-                                                      boolean includeImages, boolean includeSeason) {
-
-
-        var eventType = eventTypeService.getEventTypeEntityByName(eventTypeName);
-        var events = eventDao.findAllByType(eventType);
-
-        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public List<EventDto> getAllEventsByEventTypeName(String eventTypeName) {
+        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventTypeName)));
     }
 
     @Override
-    public List<EventDto> getAllEventByIsActive(boolean isActive, boolean includeEventType, boolean includeSession,
-                                                boolean includeCompetitors, boolean includeImages,
-                                                boolean includeSeason) {
-
-        var events = eventDao.findAllByActive(isActive);
-
-        return convertToDtoList(events, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason);
+    public List<EventDto> getAllEventByIsActive(boolean isActive) {
+        return convertToDtoList(eventDao.findAllByActive(isActive));
     }
-
 
     @Override
     public Event getEventEntityById(UUID id) {
-        return eventDao.findById(id).orElseThrow(()-> new ResourceNotFoundException(EventMessages.EVENT_NOT_FOUND));
+        return eventDao.findById(id).orElseThrow(() -> {
+            logger.error("Event not found with id: {}", id);
+            return new ResourceNotFoundException(EventMessages.EVENT_NOT_FOUND);
+        });
     }
 
-    private void checkUserAuthorization(EventType eventType) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null) {
-
-            if (authentication == null || !authentication.isAuthenticated()) {
-                throw new AccessDeniedException("Kullanıcı girişi yapılmamış!");
-            }
-
-            Set<String> userRoles = authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .map(role -> role.replace("ROLE_", ""))
-                    .collect(Collectors.toSet());
-
-
-            boolean authorizedUser = userRoles.stream()
-                    .anyMatch(role ->
-                            PRIVILEGED_ROLES.contains(role) ||
-                                    eventType.getAuthorizedRoles().contains(role)
-                    );
-
-
-            if (!authorizedUser) {
-                logger.error("User not authorized for event type: {}. User roles: {}", eventType.getName(), userRoles);
-                throw new AccessDeniedException(UserMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
-            }
-        }
-    }
-
-    private EventDto convertToDto(Event event, boolean includeEventType, boolean includeSession,
-                                  boolean includeCompetitors, boolean includeImages, boolean includeSeason) {
-        if (event == null) return null;
-
-        List<CompetitorDto> competitorDtos = null;
-
-        if (includeCompetitors) {
-            competitorDtos = competitorService.getCompetitorsByEventId(event.getId(), true, false);
-        }
-
-        return eventMapper.toDto(event, includeEventType, includeSession, competitorDtos, includeImages, includeSeason);
-    }
-
-    private List<EventDto> convertToDtoList(List<Event> events, boolean includeEventType, boolean includeSession,
-                                            boolean includeCompetitors, boolean includeImages, boolean includeSeason) {
+    private List<EventDto> convertToDtoList(List<Event> events) {
         if (events == null || events.isEmpty()) return Collections.emptyList();
-
         return events.stream()
-                .map(event -> convertToDto(event, includeEventType, includeSession, includeCompetitors, includeImages, includeSeason))
+                .map(event -> eventMapper.toDto(event, true, false, null, true, true))
                 .collect(Collectors.toList());
     }
-
-
-
 }

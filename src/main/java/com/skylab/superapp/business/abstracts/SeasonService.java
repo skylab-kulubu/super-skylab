@@ -16,18 +16,17 @@ public interface SeasonService {
 
     SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest);
 
-    List<SeasonDto> getAllSeasons(boolean includeEvents);
+    List<SeasonDto> getAllSeasons();
 
-    SeasonDto getSeasonByName(String name, boolean includeEvents);
+    SeasonDto getSeasonByName(String name);
 
-    SeasonDto getSeasonById(UUID id, boolean includeEvents);
+    SeasonDto getSeasonById(UUID id);
 
-    List<SeasonDto> getActiveSeasons(boolean includeEvents);
+    List<SeasonDto> getActiveSeasons();
 
     void addEventToSeason(UUID seasonId, UUID eventId);
 
     void removeEventFromSeason(UUID seasonId, UUID eventId);
 
     Season getSeasonEntityById(UUID id);
-
 }

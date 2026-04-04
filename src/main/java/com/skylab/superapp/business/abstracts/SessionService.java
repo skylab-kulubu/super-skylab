@@ -9,15 +9,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SessionService {
+
     SessionDto addSession(CreateSessionRequest createSessionRequest);
 
-    List<SessionDto> getAllSessions(boolean includeEvent);
+    List<SessionDto> getAllSessions();
 
-    SessionDto getSessionById(UUID id, boolean includeEvent);
+    SessionDto getSessionById(UUID id);
 
     SessionDto updateSession(UUID id, UpdateSessionRequest updateSessionRequest);
 
     void deleteSession(UUID id);
 
     Session getSessionEntityById(UUID id);
+
+    List<SessionDto> getSessionsByEventId(UUID eventId);
 }

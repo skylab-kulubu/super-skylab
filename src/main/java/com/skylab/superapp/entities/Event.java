@@ -17,7 +17,7 @@ import java.util.UUID;
 @Entity
 @Builder
 @Table(name = "events")
-public class Event {
+public class Event extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

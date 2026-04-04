@@ -6,18 +6,13 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
+import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.*;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
-import com.skylab.superapp.entities.EventType;
-import com.skylab.superapp.entities.User;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CompetitorManager implements CompetitorService {
 
     private final CompetitorDao competitorDao;
@@ -33,260 +29,198 @@ public class CompetitorManager implements CompetitorService {
     private final EventService eventService;
     private final EventTypeService eventTypeService;
     private final CompetitorMapper competitorMapper;
-
-    private static final Set<String> PRIVILEGED_ROLES = Set.of("ADMIN", "YK", "DK");
-
-
-    public CompetitorManager(CompetitorDao competitorDao,@Lazy UserService userService,
-                             @Lazy EventService eventService, @Lazy EventTypeService eventTypeService, CompetitorMapper competitorMapper){
-        this.competitorDao = competitorDao;
-        this.userService = userService;
-        this.eventService = eventService;
-        this.eventTypeService = eventTypeService;
-        this.competitorMapper = competitorMapper;
-    }
+    private final EventSecurityUtils eventSecurityUtils;
 
     @Override
     @Transactional
-    public CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest) {
-        var user = userService.getUserEntityById(createCompetitorRequest.getUserId());
-        var event = eventService.getEventEntityById(createCompetitorRequest.getEventId());
+    public CompetitorDto addCompetitor(CreateCompetitorRequest request) {
+        log.info("Attempting to add competitor: user {} for event {}", request.getUserId(), request.getEventId());
+        var user = userService.getUserEntityById(request.getUserId());
+        var event = eventService.getEventEntityById(request.getEventId());
         var currentUser = userService.getAuthenticatedUser();
 
         boolean isSelfRegistration = currentUser.getId().equals(user.getId());
         if (!isSelfRegistration) {
-            checkAuthorization(event.getType());
+            log.debug("Registration is for another user. Verifying authorization...");
+            eventSecurityUtils.checkAuthorization(event.getType());
         }
 
         if (competitorDao.existsByUserAndEvent(user, event)) {
+            log.warn("Competitor mapping already exists for user {} and event {}", request.getUserId(), request.getEventId());
             throw new BusinessException(CompetitorMessages.COMPETITOR_ALREADY_IN_COMPETITION);
         }
-
         if (!event.isActive()) {
+            log.warn("Cannot register competitor: Event {} is not active", request.getEventId());
             throw new BusinessException(EventMessages.EVENT_NOT_ACTIVE);
         }
 
         var competitor = Competitor.builder()
                 .user(user)
                 .event(event)
-                .score(isSelfRegistration ? null : createCompetitorRequest.getPoints())
-                .isWinner(createCompetitorRequest.isWinner())
+                .score(isSelfRegistration ? null : request.getPoints())
+                .isWinner(request.isWinner())
                 .build();
 
-        return convertToDto(competitorDao.save(competitor), true, true);
+        log.info("Competitor successfully added: {}", competitor.getId());
+        return convertToDto(competitorDao.save(competitor));
     }
 
     @Override
-    public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest) {
-      var competitor = getCompetitorEntityById(id);
+    @Transactional
+    public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest request) {
+        log.info("Attempting to update competitor with id: {}", id);
+        var competitor = getCompetitorEntityById(id);
 
-        checkAuthorization(competitor.getEvent().getType());
+        eventSecurityUtils.checkAuthorization(competitor.getEvent().getType());
 
-        if (updateCompetitorRequest.getUserId() != null) {
-            competitor.setUser(userService.getUserEntityById(updateCompetitorRequest.getUserId()));
+        if (request.getUserId() != null) {
+            competitor.setUser(userService.getUserEntityById(request.getUserId()));
         }
-
-
-        if (updateCompetitorRequest.getEventId() != null) {
-            var event = eventService.getEventEntityById(updateCompetitorRequest.getEventId());
-            competitor.setEvent(event);
+        if (request.getEventId() != null) {
+            competitor.setEvent(eventService.getEventEntityById(request.getEventId()));
         }
-
-        if (updateCompetitorRequest.getPoints() != 0) {
-            competitor.setScore(updateCompetitorRequest.getPoints());
+        if (request.getPoints() != 0) {
+            competitor.setScore(request.getPoints());
         }
+        competitor.setWinner(request.isWinner());
 
-        competitor.setWinner(updateCompetitorRequest.isWinner());
-
-        return convertToDto(competitorDao.save(competitor), true, true);
-
+        log.info("Competitor successfully updated: {}", id);
+        return convertToDto(competitorDao.save(competitor));
     }
 
-
     @Override
+    @Transactional
     public void deleteCompetitor(UUID competitorId) {
+        log.info("Attempting to delete competitor with id: {}", competitorId);
         Competitor competitor = getCompetitorEntityById(competitorId);
-
         var currentUser = userService.getAuthenticatedUser();
 
-        boolean isSelf = currentUser.getId().equals(competitor.getUser().getId());
-
-        if (!isSelf){
-            checkAuthorization(competitor.getEvent().getType());
+        if (!currentUser.getId().equals(competitor.getUser().getId())) {
+            log.debug("User is attempting to delete another competitor's record. Verifying authorization...");
+            eventSecurityUtils.checkAuthorization(competitor.getEvent().getType());
         }
-
         competitorDao.delete(competitor);
+        log.info("Competitor deleted successfully: {}", competitorId);
     }
 
     @Override
-    public CompetitorDto getCompetitorById(UUID id, boolean includeUser, boolean includeEvent) {
-        return convertToDto(getCompetitorEntityById(id), includeUser, includeEvent);
+    public CompetitorDto getCompetitorById(UUID id) {
+        return convertToDto(getCompetitorEntityById(id));
     }
 
     @Override
-    public List<CompetitorDto> getMyCompetitors(boolean includeUser, boolean includeEvent) {
-        var authenticatedUser = userService.getAuthenticatedUserEntity();
-        var result = competitorDao.findCompetitorsByUser(authenticatedUser);
-        return convertToDtoList(result, includeUser, includeEvent);
+    public List<CompetitorDto> getMyCompetitors() {
+        return convertToDtoList(competitorDao.findCompetitorsByUser(userService.getAuthenticatedUserEntity()));
     }
 
     @Override
-    public List<CompetitorDto> getAllCompetitors(boolean includeUser, boolean includeEvent) {
-        return convertToDtoList(competitorDao.findAll(), includeUser, includeEvent);
+    public List<CompetitorDto> getAllCompetitors() {
+        return convertToDtoList(competitorDao.findAll());
     }
 
     @Override
-    public List<CompetitorDto> getCompetitorsByEventId(UUID eventId, boolean includeUser, boolean includeEvent) {
-        return convertToDtoList(competitorDao.findByEventId(eventId), includeUser, includeEvent);
+    public List<CompetitorDto> getCompetitorsByEventId(UUID eventId) {
+        return convertToDtoList(competitorDao.findByEventId(eventId));
     }
 
     @Override
-    public List<CompetitorDto> getCompetitorsByUserId(UUID userId, boolean includeUser, boolean includeEvent) {
-        return convertToDtoList(competitorDao.findByUserId(userId), includeUser, includeEvent);
+    public List<CompetitorDto> getCompetitorsByUserId(UUID userId) {
+        return convertToDtoList(competitorDao.findByUserId(userId));
     }
 
     @Override
-    public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEvent) {
-        var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
-        return convertToDtoList(competitorDao.findAllByEventType(eventType), includeUser, includeEvent);
+    public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId) {
+        return convertToDtoList(competitorDao.findAllByEventType(eventTypeService.getEventTypeEntityById(eventTypeId)));
     }
-
 
     @Override
     public List<LeaderboardDto> getLeaderboardByEventType(String eventTypeName) {
+        log.info("Fetching leaderboard for event type: {}", eventTypeName);
         List<LeaderboardScoreDto> scores = competitorDao.getLeaderboardScoresByEventType(eventTypeName);
-
-        List<LeaderboardDto> leaderboard = scores.stream().map(score -> {
-            UserDto userDto = userService.getUserById(score.getUserId());
-
-            return new LeaderboardDto(
-                    userDto,
-                    score.getTotalScore(),
-                    score.getEventCount(),
-                    0
-            );
-        }).collect(Collectors.toList());
-
-        assignRanks(leaderboard);
-
-        return leaderboard;
+        return processLeaderboard(scores);
     }
 
     @Override
     public List<LeaderboardDto> getLeaderboardBySeasonAndEventType(UUID seasonId, String eventTypeName) {
+        log.info("Fetching leaderboard for season: {} and event type: {}", seasonId, eventTypeName);
         List<LeaderboardScoreDto> scores = competitorDao.getLeaderboardScoresBySeasonAndEventType(eventTypeName, seasonId);
+        return processLeaderboard(scores);
+    }
 
-        List<LeaderboardDto> leaderboard = scores.stream()
-                .map(score -> {
-                    UserDto userDto = userService.getUserById(score.getUserId());
+    private List<LeaderboardDto> processLeaderboard(List<LeaderboardScoreDto> scores) {
+        List<LeaderboardDto> leaderboard = scores.stream().map(score ->
+                new LeaderboardDto(userService.getUserById(score.getUserId()), score.getTotalScore(), score.getEventCount(), 0)
+        ).collect(Collectors.toList());
 
-                    return new LeaderboardDto(
-                            userDto,
-                            score.getTotalScore(),
-                            score.getEventCount(),
-                            0
-                    );
-                })
-                .collect(Collectors.toList());
         assignRanks(leaderboard);
-
         return leaderboard;
     }
 
-
     @Override
-    public CompetitorDto getEventWinner(UUID eventId, boolean includeUser, boolean includeEvent) {
-        var event = eventService.getEventEntityById(eventId);
-        return convertToDto(competitorDao.findWinnerOfEvent(event), includeUser, includeEvent);
+    public CompetitorDto getEventWinner(UUID eventId) {
+        return convertToDto(competitorDao.findWinnerOfEvent(eventService.getEventEntityById(eventId)));
     }
 
     @Override
     public double getUserTotalPoints(UUID userId) {
-        var user = userService.getUserEntityById(userId);
-        var competitors = competitorDao.findCompetitorsByUser(user);
-
-        return competitors.stream()
+        return competitorDao.findCompetitorsByUser(userService.getUserEntityById(userId)).stream()
                 .map(Competitor::getScore)
                 .filter(Objects::nonNull)
                 .mapToDouble(Double::doubleValue)
                 .sum();
     }
 
-
-
     @Override
     public boolean isUserParticipant(UUID userId, UUID eventId) {
-        var user = userService.getUserEntityById(userId);
-        var event = eventService.getEventEntityById(eventId);
-
-        return competitorDao.existsByUserAndEvent(user, event);
+        return competitorDao.existsByUserAndEvent(
+                userService.getUserEntityById(userId),
+                eventService.getEventEntityById(eventId)
+        );
     }
 
     @Override
     public Competitor getCompetitorEntityById(UUID id) {
         return competitorDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(CompetitorMessages.COMPETITOR_NOT_FOUND));
-    }
-
-    private void checkAuthorization(EventType eventType) {
-        log.info("Checking authorization");
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("Kullanıcı girişi yapılmamış!");
-        }
-
-        Set<String> userRoles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(role -> role.replace("ROLE_", ""))
-                .collect(Collectors.toSet());
-
-        boolean isAuthorized = userRoles.stream()
-                .anyMatch(role ->
-                        PRIVILEGED_ROLES.contains(role) ||
-                                eventType.getAuthorizedRoles().contains(role)
-                );
-
-        if (!isAuthorized) {
-            throw new AccessDeniedException(EventMessages.USER_NOT_AUTHORIZED_FOR_EVENT_TYPE);
-        }
-
+                .orElseThrow(() -> {
+                    log.error("Competitor not found with id: {}", id);
+                    return new ResourceNotFoundException(CompetitorMessages.COMPETITOR_NOT_FOUND);
+                });
     }
 
     private void assignRanks(List<LeaderboardDto> leaderboard) {
-        for (int i = 0; i < leaderboard.size(); i++) {
-            leaderboard.get(i).setRank(i + 1);
+        if (leaderboard.isEmpty()) return;
+
+        int currentRank = 1;
+        leaderboard.get(0).setRank(currentRank);
+
+        for (int i = 1; i < leaderboard.size(); i++) {
+            if (leaderboard.get(i).getTotalScore() == leaderboard.get(i - 1).getTotalScore()) {
+                leaderboard.get(i).setRank(currentRank);
+            } else {
+                currentRank = i + 1;
+                leaderboard.get(i).setRank(currentRank);
+            }
         }
     }
 
-    private List<CompetitorDto> convertToDtoList(List<Competitor> competitors, boolean includeUser, boolean includeEvent) {
+    private List<CompetitorDto> convertToDtoList(List<Competitor> competitors) {
         if (competitors.isEmpty()) return List.of();
 
-        Map<UUID, UserDto> userDtoMap = new HashMap<>();
+        List<UUID> userIds = competitors.stream()
+                .map(competitor -> competitor.getUser().getId())
+                .distinct()
+                .toList();
 
-        if (includeUser) {
-            List<UUID> userIds = competitors.stream()
-                    .map(competitor -> competitor.getUser().getId())
-                    .distinct()
-                    .toList();
+        Map<UUID, UserDto> userDtoMap = userService.getAllUsersByIds(userIds).stream()
+                .collect(Collectors.toMap(UserDto::getId, userDto -> userDto));
 
-            List<UserDto> userDtos = userService.getAllUsersByIds(userIds);
-
-            userDtoMap = userDtos.stream()
-                    .collect(Collectors.toMap(UserDto::getId, userDto -> userDto));
-        }
-
-        return competitorMapper.toDtoList(competitors, userDtoMap, includeUser, includeEvent);
+        return competitorMapper.toDtoList(competitors, userDtoMap, true, true);
     }
 
-    private CompetitorDto convertToDto(Competitor competitor, boolean includeUser, boolean includeEvent) {
-        UserDto userDto = null;
-        if (includeUser && competitor.getUser() != null) {
-            userDto = userService.getUserById(competitor.getUser().getId());
-        }
-        return competitorMapper.toDto(competitor, userDto, includeEvent);
+    private CompetitorDto convertToDto(Competitor competitor) {
+        UserDto userDto = competitor.getUser() != null
+                ? userService.getUserById(competitor.getUser().getId())
+                : null;
+        return competitorMapper.toDto(competitor, userDto, true);
     }
-
-
-
 }

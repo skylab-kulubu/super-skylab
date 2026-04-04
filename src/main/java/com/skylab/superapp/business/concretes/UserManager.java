@@ -102,7 +102,7 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers(){
+    public List<UserDto> getAllUsers(String email, List<String> roles){
         logger.info("Getting all users from database");
         List<User> users = userDao.findAll();
 

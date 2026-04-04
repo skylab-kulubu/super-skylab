@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "competitors")
-public class Competitor {
+public class Competitor extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

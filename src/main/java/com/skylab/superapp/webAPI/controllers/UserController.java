@@ -53,8 +53,8 @@ public class UserController {
 
 
     @GetMapping
-    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers() {
-        var result = userService.getAllUsers();
+    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(@RequestParam String email, @RequestParam List<String> roles) {
+        var result = userService.getAllUsers(email, roles);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.ALL_USERS_RETRIEVED_SUCCESS,
                         HttpStatus.OK));

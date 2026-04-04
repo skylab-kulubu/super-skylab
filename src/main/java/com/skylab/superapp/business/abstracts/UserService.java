@@ -14,7 +14,7 @@ public interface UserService{
 
     User getAuthenticatedUserEntity();
 
-    List<UserDto> getAllUsers();
+    List<UserDto> getAllUsers(String email, List<String> roles);
 
     UserDto getUserById(UUID id);
 

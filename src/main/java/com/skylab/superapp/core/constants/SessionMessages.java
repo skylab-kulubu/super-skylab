@@ -12,6 +12,13 @@ public final class SessionMessages {
     public static final String SESSION_SPEAKER_NAME_CANNOT_BE_NULL_OR_BLANK = "session.speaker.name.cannot.be.null.or.blank";
     public static final String SESSION_TYPE_NOT_VALID = "session.type.not.valid";
     public static final String SESSION_NOT_FOUND = "session.not.found";
+    public static final String EVENT_ID_NOT_NULL = "event.id.not.null";
+    public static final String SESSION_TITLE_NOT_BLANK = "session.title.not.blank";
+    public static final String SPEAKER_NAME_NOT_BLANK = "session.speaker.name.not.blank";
+    public static final String SESSION_START_TIME_NOT_NULL = "session.start.time.not.null";
+    public static final String SESSION_END_TIME_NOT_NULL = "session.end.time.not.null";
+    public static final String SESSION_ORDER_INDEX_NOT_NULL = "session.order.index.not.null";
+    public static final String SESSION_TYPE_NOT_NULL = "session.type.not.null";
 
     private SessionMessages() {}
 

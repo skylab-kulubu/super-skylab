@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-public abstract class Media {
+public abstract class Media extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
