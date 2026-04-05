@@ -120,18 +120,18 @@ public class KeycloakAdminService {
 
     public Set<UUID> getUserIdsByRoleName(String roleName) {
         logger.info("Getting user ids by role name {} (including inherited)", roleName);
+        Set<UUID> allUserIds = new HashSet<>();
 
         try {
-            Set<UUID> allUserIds = new HashSet<>();
             Set<String> rolesToQuery = new HashSet<>();
             rolesToQuery.add(roleName);
 
-            List<RoleRepresentation> allRoles = keycloak.realm(keycloakProperties.getRealm()).roles().list();
+            List<RoleRepresentation> allRealmRoles = keycloak.realm(keycloakProperties.getRealm()).roles().list();
 
             boolean addedNew;
             do {
                 addedNew = false;
-                for (RoleRepresentation role : allRoles) {
+                for (RoleRepresentation role : allRealmRoles) {
                     if (Boolean.TRUE.equals(role.isComposite()) && !rolesToQuery.contains(role.getName())) {
 
                         Set<RoleRepresentation> composites = keycloak.realm(keycloakProperties.getRealm())
@@ -148,15 +148,10 @@ public class KeycloakAdminService {
                 }
             } while (addedNew);
 
-            logger.info("Target role '{}' is also provided by these inherited roles: {}", roleName, rolesToQuery);
+            logger.info("Target role '{}' is provided by these roles: {}", roleName, rolesToQuery);
 
             for (String roleToQuery : rolesToQuery) {
-                List<UserRepresentation> members = keycloak.realm(keycloakProperties.getRealm())
-                        .roles().get(roleToQuery).getUserMembers();
-
-                for (UserRepresentation user : members) {
-                    allUserIds.add(UUID.fromString(user.getId()));
-                }
+                allUserIds.addAll(getUsersFromRole(roleToQuery));
             }
 
             return allUserIds;
@@ -164,6 +159,36 @@ public class KeycloakAdminService {
         } catch (Exception e) {
             logger.error("Error getting user ids by role name {}", roleName, e);
             return Collections.emptySet();
+        }
+    }
+
+    private Set<UUID> getUsersFromRole(String roleName) {
+        Set<UUID> ids = new HashSet<>();
+        try {
+            List<UserRepresentation> members = keycloak.realm(keycloakProperties.getRealm())
+                    .roles().get(roleName).getUserMembers();
+
+            members.forEach(u -> ids.add(UUID.fromString(u.getId())));
+            return ids;
+
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            List<org.keycloak.representations.idm.ClientRepresentation> clients =
+                    keycloak.realm(keycloakProperties.getRealm()).clients().findAll();
+
+            for (org.keycloak.representations.idm.ClientRepresentation client : clients) {
+                try {
+                    List<UserRepresentation> members = keycloak.realm(keycloakProperties.getRealm())
+                            .clients().get(client.getId())
+                            .roles().get(roleName).getUserMembers();
+
+                    members.forEach(u -> ids.add(UUID.fromString(u.getId())));
+                    return ids;
+                } catch (jakarta.ws.rs.NotFoundException ignored) {
+
+                }
+            }
+            logger.warn("Role '{}' not found in Realm or any Client!", roleName);
+            return ids;
         }
     }
 
