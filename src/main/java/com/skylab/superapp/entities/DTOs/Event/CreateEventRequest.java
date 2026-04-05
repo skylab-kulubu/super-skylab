@@ -37,8 +37,6 @@ public class CreateEventRequest {
 
     private boolean active;
 
-    private UUID competitionId;
-
     private boolean isRanked;
 
     private String prizeInfo;

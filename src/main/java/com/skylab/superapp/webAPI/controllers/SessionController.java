@@ -10,8 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,10 +35,21 @@ public class SessionController {
                 .body(new SuccessDataResult<>(result, SessionMessages.SESSIONS_GET_ALL_SUCCESS, HttpStatus.OK));
     }
 
-    @PostMapping
-    public ResponseEntity<DataResult<SessionDto>> addSession(@RequestBody @Valid CreateSessionRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DataResult<SessionDto>> addSession(
+
+            @RequestPart(value = "speakerImage", required = false)
+            MultipartFile speakerImage,
+
+
+            @RequestPart("data")
+            @Valid
+            CreateSessionRequest request
+
+
+    ) {
         log.info("REST request to add new session with title: {}", request.getTitle());
-        var result = sessionService.addSession(request);
+        var result = sessionService.addSession(request, speakerImage);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, SessionMessages.SESSION_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }

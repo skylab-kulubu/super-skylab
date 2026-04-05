@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.EventService;
+import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.SessionService;
 import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.exceptions.*;
@@ -9,11 +10,13 @@ import com.skylab.superapp.dataAccess.SessionDao;
 import com.skylab.superapp.entities.DTOs.sessions.CreateSessionRequest;
 import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import com.skylab.superapp.entities.DTOs.sessions.UpdateSessionRequest;
+import com.skylab.superapp.entities.Image;
 import com.skylab.superapp.entities.Session;
 import com.skylab.superapp.entities.SessionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,11 +28,13 @@ public class SessionManager implements SessionService {
     private final SessionMapper sessionMapper;
     private final EventService eventService;
     private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
+    private final ImageService imageService;
 
-    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService) {
+    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService, ImageService imageService) {
         this.sessionDao = sessionDao;
         this.sessionMapper = sessionMapper;
         this.eventService = eventService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -65,11 +70,19 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public SessionDto addSession(CreateSessionRequest createSessionDto) {
+    public SessionDto addSession(CreateSessionRequest createSessionDto, MultipartFile speakerImage) {
         logger.info("Adding session with title: {}", createSessionDto.getTitle());
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
             throw new SessionStartDateCannotBeAfterEndDateException();
         }
+
+        Image savedImage = null;
+        if (speakerImage != null && !speakerImage.isEmpty()) {
+            logger.info("Uploading speaker image for session: {}", createSessionDto.getTitle());
+            savedImage = imageService.uploadImage(speakerImage);
+            logger.info("Speaker image uploaded successfully with id: {}", savedImage.getId());
+        }
+
 
         var event = eventService.getEventEntityById(createSessionDto.getEventId());
 
@@ -80,6 +93,7 @@ public class SessionManager implements SessionService {
                 .description(createSessionDto.getDescription())
                 .orderIndex(createSessionDto.getOrderIndex())
                 .startTime(createSessionDto.getStartTime())
+                .speakerImage(savedImage)
                 .endTime(createSessionDto.getEndTime())
                 .event(event)
                 .sessionType(SessionType.valueOf(createSessionDto.getSessionType().name()))
