@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -20,5 +21,9 @@ public interface UserDao extends JpaRepository<User, UUID> , JpaSpecificationExe
 
     @Query("SELECT MAX(CAST(SUBSTRING(u.skyNumber, 5) AS integer)) FROM User u")
     Integer findMaxSkyNumberValue();
+
+    List<User> findByEmailContainingIgnoreCaseAndIdIn(String email, Set<UUID> authorizedUserIds);
+
+    List<User> findByEmailContainingIgnoreCase(String email);
 
 }

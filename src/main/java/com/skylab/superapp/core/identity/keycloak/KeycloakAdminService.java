@@ -4,6 +4,7 @@ import com.skylab.superapp.core.properties.KeycloakProperties;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,26 +118,53 @@ public class KeycloakAdminService {
 
         }
 
-    public Set<UUID> getUserIdsByRoleName(String roleName){
-        logger.info("Getting user ids by role name {}", roleName);
+    public Set<UUID> getUserIdsByRoleName(String roleName) {
+        logger.info("Getting user ids by role name {} (including inherited)", roleName);
 
         try {
-            List<UserRepresentation> members = keycloak.realm(keycloakProperties.getRealm())
-                    .roles()
-                    .get(roleName)
-                    .getUserMembers();
+            Set<UUID> allUserIds = new HashSet<>();
+            Set<String> rolesToQuery = new HashSet<>();
+            rolesToQuery.add(roleName);
 
-            return members.stream()
-                    .map(user -> UUID.fromString(user.getId()))
-                    .collect(Collectors.toSet());
+            List<RoleRepresentation> allRoles = keycloak.realm(keycloakProperties.getRealm()).roles().list();
 
-        }catch (Exception e){
+            boolean addedNew;
+            do {
+                addedNew = false;
+                for (RoleRepresentation role : allRoles) {
+                    if (Boolean.TRUE.equals(role.isComposite()) && !rolesToQuery.contains(role.getName())) {
 
+                        Set<RoleRepresentation> composites = keycloak.realm(keycloakProperties.getRealm())
+                                .roles().get(role.getName()).getRoleComposites();
+
+                        boolean containsTarget = composites.stream()
+                                .anyMatch(c -> rolesToQuery.contains(c.getName()));
+
+                        if (containsTarget) {
+                            rolesToQuery.add(role.getName());
+                            addedNew = true;
+                        }
+                    }
+                }
+            } while (addedNew);
+
+            logger.info("Target role '{}' is also provided by these inherited roles: {}", roleName, rolesToQuery);
+
+            for (String roleToQuery : rolesToQuery) {
+                List<UserRepresentation> members = keycloak.realm(keycloakProperties.getRealm())
+                        .roles().get(roleToQuery).getUserMembers();
+
+                for (UserRepresentation user : members) {
+                    allUserIds.add(UUID.fromString(user.getId()));
+                }
+            }
+
+            return allUserIds;
+
+        } catch (Exception e) {
             logger.error("Error getting user ids by role name {}", roleName, e);
-           return Collections.emptySet();
+            return Collections.emptySet();
         }
-
-
     }
 
     public void updateUserAttribute(UUID userId, String attributeKey, String attributeValue){

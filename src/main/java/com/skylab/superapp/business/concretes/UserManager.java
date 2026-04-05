@@ -117,30 +117,35 @@ public class UserManager implements UserService {
 
     @Override
     public List<UserDto> getAllUsers(String email, List<String> roles) {
-        logger.info("Getting all users with email filter: {} and roles filter: {}", email, roles);
+        logger.info("Getting users. Email filter: {}, Roles filter: {}", email, roles);
 
         List<User> users;
+        boolean hasEmailFilter = email != null && !email.isBlank();
+        boolean hasRoleFilter = roles != null && !roles.isEmpty();
 
-        if (roles != null && !roles.isEmpty()) {
+        if (hasRoleFilter) {
             Set<UUID> authorizedUserIds = new HashSet<>();
             for (String role : roles) {
                 authorizedUserIds.addAll(keycloakAdminService.getUserIdsByRoleName(role));
             }
 
             if (authorizedUserIds.isEmpty()) {
-                logger.info("No users found matching the given roles: {}", roles);
+                logger.info("No users found in Keycloak matching the given roles: {}", roles);
                 return Collections.emptyList();
             }
-            users = userDao.findAllById(authorizedUserIds);
-        } else {
-            users = userDao.findAll();
-        }
 
-        if (email != null && !email.isBlank()) {
-            String searchEmail = email.toLowerCase();
-            users = users.stream()
-                    .filter(user -> user.getEmail() != null && user.getEmail().toLowerCase().contains(searchEmail))
-                    .collect(Collectors.toList());
+            if (hasEmailFilter) {
+                users = userDao.findByEmailContainingIgnoreCaseAndIdIn(email, authorizedUserIds);
+            } else {
+                users = userDao.findAllById(authorizedUserIds);
+            }
+        }
+        else {
+            if (hasEmailFilter) {
+                users = userDao.findByEmailContainingIgnoreCase(email);
+            } else {
+                users = userDao.findAll();
+            }
         }
 
         logger.info("Found {} users matching the criteria", users.size());
