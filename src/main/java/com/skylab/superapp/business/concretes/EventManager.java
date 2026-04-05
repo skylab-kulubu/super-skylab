@@ -172,7 +172,10 @@ public class EventManager implements EventService {
 
     @Override
     public List<EventDto> getAllEventsByEventTypeName(String eventTypeName) {
-        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventTypeName)));
+        return eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventTypeName))
+                .stream()
+                .map(event -> eventMapper.toDto(event, true, true, null, true, true))
+                .collect(Collectors.toList());
     }
 
     @Override
