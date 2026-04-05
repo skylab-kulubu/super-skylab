@@ -116,15 +116,38 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers(String email, List<String> roles){
-        logger.info("Getting all users from database");
-        List<User> users = userDao.findAll();
+    public List<UserDto> getAllUsers(String email, List<String> roles) {
+        logger.info("Getting all users with email filter: {} and roles filter: {}", email, roles);
 
-      return users.stream()
-              .map(userMapper::toDto)
-              .collect(Collectors.toList());
+        List<User> users;
 
+        if (roles != null && !roles.isEmpty()) {
+            Set<UUID> authorizedUserIds = new HashSet<>();
+            for (String role : roles) {
+                authorizedUserIds.addAll(keycloakAdminService.getUserIdsByRoleName(role));
+            }
 
+            if (authorizedUserIds.isEmpty()) {
+                logger.info("No users found matching the given roles: {}", roles);
+                return Collections.emptyList();
+            }
+            users = userDao.findAllById(authorizedUserIds);
+        } else {
+            users = userDao.findAll();
+        }
+
+        if (email != null && !email.isBlank()) {
+            String searchEmail = email.toLowerCase();
+            users = users.stream()
+                    .filter(user -> user.getEmail() != null && user.getEmail().toLowerCase().contains(searchEmail))
+                    .collect(Collectors.toList());
+        }
+
+        logger.info("Found {} users matching the criteria", users.size());
+
+        return users.stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override

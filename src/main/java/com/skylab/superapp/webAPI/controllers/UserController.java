@@ -53,11 +53,13 @@ public class UserController {
 
 
     @GetMapping
-    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(@RequestParam String email, @RequestParam List<String> roles) {
+    public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) List<String> roles) {
+
         var result = userService.getAllUsers(email, roles);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, UserMessages.ALL_USERS_RETRIEVED_SUCCESS,
-                        HttpStatus.OK));
+                .body(new SuccessDataResult<>(result, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
     }
 
     @GetMapping("/{id}")
