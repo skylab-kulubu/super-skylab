@@ -23,14 +23,12 @@ import java.util.UUID;
 public class SeasonManager implements SeasonService {
 
     private final SeasonDao seasonDao;
-    private final EventService eventService;
     private final SeasonMapper seasonMapper;
 
     private static final Logger logger = LoggerFactory.getLogger(SeasonManager.class);
 
-    public SeasonManager(SeasonDao seasonDao, @Lazy EventService eventService, SeasonMapper seasonMapper) {
+    public SeasonManager(SeasonDao seasonDao, SeasonMapper seasonMapper) {
         this.seasonDao = seasonDao;
-        this.eventService = eventService;
         this.seasonMapper = seasonMapper;
     }
 
@@ -144,60 +142,6 @@ public class SeasonManager implements SeasonService {
         logger.info("{} active seasons found", activeSeasons.size());
 
         return seasonMapper.toDtoList(activeSeasons);
-    }
-
-    @Transactional
-    @Override
-    public void addEventToSeason(UUID seasonId, UUID eventId) {
-        logger.info("Adding event with id: {} to season with id: {}", eventId, seasonId);
-
-        var season = getSeasonEntityById(seasonId);
-        logger.info("Season with id: {} found, proceeding to add event", seasonId);
-
-        var event = eventService.getEventEntityById(eventId);
-        logger.info("Event with id: {} found, proceeding to add event to season", eventId);
-
-
-        if (season.getEvents().contains(event)) {
-            logger.info("Season with id: {} already contains event with id: {}", seasonId, eventId);
-            throw new SeasonAlreadyContainsEventException();
-        }
-
-        if (event.getSeason() != null && event.getSeason().getId() != season.getId()) {
-            logger.info("Event with id: {} already belongs to another season with id: {}", eventId, event.getSeason().getId());
-            throw new BusinessException(SeasonMessages.EVENT_IS_IN_ANOTHER_SEASON);
-        }
-
-        season.getEvents().add(event);
-        event.setSeason(season);
-
-        seasonDao.save(season);
-
-        logger.info("Event with id: {} added to season with id: {} successfully", eventId, seasonId);
-
-    }
-
-    @Transactional
-    @Override
-    public void removeEventFromSeason(UUID seasonId, UUID eventId) {
-        logger.info("Removing event with id: {} from season with id: {}", eventId, seasonId);
-        var season = getSeasonEntityById(seasonId);
-        logger.info("Season with id: {} found, proceeding to remove event", seasonId);
-        var event = eventService.getEventEntityById(eventId);
-        logger.info("Event with id: {} found, proceeding to remove event from season", eventId);
-
-        if (!season.getEvents().contains(event) || event.getSeason() == null || event.getSeason().getId() != season.getId() ) {
-            logger.error("Season with id: {} does not contain event with id: {}", seasonId, eventId);
-            throw new SeasonDoesNotContainEventException();
-        }
-
-        season.getEvents().remove(event);
-        event.setSeason(null);
-
-        seasonDao.save(season);
-
-        logger.info("Event with id: {} removed from season with id: {} successfully", eventId, seasonId);
-
     }
 
     @Override

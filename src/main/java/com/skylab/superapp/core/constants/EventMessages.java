@@ -10,9 +10,7 @@ public final class EventMessages {
     public static final String USER_NOT_AUTHORIZED_FOR_EVENT_TYPE = "event.user.not.authorized.for.event.type";
     public static final String SEASON_ID_NOT_NULL = "event.season.id.not.null";
     public static final String EVENT_NOT_ACTIVE = "event.not.active";
-
-    private EventMessages() {}
-
+    public static final String EVENT_ALREADY_ASSIGNED_TO_SEASON = "event.already.assigned.to.season";
     public static final String EVENT_NOT_FOUND = "event.not.found";
     public static final String SUCCESS_GET_ALL_EVENTS = "event.success.get.all.events";
     public static final String SUCCESS_GET_EVENT_BY_ID = "event.success.get.event.by.id";
@@ -21,4 +19,7 @@ public final class EventMessages {
     public static final String SUCCESS_DELETE_EVENT = "event.success.delete.event";
 
     public static final String SUCCESS_GET_ACTIVE_EVENTS = "event.success.get.active.events";
+    public static final String EVENT_NOT_ASSIGNED_TO_SEASON = "event.not.assigned.to.season";
+    public static final String SUCCESS_ASSIGN_SEASON_TO_EVENT = "event.success.assign.season.to.event";
+    public static final String SUCCESS_REMOVE_SEASON_FROM_EVENT = "event.success.remove.season.from.event";
 }

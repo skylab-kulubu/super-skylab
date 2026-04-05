@@ -31,14 +31,12 @@ public class ImageManager implements ImageService {
 
     private final ImageDao imageDao;
     private final R2StorageService r2StorageService;
-    private final UserService userService;
     private final Logger logger = LoggerFactory.getLogger(ImageManager.class);
     private final ImageMapper imageMapper;
 
-    public ImageManager(ImageDao imageDao, R2StorageService r2StorageService, UserService userService, ImageMapper imageMapper) {
+    public ImageManager(ImageDao imageDao, R2StorageService r2StorageService, ImageMapper imageMapper) {
         this.imageDao = imageDao;
         this.r2StorageService = r2StorageService;
-        this.userService = userService;
         this.imageMapper = imageMapper;
     }
 

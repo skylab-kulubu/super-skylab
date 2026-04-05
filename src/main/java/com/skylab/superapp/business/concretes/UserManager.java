@@ -9,7 +9,6 @@ import com.skylab.superapp.core.identity.keycloak.KeycloakAdminService;
 import com.skylab.superapp.core.identity.ldap.LdapService;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.microsoftGraph.MicrosoftGraphService;
-import com.skylab.superapp.core.utilities.sync.UserSyncService;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
@@ -17,7 +16,6 @@ import com.skylab.superapp.entities.User;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,10 +40,8 @@ public class UserManager implements UserService {
     private final LdapService ldapService;
     private final KeycloakAdminService keycloakAdminService;
     private final MicrosoftGraphService microsoftGraphService;
-    private final UserSyncService userSyncService;
 
-
-    public UserManager(UserDao userDao, UserMapper userMapper, @Lazy ImageService imageService, UserIdentityGenerator userIdentityGenerator, LdapService ldapService, KeycloakAdminService keycloakAdminService, MicrosoftGraphService microsoftGraphService, UserSyncService userSyncService) {
+    public UserManager(UserDao userDao, UserMapper userMapper, ImageService imageService, UserIdentityGenerator userIdentityGenerator, LdapService ldapService, KeycloakAdminService keycloakAdminService, MicrosoftGraphService microsoftGraphService) {
         this.userDao = userDao;
         this.userMapper = userMapper;
         this.imageService = imageService;
@@ -53,7 +49,6 @@ public class UserManager implements UserService {
         this.ldapService = ldapService;
         this.keycloakAdminService = keycloakAdminService;
         this.microsoftGraphService = microsoftGraphService;
-        this.userSyncService = userSyncService;
     }
 
 
@@ -80,6 +75,17 @@ public class UserManager implements UserService {
             logger.info("New authenticated user detected, creating user in database for userId: {}", userId);
 
             String generatedSkyNumber = userIdentityGenerator.generateNextSkyNumber();
+            String department = null;
+
+            try {
+                String msToken = keycloakAdminService.getObsBrokerToken(jwt.getTokenValue());
+                if (msToken != null) {
+                    department = microsoftGraphService.fetchUserDepartment(msToken);
+                    logger.info("Fetched department from MS Graph synchronously: {}", department);
+                }
+            } catch (Exception e) {
+                logger.error("Error fetching department from MS Graph synchronously: {}", e.getMessage());
+            }
 
             User newUser = User.builder()
                     .id(userId)
@@ -88,6 +94,7 @@ public class UserManager implements UserService {
                     .email(jwt.getClaimAsString("email"))
                     .username(jwt.getClaimAsString("preferred_username"))
                     .university(jwt.getClaimAsString("university"))
+                    .department(department)
                     .skyNumber(generatedSkyNumber)
                     .isLdapUser(false)
                     .build();
@@ -95,7 +102,14 @@ public class UserManager implements UserService {
             newUser = userDao.save(newUser);
             logger.info("Created new user in database with id: {}", newUser.getId());
 
-            userSyncService.syncExternalApisAsync(userId, jwt.getTokenValue(), generatedSkyNumber);
+            try {
+                keycloakAdminService.updateUserAttribute(userId, "skyNumber", generatedSkyNumber);
+                if (department != null && !department.isBlank()) {
+                    keycloakAdminService.updateUserAttribute(userId, "department", department);
+                }
+            } catch (Exception e) {
+                logger.error("Error syncing attributes to Keycloak synchronously: {}", e.getMessage());
+            }
 
             return newUser;
         });

@@ -24,9 +24,5 @@ public interface SeasonService {
 
     List<SeasonDto> getActiveSeasons();
 
-    void addEventToSeason(UUID seasonId, UUID eventId);
-
-    void removeEventFromSeason(UUID seasonId, UUID eventId);
-
     Season getSeasonEntityById(UUID id);
 }

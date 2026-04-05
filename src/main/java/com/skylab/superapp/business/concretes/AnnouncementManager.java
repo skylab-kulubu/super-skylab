@@ -35,9 +35,9 @@ public class AnnouncementManager implements AnnouncementService {
 
 
     public AnnouncementManager(AnnouncementDao announcementDao,
-                               @Lazy UserService userService,
-                               @Lazy ImageService imageService,
-                               @Lazy EventTypeService eventTypeService,
+                               UserService userService,
+                               ImageService imageService,
+                               EventTypeService eventTypeService,
                                AnnouncementMapper announcementMapper) {
         this.announcementDao = announcementDao;
         this.userService = userService;

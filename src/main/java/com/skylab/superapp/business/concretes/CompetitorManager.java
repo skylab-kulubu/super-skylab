@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CompetitorManager implements CompetitorService {
 
     private final CompetitorDao competitorDao;
@@ -30,6 +29,15 @@ public class CompetitorManager implements CompetitorService {
     private final EventTypeService eventTypeService;
     private final CompetitorMapper competitorMapper;
     private final EventSecurityUtils eventSecurityUtils;
+
+    public CompetitorManager(CompetitorDao competitorDao, UserService userService, EventService eventService, EventTypeService eventTypeService, CompetitorMapper competitorMapper, EventSecurityUtils eventSecurityUtils) {
+        this.competitorDao = competitorDao;
+        this.userService = userService;
+        this.eventService = eventService;
+        this.eventTypeService = eventTypeService;
+        this.competitorMapper = competitorMapper;
+        this.eventSecurityUtils = eventSecurityUtils;
+    }
 
     @Override
     @Transactional

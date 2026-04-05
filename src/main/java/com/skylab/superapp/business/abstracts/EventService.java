@@ -35,4 +35,9 @@ public interface EventService {
     List<EventDto> getAllEventsByEventTypeName(String eventTypeName);
 
     List<EventDto> getAllEventByIsActive(boolean isActive);
+
+    void assignSeasonToEvent(UUID eventId, UUID seasonId);
+
+    void removeSeasonFromEvent(UUID eventId);
+
 }

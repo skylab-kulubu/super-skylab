@@ -81,19 +81,4 @@ public class SeasonController {
                 .body(new SuccessResult(SeasonMessages.SEASON_DELETED_SUCCESSFULLY, HttpStatus.OK));
     }
 
-    @PostMapping("/{seasonId}/events/{eventId}")
-    public ResponseEntity<Result> addEventToSeason(@PathVariable UUID seasonId, @PathVariable UUID eventId) {
-        log.info("REST request to add event id: {} to season id: {}", eventId, seasonId);
-        seasonService.addEventToSeason(seasonId, eventId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(SeasonMessages.EVENT_ADDED_TO_SEASON, HttpStatus.OK));
-    }
-
-    @DeleteMapping("/{seasonId}/events/{eventId}")
-    public ResponseEntity<Result> removeEventFromSeason(@PathVariable UUID seasonId, @PathVariable UUID eventId) {
-        log.info("REST request to remove event id: {} from season id: {}", eventId, seasonId);
-        seasonService.removeEventFromSeason(seasonId, eventId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(SeasonMessages.EVENT_REMOVED_FROM_SEASON, HttpStatus.OK));
-    }
 }

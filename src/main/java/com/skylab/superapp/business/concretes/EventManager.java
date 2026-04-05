@@ -2,6 +2,7 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.EventMessages;
+import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
@@ -181,6 +182,44 @@ public class EventManager implements EventService {
     @Override
     public List<EventDto> getAllEventByIsActive(boolean isActive) {
         return convertToDtoList(eventDao.findAllByActive(isActive));
+    }
+
+    @Override
+    @Transactional
+    public void assignSeasonToEvent(UUID eventId, UUID seasonId) {
+        logger.info("Assigning event with id: {} to season with id: {}", eventId, seasonId);
+
+        Event event = getEventEntityById(eventId);
+
+        eventSecurityUtils.checkAuthorization(event.getType());
+
+        Season season = seasonService.getSeasonEntityById(seasonId);
+
+        if (event.getSeason() != null && event.getSeason().getId().equals(season.getId())) {
+            throw new BusinessException(EventMessages.EVENT_ALREADY_ASSIGNED_TO_SEASON);
+        }
+
+        event.setSeason(season);
+        eventDao.save(event);
+
+        logger.info("Event with id: {} successfully assigned to season with id: {}", eventId, seasonId);
+    }
+
+    @Transactional
+    @Override
+    public void removeSeasonFromEvent(UUID eventId) {
+        logger.info("Removing season from event with id: {}", eventId);
+
+        Event event = getEventEntityById(eventId);
+        eventSecurityUtils.checkAuthorization(event.getType());
+
+        if (event.getSeason() == null) {
+            throw new BusinessException(EventMessages.EVENT_NOT_ASSIGNED_TO_SEASON);
+        }
+        event.setSeason(null);
+        eventDao.save(event);
+
+        logger.info("Season successfully removed from event with id: {}", eventId);
     }
 
     @Override

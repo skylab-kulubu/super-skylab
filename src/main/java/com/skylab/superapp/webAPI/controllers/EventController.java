@@ -33,7 +33,6 @@ import java.util.UUID;
 public class EventController {
 
     private final EventService eventService;
-    private final ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<DataResult<List<EventDto>>> getAllEvents() {
@@ -104,4 +103,23 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(EventMessages.SUCCESS_DELETE_EVENT, HttpStatus.OK));
     }
+
+
+    @PostMapping("/{eventId}/seasons/{seasonId}")
+    public ResponseEntity<Result> assignSeasonToEvent(@PathVariable UUID eventId, @PathVariable UUID seasonId) {
+        log.info("REST request to assign season id: {} to event id: {}", seasonId, eventId);
+        eventService.assignSeasonToEvent(eventId, seasonId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(EventMessages.SUCCESS_ASSIGN_SEASON_TO_EVENT, HttpStatus.OK));
+    }
+
+    @DeleteMapping("/{eventId}/season")
+    public ResponseEntity<Result> removeSeasonFromEvent(@PathVariable UUID eventId) {
+        log.info("REST request to remove season from event id: {}", eventId);
+        eventService.removeSeasonFromEvent(eventId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessResult(EventMessages.SUCCESS_REMOVE_SEASON_FROM_EVENT, HttpStatus.OK));
+    }
+
+
 }
