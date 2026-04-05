@@ -54,16 +54,16 @@ public class UserManager implements UserService {
 
     @Override
     @Transactional
-    public User getAuthenticatedUserEntity(){
+    public User getAuthenticatedUserEntity() {
         logger.info("Retrieving authenticated user entity from database");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()){
+        if (authentication == null || !authentication.isAuthenticated()) {
             logger.warn("No authenticated user found in security context");
             throw new AccessDeniedException(UserMessages.USER_NOT_AUTHENTICATED);
         }
 
-        if (!(authentication.getPrincipal() instanceof Jwt jwt)){
+        if (!(authentication.getPrincipal() instanceof Jwt jwt)) {
             logger.error("Authentication principal is not of type Jwt, actual type: {}", authentication.getPrincipal().getClass().getName());
             throw new RuntimeException(UserMessages.PRINCIPAL_IS_NOT_JWT);
         }
@@ -71,21 +71,10 @@ public class UserManager implements UserService {
         UUID userId = UUID.fromString(jwt.getClaimAsString("sub"));
         logger.info("Authenticated user detected with userId: {}, checking if user exists in database", userId);
 
-        return userDao.findById(userId).orElseGet(() -> {
-            logger.info("New authenticated user detected, creating user in database for userId: {}", userId);
+        User currentUser = userDao.findById(userId).orElseGet(() -> {
+            logger.info("New authenticated user detected (not synced by RabbitMQ yet), creating user in database for userId: {}", userId);
 
             String generatedSkyNumber = userIdentityGenerator.generateNextSkyNumber();
-            String department = null;
-
-            try {
-                String msToken = keycloakAdminService.getObsBrokerToken(jwt.getTokenValue());
-                if (msToken != null) {
-                    department = microsoftGraphService.fetchUserDepartment(msToken);
-                    logger.info("Fetched department from MS Graph synchronously: {}", department);
-                }
-            } catch (Exception e) {
-                logger.error("Error fetching department from MS Graph synchronously: {}", e.getMessage());
-            }
 
             User newUser = User.builder()
                     .id(userId)
@@ -94,25 +83,43 @@ public class UserManager implements UserService {
                     .email(jwt.getClaimAsString("email"))
                     .username(jwt.getClaimAsString("preferred_username"))
                     .university(jwt.getClaimAsString("university"))
-                    .department(department)
                     .skyNumber(generatedSkyNumber)
                     .isLdapUser(false)
                     .build();
 
-            newUser = userDao.save(newUser);
-            logger.info("Created new user in database with id: {}", newUser.getId());
-
             try {
                 keycloakAdminService.updateUserAttribute(userId, "skyNumber", generatedSkyNumber);
-                if (department != null && !department.isBlank()) {
-                    keycloakAdminService.updateUserAttribute(userId, "department", department);
-                }
             } catch (Exception e) {
-                logger.error("Error syncing attributes to Keycloak synchronously: {}", e.getMessage());
+                logger.error("Error syncing skyNumber to Keycloak synchronously: {}", e.getMessage());
             }
 
-            return newUser;
+            return userDao.save(newUser);
         });
+
+        if (currentUser.getDepartment() == null || currentUser.getDepartment().trim().isEmpty()) {
+            logger.info("Department is missing for user {}, attempting to fetch from MS Graph", userId);
+            try {
+                String msToken = keycloakAdminService.getObsBrokerToken(jwt.getTokenValue());
+                if (msToken != null) {
+                    String fetchedDepartment = microsoftGraphService.fetchUserDepartment(msToken);
+
+                    if (fetchedDepartment != null && !fetchedDepartment.isBlank()) {
+                        logger.info("Fetched department from MS Graph: {}", fetchedDepartment);
+
+                        currentUser.setDepartment(fetchedDepartment);
+                        userDao.save(currentUser);
+
+                        keycloakAdminService.updateUserAttribute(userId, "department", fetchedDepartment);
+                    } else {
+                        logger.warn("MS Graph returned empty department for user {}", userId);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Error fetching/syncing department from MS Graph: {}", e.getMessage());
+            }
+        }
+
+        return currentUser;
     }
 
     @Override
