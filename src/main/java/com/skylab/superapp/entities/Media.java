@@ -34,7 +34,7 @@ public abstract class Media extends BaseEntity{
     @Column(name = "file_size")
     private Long fileSize;
 
-    @Column
+    @Column(name = "attached")
     private boolean attached = false;
 
 }
