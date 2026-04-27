@@ -50,7 +50,7 @@ public class AnnouncementController {
     })
     public ResponseEntity<DataResult<AnnouncementDto>> addAnnouncement(
             @Parameter(description = "Duyuru verileri (JSON)") @RequestPart("data") @Valid CreateAnnouncementRequestDto createAnnouncementRequest,
-            @Parameter(description = "Kapak görseli dosyası") @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
+            @Parameter(description = "Kapak görseli dosyası", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)) @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
         var announcement = announcementService.addAnnouncement(createAnnouncementRequest, coverImage);
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_ADD_SUCCESS, HttpStatus.CREATED));
     }
