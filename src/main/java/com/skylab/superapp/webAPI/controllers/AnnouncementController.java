@@ -40,19 +40,19 @@ public class AnnouncementController {
         this.announcementService = announcementService;
     }
 
-    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('announcements.create', 'announcements.moderator')")
-    @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur. Görsel yüklemesi opsiyoneldir.")
+    @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Duyuru başarıyla eklendi."),
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya eksik parametre.", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Erişim reddedildi. Geçerli yetkiye sahip değilsiniz.", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi.", content = @Content)
     })
     public ResponseEntity<DataResult<AnnouncementDto>> addAnnouncement(
-            @Parameter(description = "Duyuru verileri (JSON)", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)) @RequestPart("data") @Valid CreateAnnouncementRequestDto createAnnouncementRequest,
-            @Parameter(description = "Kapak görseli dosyası") @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
-        var announcement = announcementService.addAnnouncement(createAnnouncementRequest, coverImage);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_ADD_SUCCESS, HttpStatus.CREATED));
+            @RequestBody @Valid CreateAnnouncementRequestDto createAnnouncementRequest) {
+        var announcement = announcementService.addAnnouncement(createAnnouncementRequest);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_ADD_SUCCESS, HttpStatus.CREATED));
     }
 
     @DeleteMapping("/{id}")

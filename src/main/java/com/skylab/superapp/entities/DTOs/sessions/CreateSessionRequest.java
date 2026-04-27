@@ -23,6 +23,8 @@ public class CreateSessionRequest {
     @NotBlank(message = SessionMessages.SPEAKER_NAME_NOT_BLANK)
     private String speakerName;
 
+    private UUID speakerImageId;
+
     private String speakerLinkedin;
 
     private String description;

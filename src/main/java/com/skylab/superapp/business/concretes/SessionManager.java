@@ -1,9 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
-import com.skylab.superapp.business.abstracts.EventDayService;
-import com.skylab.superapp.business.abstracts.EventService;
-import com.skylab.superapp.business.abstracts.ImageService;
-import com.skylab.superapp.business.abstracts.SessionService;
+import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.exceptions.*;
 import com.skylab.superapp.core.mappers.SessionMapper;
@@ -32,13 +29,15 @@ public class SessionManager implements SessionService {
     private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
     private final ImageService imageService;
     private final EventDayService eventDayService;
+    private final MediaService mediaService;
 
-    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService, ImageService imageService, EventDayService eventDayService) {
+    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService, ImageService imageService, EventDayService eventDayService, MediaService mediaService) {
         this.sessionDao = sessionDao;
         this.sessionMapper = sessionMapper;
         this.eventService = eventService;
         this.imageService = imageService;
         this.eventDayService = eventDayService;
+        this.mediaService = mediaService;
     }
 
     @Override
@@ -79,17 +78,16 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public SessionDto addSession(CreateSessionRequest createSessionDto, MultipartFile speakerImage) {
+    public SessionDto addSession(CreateSessionRequest createSessionDto) {
         logger.info("Adding session with title: {}", createSessionDto.getTitle());
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
             throw new SessionStartDateCannotBeAfterEndDateException();
         }
 
-        Image savedImage = null;
-        if (speakerImage != null && !speakerImage.isEmpty()) {
-            logger.info("Uploading speaker image for session: {}", createSessionDto.getTitle());
-            savedImage = imageService.uploadImage(speakerImage);
-            logger.info("Speaker image uploaded successfully with id: {}", savedImage.getId());
+        Image speakerImage = null;
+        if (createSessionDto.getSpeakerImageId() != null) {
+            mediaService.attachImageMedia(createSessionDto.getSpeakerImageId());
+            speakerImage = imageService.getImageEntityById(createSessionDto.getSpeakerImageId());
         }
 
 
@@ -102,7 +100,7 @@ public class SessionManager implements SessionService {
                 .description(createSessionDto.getDescription())
                 .orderIndex(createSessionDto.getOrderIndex())
                 .startTime(createSessionDto.getStartTime())
-                .speakerImage(savedImage)
+                .speakerImage(speakerImage)
                 .endTime(createSessionDto.getEndTime())
                 .eventDay(eventDay)
                 .sessionType(SessionType.valueOf(createSessionDto.getSessionType().name()))

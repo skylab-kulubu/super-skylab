@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface SessionService {
 
-    SessionDto addSession(CreateSessionRequest createSessionRequest, MultipartFile speakerImage);
+    SessionDto addSession(CreateSessionRequest createSessionRequest);
 
     List<SessionDto> getAllSessions();
 

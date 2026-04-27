@@ -53,11 +53,9 @@ public class SessionController {
             @ApiResponse(responseCode = "201", description = "Oturum başarıyla eklendi."),
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya tarihler arası uyumsuzluk.", content = @Content)
     })
-    public ResponseEntity<DataResult<SessionDto>> addSession(
-            @Parameter(description = "Konuşmacı Görseli") @RequestPart(value = "speakerImage", required = false) MultipartFile speakerImage,
-            @Parameter(description = "Oturum Verileri (JSON)") @RequestPart("data") @Valid CreateSessionRequest request) {
+    public ResponseEntity<DataResult<SessionDto>> addSession(@Parameter(description = "Oturum Verileri (JSON)") @RequestPart("data") @Valid CreateSessionRequest request) {
         log.info("REST request to add new session with title: {}", request.getTitle());
-        var result = sessionService.addSession(request, speakerImage);
+        var result = sessionService.addSession(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, SessionMessages.SESSION_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }

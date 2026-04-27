@@ -92,7 +92,7 @@ public class EventController {
     }
 
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     @PreAuthorize("hasAnyRole('events.create', 'events.moderator')")
     @Operation(summary = "Yeni Etkinlik Oluştur", description = "Yeni bir etkinlik kaydı oluşturur. Kapak fotoğrafı opsiyoneldir.")
     @ApiResponses(value = {
@@ -102,12 +102,11 @@ public class EventController {
             @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content)
     })
     public ResponseEntity<DataResult<EventDto>> addEvent(
-            @Parameter(description = "Etkinlik kapak görseli (Multipart)") @RequestPart(value = "coverImage", required = false) MultipartFile coverImageFile,
             @Parameter(description = "Etkinlik verileri (JSON)") @Valid @RequestPart("data") CreateEventRequest createEventRequest) {
 
         log.info("REST request to add a new event");
 
-        var eventResult = eventService.addEvent(createEventRequest, coverImageFile);
+        var eventResult = eventService.addEvent(createEventRequest);
 
         log.info("Successfully created event with id: {}", eventResult.getId());
 

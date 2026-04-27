@@ -11,4 +11,8 @@ public interface MediaService {
 
     MediaUploadResponseDto getMediaById(UUID id);
 
+    void attachMedia(UUID mediaId);
+
+    void attachImageMedia(UUID mediaId);
+
 }

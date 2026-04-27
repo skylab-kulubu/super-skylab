@@ -17,4 +17,6 @@ public interface ImageService {
 
     List<Image> getImagesByIds(List<UUID> imageIds);
 
+    Image getImageEntityById(UUID coverImageId);
+
 }

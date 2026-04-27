@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface AnnouncementService {
 
-    AnnouncementDto addAnnouncement(CreateAnnouncementRequestDto createAnnouncementRequest, MultipartFile coverImage);
+    AnnouncementDto addAnnouncement(CreateAnnouncementRequestDto createAnnouncementRequest);
 
     void deleteAnnouncement(UUID id);
 

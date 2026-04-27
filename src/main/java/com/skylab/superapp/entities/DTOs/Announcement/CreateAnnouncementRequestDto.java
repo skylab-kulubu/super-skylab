@@ -17,6 +17,8 @@ public class CreateAnnouncementRequestDto {
     @NotNull(message = AnnouncementMessages.BODY_NOT_NULL)
     private String body;
 
+    private UUID coverImageId;
+
     private boolean active;
 
     @NotNull(message = AnnouncementMessages.EVENT_TYPE_ID_NOT_NULL)

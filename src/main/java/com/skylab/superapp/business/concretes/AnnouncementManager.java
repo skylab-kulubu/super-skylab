@@ -1,9 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
-import com.skylab.superapp.business.abstracts.AnnouncementService;
-import com.skylab.superapp.business.abstracts.EventTypeService;
-import com.skylab.superapp.business.abstracts.ImageService;
-import com.skylab.superapp.business.abstracts.UserService;
+import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.AnnouncementMessages;
 import com.skylab.superapp.core.exceptions.ImageAlreadyAddedException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
@@ -29,43 +26,42 @@ import java.util.stream.Collectors;
 public class AnnouncementManager implements AnnouncementService {
 
     private final AnnouncementDao announcementDao;
-    private final UserService userService;
     private final ImageService imageService;
     private final EventTypeService eventTypeService;
     private final AnnouncementMapper announcementMapper;
+    private final MediaService mediaService;
 
 
     public AnnouncementManager(AnnouncementDao announcementDao,
-                               UserService userService,
                                ImageService imageService,
                                EventTypeService eventTypeService,
-                               AnnouncementMapper announcementMapper) {
+                               AnnouncementMapper announcementMapper, MediaService mediaService) {
         this.announcementDao = announcementDao;
-        this.userService = userService;
         this.imageService = imageService;
         this.eventTypeService = eventTypeService;
         this.announcementMapper = announcementMapper;
+        this.mediaService = mediaService;
     }
 
 
     @Override
-    public AnnouncementDto addAnnouncement(CreateAnnouncementRequestDto createAnnouncementRequest, MultipartFile coverImage) {
-        var eventType = eventTypeService.getEventTypeEntityById(createAnnouncementRequest.getEventTypeId());
+    public AnnouncementDto addAnnouncement(CreateAnnouncementRequestDto request) {
+        var eventType = eventTypeService.getEventTypeEntityById(request.getEventTypeId());
 
-        Image savedCoverImage = null;
-        if (coverImage != null && !coverImage.isEmpty()) {
-             savedCoverImage = imageService.uploadImage(coverImage);
+        Image coverImage = null;
+        if (request.getCoverImageId() != null) {
+            mediaService.attachImageMedia(request.getCoverImageId());
+            coverImage = imageService.getImageEntityById(request.getCoverImageId());
         }
 
         Announcement announcement = Announcement.builder()
-                .title(createAnnouncementRequest.getTitle())
-                .body(createAnnouncementRequest.getBody())
-                .active(createAnnouncementRequest.isActive())
-                .formUrl(createAnnouncementRequest.getFormUrl())
+                .title(request.getTitle())
+                .body(request.getBody())
+                .active(request.isActive())
+                .formUrl(request.getFormUrl())
                 .eventType(eventType)
-                .coverImage(savedCoverImage)
+                .coverImage(coverImage)
                 .build();
-
 
         return announcementMapper.toDto(announcementDao.save(announcement));
     }

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public interface EventService {
 
-    EventDto addEvent(CreateEventRequest createEventDto, MultipartFile coverImageFile);
+    EventDto addEvent(CreateEventRequest createEventDto);
 
     void deleteEvent(UUID id);
 

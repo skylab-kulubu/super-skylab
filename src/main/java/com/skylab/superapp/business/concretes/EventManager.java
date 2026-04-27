@@ -39,10 +39,11 @@ public class EventManager implements EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
     private final UserService userService;
     private final TicketDao ticketDao;
+    private final MediaService mediaService;
 
     @Override
     @Transactional
-    public EventDto addEvent(CreateEventRequest createEventRequest, MultipartFile coverImageFile) {
+    public EventDto addEvent(CreateEventRequest createEventRequest) {
         logger.info("Attempting to add new event: {}", createEventRequest.getName());
         EventType eventType = eventTypeService.getEventTypeEntityById(createEventRequest.getEventTypeId());
 
@@ -52,9 +53,11 @@ public class EventManager implements EventService {
                 ? seasonService.getSeasonEntityById(createEventRequest.getSeasonId())
                 : null;
 
-        Image savedCoverImage = (coverImageFile != null && !coverImageFile.isEmpty())
-                ? imageService.uploadImage(coverImageFile)
-                : null;
+        Image coverImage = null;
+        if (createEventRequest.getCoverImageId() != null) {
+            mediaService.attachImageMedia(createEventRequest.getCoverImageId());
+            coverImage = imageService.getImageEntityById(createEventRequest.getCoverImageId());
+        }
 
         Event event = Event.builder()
                 .name(createEventRequest.getName())
@@ -67,7 +70,7 @@ public class EventManager implements EventService {
                 .active(createEventRequest.isActive())
                 .linkedin(createEventRequest.getLinkedin())
                 .location(createEventRequest.getLocation())
-                .coverImage(savedCoverImage)
+                .coverImage(coverImage)
                 .season(season)
                 .ranked(createEventRequest.isRanked())
                 .prizeInfo(createEventRequest.getPrizeInfo())

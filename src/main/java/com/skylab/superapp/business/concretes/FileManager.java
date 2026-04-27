@@ -7,11 +7,16 @@ import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.utilities.storage.R2StorageService;
 import com.skylab.superapp.dataAccess.FileDao;
 import com.skylab.superapp.entities.File;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 @Service
@@ -42,9 +47,10 @@ public class FileManager implements FileService {
         }
 
         try {
+            byte[] fileBytes = sanitizeFile(file);
 
             String fileKey = r2StorageService.uploadFile(
-                    file.getBytes(),
+                    fileBytes,
                     file.getOriginalFilename(),
                     file.getContentType(),
                     FolderType.FILE
@@ -54,7 +60,7 @@ public class FileManager implements FileService {
             newFile.setFileName(file.getOriginalFilename());
             newFile.setFileType(file.getContentType());
             newFile.setFileUrl(fileKey);
-            newFile.setFileSize(file.getSize());
+            newFile.setFileSize((long) fileBytes.length);
 
             return fileDao.save(newFile);
 
@@ -62,8 +68,23 @@ public class FileManager implements FileService {
             logger.error("File upload failed: {}", e.getMessage());
             throw new RuntimeException("File upload failed");
         }
+    }
 
+    private byte[] sanitizeFile(MultipartFile file) throws IOException {
+        String extension = getFileExtension(file.getOriginalFilename())
+                .toLowerCase().substring(1);
 
+        return switch (extension) {
+            case "pdf" -> removePdfMetadata(file);
+            default -> file.getBytes();
+        };
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            throw new IllegalArgumentException("File has no extension: " + fileName);
+        }
+        return fileName.substring(fileName.lastIndexOf("."));
     }
 
     @Override
@@ -76,5 +97,19 @@ public class FileManager implements FileService {
         r2StorageService.deleteFile(file.getFileUrl());
         fileDao.delete(file);
 
+    }
+
+    private byte[] removePdfMetadata(MultipartFile file) throws IOException {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+
+            PDDocumentInformation info = new PDDocumentInformation();
+            document.setDocumentInformation(info);
+            document.getDocumentCatalog().setMetadata(null);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            document.save(outputStream);
+
+            return outputStream.toByteArray();
+        }
     }
 }

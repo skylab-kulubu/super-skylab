@@ -18,6 +18,8 @@ public class CreateEventRequest {
 
     private String description;
 
+    private UUID coverImageId;
+
     @NotNull(message = EventMessages.LOCATION_NOT_NULL)
     private String location;
 

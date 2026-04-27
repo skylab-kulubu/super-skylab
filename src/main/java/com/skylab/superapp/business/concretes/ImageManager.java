@@ -11,6 +11,7 @@ import com.skylab.superapp.core.utilities.storage.R2StorageService;
 import com.skylab.superapp.dataAccess.ImageDao;
 import com.skylab.superapp.entities.DTOs.Image.response.UploadImageResponseDto;
 import com.skylab.superapp.entities.Image;
+import org.apache.commons.imaging.Imaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -117,20 +118,26 @@ public class ImageManager implements ImageService {
         return images;
     }
 
+    @Override
+    public Image getImageEntityById(UUID coverImageId) {
+        logger.info("Retrieving image with ID: {}", coverImageId);
+
+        return imageDao.findById(coverImageId)
+                .orElseThrow(() -> {
+                    logger.error("Image not found with ID: {}", coverImageId);
+                    return new ResourceNotFoundException("Image not found with id: " + coverImageId);
+                });
+    }
+
 
     private byte[] removeMetadata(MultipartFile image) throws IOException {
-        BufferedImage originalImage = ImageIO.read(image.getInputStream());
+        String extension = getFileExtension(image.getOriginalFilename())
+                .toLowerCase().substring(1);
 
-        if (originalImage == null){
-            throw new IOException("Image file is empty.");
-        }
+        BufferedImage bufferedImage = Imaging.getBufferedImage(image.getInputStream());
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        String formatName = getFileExtension(image.getOriginalFilename()).substring(1);
-
-
-        ImageIO.write(originalImage, formatName, outputStream);
+        ImageIO.write(bufferedImage, extension, outputStream);
 
         return outputStream.toByteArray();
     }
