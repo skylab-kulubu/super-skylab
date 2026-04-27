@@ -40,7 +40,7 @@ public class MediaController {
             @ApiResponse(responseCode = "400", description = "Geçersiz dosya tipi veya boyutu.", content = @Content),
             @ApiResponse(responseCode = "403", description = "Yetkisiz erişim.", content = @Content)
     })
-    public ResponseEntity<DataResult<MediaUploadResponseDto>> uploadMedia(@Parameter(description = "Yüklenecek Dosya") @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<DataResult<MediaUploadResponseDto>> uploadMedia(@Parameter(description = "Yüklenecek Dosya") @RequestPart("file") MultipartFile file) {
         var result = mediaService.uploadMedia(file);
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessDataResult<>(result,MediaMessages.MEDIA_UPLOAD_SUCCESS, HttpStatus.CREATED));
     }
