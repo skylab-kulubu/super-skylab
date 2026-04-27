@@ -2,38 +2,21 @@ package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.DTOs.Image.response.UploadImageResponseDto;
 import com.skylab.superapp.entities.Image;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface ImageMapper {
 
+    @Mapping(target = "name", source = "fileName")
+    @Mapping(target = "type", source = "fileType")
+    @Mapping(target = "size", source = "fileSize")
+    @Mapping(target = "url", expression = "java(\"https://cdn.yildizskylab.com/\" + savedImage.getFileUrl())")
+    UploadImageResponseDto toUploadImageResponseDto(Image savedImage);
 
-@Component
-public class ImageMapper {
-
-    public String toString(Image image){
-        if (image == null) {
-            return null;
-        }
+    default String mapImageToUrl(Image image) {
+        if (image == null || image.getFileUrl() == null) return null;
         return "https://cdn.yildizskylab.com/" + image.getFileUrl();
-    }
-
-    public List<String> toStringList(List<Image> images){
-        return images.stream()
-                .map(this::toString)
-                .toList();
-    }
-
-
-    public UploadImageResponseDto toUploadImageResponseDto(Image savedImage) {
-        if (savedImage == null) {
-            return null;
-        }
-        UploadImageResponseDto dto = new UploadImageResponseDto();
-        dto.setId(savedImage.getId());
-        dto.setName(savedImage.getFileName());
-        dto.setType(savedImage.getFileType());
-        dto.setUrl("https://cdn.yildizskylab.com/"+savedImage.getFileUrl());
-        dto.setSize(savedImage.getFileSize());
-        return dto;
     }
 }

@@ -10,6 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface SessionDao extends JpaRepository<Session, UUID> {
-    List<Session> findAllByEvent(Event event);
+    List<Session> findAllByEventDay_Event(Event event);
 
 }

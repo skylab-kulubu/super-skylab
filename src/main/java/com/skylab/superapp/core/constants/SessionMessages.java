@@ -19,7 +19,6 @@ public final class SessionMessages {
     public static final String SESSION_END_TIME_NOT_NULL = "session.end.time.not.null";
     public static final String SESSION_ORDER_INDEX_NOT_NULL = "session.order.index.not.null";
     public static final String SESSION_TYPE_NOT_NULL = "session.type.not.null";
-
-    private SessionMessages() {}
-
+    public static final String EVENT_DAY_ID_NOT_NULL = "session.event.day.id.not.null";
+    public static final String SESSION_UPDATED_SUCCESFULLY = "session.updated.successfully";
 }

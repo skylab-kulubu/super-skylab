@@ -34,7 +34,7 @@ public class EventDto {
     private String linkedin;
     private boolean active;
 
-    private boolean isRanked;
+    private boolean ranked;
     private String prizeInfo;
 
     private SeasonDto season;
@@ -42,6 +42,4 @@ public class EventDto {
     private List<SessionDto> sessions;
 
     private List<String> imageUrls;
-
-    private List<CompetitorDto> competitors;
 }

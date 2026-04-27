@@ -1,8 +1,10 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
+import com.skylab.superapp.entities.DTOs.Event.EventApplicationDto;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
+import com.skylab.superapp.entities.DTOs.ticket.request.GuestTicketRequestDto;
 import com.skylab.superapp.entities.Event;
 import com.skylab.superapp.entities.EventType;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,5 +41,13 @@ public interface EventService {
     void assignSeasonToEvent(UUID eventId, UUID seasonId);
 
     void removeSeasonFromEvent(UUID eventId);
+
+    void applyToEvent(UUID eventId);
+
+    Event getEventReference(UUID eventId);
+
+    void applyToEventAsGuest(UUID eventId, GuestTicketRequestDto request);
+
+    List<EventDto> getEventsBySeasonId(UUID seasonId);
 
 }

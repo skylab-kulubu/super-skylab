@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean

@@ -9,18 +9,29 @@ import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Announcement.AnnouncementDto;
 import com.skylab.superapp.entities.DTOs.Announcement.CreateAnnouncementRequestDto;
 import com.skylab.superapp.entities.DTOs.Announcement.UpdateAnnouncementRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/announcements")
+@Tag(name = "Duyuru Yönetimi", description = "Sistem genelindeki duyuruların oluşturulması, listelenmesi ve güncellenmesi işlemleri.")
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
@@ -30,18 +41,29 @@ public class AnnouncementController {
     }
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasAnyRole('announcements.create', 'announcements.moderator')")
+    @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur. Görsel yüklemesi opsiyoneldir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Duyuru başarıyla eklendi."),
+            @ApiResponse(responseCode = "400", description = "Validasyon hatası veya eksik parametre.", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi. Geçerli yetkiye sahip değilsiniz.", content = @Content)
+    })
     public ResponseEntity<DataResult<AnnouncementDto>> addAnnouncement(
-            @RequestPart("data") @Valid CreateAnnouncementRequestDto createAnnouncementRequest,
-            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
+            @Parameter(description = "Duyuru verileri (JSON)") @RequestPart("data") @Valid CreateAnnouncementRequestDto createAnnouncementRequest,
+            @Parameter(description = "Kapak görseli dosyası") @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
         var announcement = announcementService.addAnnouncement(createAnnouncementRequest, coverImage);
-
-       return ResponseEntity.status(HttpStatus.CREATED)
-               .body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_ADD_SUCCESS,
-                       HttpStatus.CREATED));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_ADD_SUCCESS, HttpStatus.CREATED));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteAnnouncement(@PathVariable UUID id) {
+    @PreAuthorize("hasAnyRole('announcements.delete', 'announcements.moderator')")
+    @Operation(summary = "Duyuru Sil", description = "Belirtilen duyuruyu sistemden kalıcı olarak siler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Duyuru başarıyla silindi."),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi.", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Silinmek istenen duyuru bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<Result> deleteAnnouncement(@Parameter(description = "Duyuru UUID") @PathVariable UUID id) {
         announcementService.deleteAnnouncement(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(AnnouncementMessages.ANNOUNCEMENT_DELETE_SUCCESS,
@@ -49,8 +71,14 @@ public class AnnouncementController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DataResult<AnnouncementDto>> updateAnnouncement(@PathVariable UUID id,
-                                                     @RequestBody UpdateAnnouncementRequest updateAnnouncementRequest) {
+    @PreAuthorize("hasAnyRole('announcements.update', 'announcements.moderator')")
+    @Operation(summary = "Duyuru Güncelle", description = "Duyuruya ait verileri kısmi olarak günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Duyuru başarıyla güncellendi."),
+            @ApiResponse(responseCode = "404", description = "Güncellenmek istenen duyuru bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<DataResult<AnnouncementDto>> updateAnnouncement(@Parameter(description = "Duyuru UUID") @PathVariable UUID id,
+                                                                          @RequestBody UpdateAnnouncementRequest updateAnnouncementRequest) {
         var announcement = announcementService.updateAnnouncement(id, updateAnnouncementRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_UPDATE_SUCCESS,
@@ -58,29 +86,30 @@ public class AnnouncementController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResult<AnnouncementDto>> getAnnouncementById(@PathVariable UUID id,
-                                                                           @RequestParam(defaultValue = "false") boolean includeEventType) {
-        var announcement = announcementService.getAnnouncementById(id, includeEventType);
+    @Operation(summary = "Duyuru Detayı Getir", description = "Belirtilen UUID'ye sahip duyurunun detaylarını listeler.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Duyuru detayı getirildi."),
+            @ApiResponse(responseCode = "404", description = "Duyuru bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<DataResult<AnnouncementDto>> getAnnouncementById(@Parameter(description = "Duyuru UUID") @PathVariable UUID id) {
+        var announcement = announcementService.getAnnouncementById(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(announcement, AnnouncementMessages.ANNOUNCEMENT_GET_SUCCESS, HttpStatus.OK));
     }
 
-    @GetMapping()
-    public ResponseEntity<DataResult<List<AnnouncementDto>>> getAllAnnouncements(@RequestParam(defaultValue = "false") boolean includeUser,
-                                                                                 @RequestParam(defaultValue = "false") boolean includeEventType,
-                                                                                 @RequestParam(defaultValue = "false") boolean includeImages) {
-        var announcements = announcementService.getAllAnnouncements(includeUser, includeEventType, includeImages);
+    @GetMapping
+    @Operation(summary = "Tüm Duyuruları Getir", description = "Sistemdeki tüm duyuruları liste halinde döner.")
+    public ResponseEntity<DataResult<List<AnnouncementDto>>> getAllAnnouncements() {
+        var announcements = announcementService.getAllAnnouncements();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult(announcements, AnnouncementMessages.ANNOUNCEMENT_GET_ALL_SUCCESS,
                         HttpStatus.OK));
     }
 
     @GetMapping("/event-type/{eventTypeId}")
-    public ResponseEntity<DataResult<List<AnnouncementDto>>> getAllAnnouncementsByEventTypeId(@PathVariable UUID eventTypeId,
-                                                                                              @RequestParam(defaultValue = "false") boolean includeUser,
-                                                                                              @RequestParam(defaultValue = "false") boolean includeEventType,
-                                                                                              @RequestParam(defaultValue = "false") boolean includeImages) {
-        var result = announcementService.getAllAnnouncementsByEventTypeId(eventTypeId, includeUser, includeEventType, includeImages);
+    @Operation(summary = "Etkinlik Türüne Göre Duyuruları Getir", description = "Sadece belirli bir etkinlik türüne atanmış duyuruları filtreler.")
+    public ResponseEntity<DataResult<List<AnnouncementDto>>> getAllAnnouncementsByEventTypeId(@Parameter(description = "Etkinlik Türü UUID") @PathVariable UUID eventTypeId) {
+        var result = announcementService.getAllAnnouncementsByEventTypeId(eventTypeId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult(result, AnnouncementMessages.ANNOUNCEMENT_GET_SUCCESS,
                         HttpStatus.OK));

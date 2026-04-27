@@ -28,9 +28,9 @@ public class R2StorageService {
 
         String key;
         if (folderType == FolderType.IMAGE) {
-            key = "images/" + UUID.randomUUID().toString();
+            key = "images/" + UUID.randomUUID();
         }else if (folderType == FolderType.FILE){
-            key = "files/" + UUID.randomUUID().toString();
+            key = "files/" + UUID.randomUUID();
         } else {
             throw new IllegalArgumentException("Invalid folder type: " + folderType);
         }

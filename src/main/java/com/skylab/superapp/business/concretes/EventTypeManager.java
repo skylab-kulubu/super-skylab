@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class EventTypeManager implements EventTypeService {
@@ -51,7 +52,9 @@ public class EventTypeManager implements EventTypeService {
     @Override
     public List<EventTypeDto> getAllEventTypes() {
         var result = eventTypeDao.findAll();
-        return eventTypeMapper.toDtoList(result);
+        return result.stream()
+                .map(eventTypeMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override

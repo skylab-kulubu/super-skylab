@@ -102,7 +102,9 @@ public class SeasonManager implements SeasonService {
 
         logger.info("{} seasons found", seasons.size());
 
-       return seasonMapper.toDtoList(seasons);
+        return seasons.stream()
+                .map(seasonMapper::toDto)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -141,7 +143,9 @@ public class SeasonManager implements SeasonService {
 
         logger.info("{} active seasons found", activeSeasons.size());
 
-        return seasonMapper.toDtoList(activeSeasons);
+        return activeSeasons.stream()
+                .map(seasonMapper::toDto)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override

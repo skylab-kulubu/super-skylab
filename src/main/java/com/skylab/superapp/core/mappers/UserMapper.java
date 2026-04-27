@@ -2,44 +2,15 @@ package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.User;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {ImageMapper.class})
+public interface UserMapper {
 
 
-@Component
-public class UserMapper {
-
-    private final ImageMapper imageMapper;
-
-    public UserMapper(ImageMapper imageMapper) {
-        this.imageMapper = imageMapper;
-    }
-
-    public UserDto toDto(User user) {
-        if (user == null) {
-            return null;
-        }
-
-        UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        userDto.setEmail(user.getEmail());
-        userDto.setFirstName(user.getFirstName());
-        userDto.setLastName(user.getLastName());
-
-        userDto.setSkyNumber(user.getSkyNumber());
-
-        userDto.setLdapUser(user.isLdapUser());
-
-        if (user.getProfilePicture() != null) {
-            userDto.setProfilePictureUrl(imageMapper.toString(user.getProfilePicture()));
-        }
-
-        userDto.setLinkedin(user.getLinkedin());
-        userDto.setUniversity(user.getUniversity());
-        userDto.setFaculty(user.getFaculty());
-        userDto.setDepartment(user.getDepartment());
-
-        return userDto;
-    }
-
+    @Mapping(source = "profilePicture", target = "profilePictureUrl")
+    UserDto toDto(User user);
 
 }

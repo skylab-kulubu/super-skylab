@@ -6,29 +6,36 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
-import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/event-types")
 @RequiredArgsConstructor
+@Tag(name = "Etkinlik Türü Yönetimi", description = "Sistemdeki etkinlik kategorilerinin (AGC, GECEKODU vb.) tanımlanması ve yönetilmesi.")
 public class EventTypeController {
 
     private final EventTypeService eventTypeService;
 
     @GetMapping
+    @Operation(summary = "Tüm Etkinlik Türlerini Getir", description = "Sistemdeki kayıtlı tüm etkinlik kategorilerini listeler.")
     public ResponseEntity<DataResult<List<EventTypeDto>>> getAllEventTypes() {
         log.info("REST request to get all event types");
         var result = eventTypeService.getAllEventTypes();
@@ -44,6 +51,7 @@ public class EventTypeController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Etkinlik Türü Detayı Getir", description = "Belirtilen UUID'ye sahip etkinlik kategorisinin detaylarını getirir.")
     public ResponseEntity<DataResult<EventTypeDto>> getEventTypeById(@PathVariable UUID id) {
         log.info("REST request to get event type by id: {}", id);
         var result = eventTypeService.getEventTypeById(id);
@@ -52,6 +60,12 @@ public class EventTypeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('event_types.create', 'event_types.moderator')")
+    @Operation(summary = "Etkinlik Türü Ekle", description = "Yeni bir etkinlik kategorisi ve yetkili rolleri tanımlar.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Etkinlik türü başarıyla eklendi."),
+            @ApiResponse(responseCode = "403", description = "Yetkisiz erişim.", content = @Content)
+    })
     public ResponseEntity<DataResult<EventTypeDto>> addEventType(@RequestBody CreateEventTypeRequest request) {
         log.info("REST request to add new event type with name: {}", request.getName());
         var result = eventTypeService.addEventType(request);
@@ -60,6 +74,8 @@ public class EventTypeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('event_types.update', 'event_types.moderator')")
+    @Operation(summary = "Etkinlik Türünü Güncelle", description = "Etkinlik kategorisinin ismini veya yetkili rollerini günceller.", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<DataResult<EventTypeDto>> updateEventType(@PathVariable UUID id, @RequestBody UpdateEventTypeRequest request) {
         log.info("REST request to update event type with id: {}", id);
         var result = eventTypeService.updateEventType(id, request);
@@ -68,18 +84,12 @@ public class EventTypeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('event_types.delete', 'event_types.moderator')")
+    @Operation(summary = "Etkinlik Türü Sil", description = "Belirtilen etkinlik kategorisini sistemden siler.", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Result> deleteEventType(@PathVariable UUID id) {
         log.info("REST request to delete event type with id: {}", id);
         eventTypeService.deleteEventType(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(EventTypeMessages.EVENT_TYPE_DELETED, HttpStatus.OK));
-    }
-
-    @GetMapping("/{eventTypeName}/coordinators")
-    public ResponseEntity<DataResult<Set<UserDto>>> getCoordinatorsByEventType(@PathVariable String eventTypeName) {
-        log.info("REST request to get coordinators for event type: {}", eventTypeName);
-        Set<UserDto> result = eventTypeService.getCoordinatorsByEventTypeName(eventTypeName);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventTypeMessages.COORDINATORS_FOUND, HttpStatus.OK));
     }
 }

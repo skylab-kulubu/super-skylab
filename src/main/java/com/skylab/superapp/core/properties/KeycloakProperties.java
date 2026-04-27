@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class KeycloakProperties {
     private String serverUrl;
+    private String externalUrl;
     private String realm;
     private String clientId;
     private String clientSecret;

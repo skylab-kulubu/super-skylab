@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
+import com.skylab.superapp.business.abstracts.EventDayService;
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.SessionService;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class SessionManager implements SessionService {
@@ -29,18 +31,25 @@ public class SessionManager implements SessionService {
     private final EventService eventService;
     private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
     private final ImageService imageService;
+    private final EventDayService eventDayService;
 
-    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService, ImageService imageService) {
+    public SessionManager(SessionDao sessionDao, SessionMapper sessionMapper, EventService eventService, ImageService imageService, EventDayService eventDayService) {
         this.sessionDao = sessionDao;
         this.sessionMapper = sessionMapper;
         this.eventService = eventService;
         this.imageService = imageService;
+        this.eventDayService = eventDayService;
     }
 
     @Override
     public List<SessionDto> getAllSessions() {
         logger.info("Getting all sessions");
-        return sessionMapper.toDtoList(sessionDao.findAll());
+
+        var sessions = sessionDao.findAll();
+
+        return sessions.stream()
+                .map(sessionMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -84,7 +93,7 @@ public class SessionManager implements SessionService {
         }
 
 
-        var event = eventService.getEventEntityById(createSessionDto.getEventId());
+        var eventDay = eventDayService.getEventDayEntityById(createSessionDto.getEventDayId());
 
         Session session = Session.builder()
                 .title(createSessionDto.getTitle())
@@ -95,7 +104,7 @@ public class SessionManager implements SessionService {
                 .startTime(createSessionDto.getStartTime())
                 .speakerImage(savedImage)
                 .endTime(createSessionDto.getEndTime())
-                .event(event)
+                .eventDay(eventDay)
                 .sessionType(SessionType.valueOf(createSessionDto.getSessionType().name()))
                 .build();
 
@@ -130,10 +139,12 @@ public class SessionManager implements SessionService {
         var event = eventService.getEventEntityById(eventId);
         logger.info("Event found, retrieving sessions");
 
-        var sessions = sessionDao.findAllByEvent(event);
+        var sessions = sessionDao.findAllByEventDay_Event(event);
 
         logger.info("Sessions retrieved successfully, count: {}", sessions.size());
 
-        return sessionMapper.toDtoList(sessions);
+        return sessions.stream()
+                .map(sessionMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

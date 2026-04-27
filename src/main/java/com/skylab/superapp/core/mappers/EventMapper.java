@@ -1,69 +1,33 @@
 package com.skylab.superapp.core.mappers;
 
-import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
-import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.Event;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
+import com.skylab.superapp.entities.Image;
+import com.skylab.superapp.entities.DTOs.Event.EventDto;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface EventMapper {
 
-@Component
-public class EventMapper {
+    @Mapping(source = "ranked", target = "ranked")
+    @Mapping(source = "coverImage", target = "coverImageUrl", qualifiedByName = "mapImageToUrl")
+    @Mapping(source = "images", target = "imageUrls", qualifiedByName = "mapImagesToUrls")
+    EventDto eventToEventDto(Event event);
 
-    private final EventTypeMapper eventTypeMapper;
-    private final ImageMapper imageMapper;
-    private final SessionMapper sessionMapper;
-    private final SeasonMapper seasonMapper;
-
-    public EventMapper(@Lazy EventTypeMapper eventTypeMapper,
-                       @Lazy ImageMapper imageMapper, @Lazy SessionMapper sessionMapper,
-                       @Lazy SeasonMapper seasonMapper) {
-        this.eventTypeMapper = eventTypeMapper;
-        this.imageMapper = imageMapper;
-        this.sessionMapper = sessionMapper;
-        this.seasonMapper = seasonMapper;
+    @Named("mapImageToUrl")
+    default String mapImageToUrl(Image image) {
+        if (image == null) return null;
+        return image.getFileUrl();
     }
 
-    public EventDto toDto(Event event,
-                          boolean includeEventType,
-                          boolean includeSession,
-                          List<CompetitorDto> competitorDtos,
-                          boolean includeImages,
-                          boolean includeSeason) {
-
-        if (event == null) {
-            return null;
-        }
-        return new EventDto(
-                event.getId(),
-                event.getName(),
-                imageMapper.toString(event.getCoverImage()),
-                event.getDescription(),
-                event.getLocation(),
-                includeEventType ? eventTypeMapper.toDto(event.getType()) : null,
-                event.getFormUrl(),
-                event.getStartDate(),
-                event.getEndDate(),
-                event.getLinkedin(),
-                event.isActive(),
-                event.isRanked(),
-                event.getPrizeInfo(),
-                includeSeason ? seasonMapper.toDto(event.getSeason()) : null,
-                includeSession ? sessionMapper.toDtoList(event.getSessions()) : null,
-                includeImages ? imageMapper.toStringList(event.getImages()) : null,
-                competitorDtos
-        );
+    @Named("mapImagesToUrls")
+    default List<String> mapImagesToUrls(List<Image> images) {
+        if (images == null) return null;
+        return images.stream().map(Image::getFileUrl).collect(Collectors.toList());
     }
-
-    public EventDto toDto(Event event) {
-        return toDto(event, false, false, null, false, false);
-    }
-
-    public List<EventDto> toDtoList(List<Event> events) {
-        if (events == null) return List.of();
-        return events.stream().map(this::toDto).toList();
-    }
-
 }

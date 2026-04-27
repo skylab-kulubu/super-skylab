@@ -27,6 +27,8 @@ public class CreateEventRequest {
     @NotNull(message = EventMessages.SEASON_ID_NOT_NULL)
     private UUID seasonId;
 
+    private int capacity;
+
     private String formUrl;
 
     private LocalDateTime startDate;

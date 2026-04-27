@@ -7,13 +7,12 @@ import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.EventDao;
+import com.skylab.superapp.dataAccess.TicketDao;
+import com.skylab.superapp.entities.*;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
-import com.skylab.superapp.entities.Event;
-import com.skylab.superapp.entities.EventType;
-import com.skylab.superapp.entities.Image;
-import com.skylab.superapp.entities.Season;
+import com.skylab.superapp.entities.DTOs.ticket.request.GuestTicketRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,8 +34,11 @@ public class EventManager implements EventService {
     private final EventMapper eventMapper;
     private final SeasonService seasonService;
     private final EventSecurityUtils eventSecurityUtils;
+   // private final SkyMailService skyMailService;
 
     private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
+    private final UserService userService;
+    private final TicketDao ticketDao;
 
     @Override
     @Transactional
@@ -59,6 +60,7 @@ public class EventManager implements EventService {
                 .name(createEventRequest.getName())
                 .description(createEventRequest.getDescription())
                 .type(eventType)
+                .capacity(createEventRequest.getCapacity())
                 .formUrl(createEventRequest.getFormUrl())
                 .startDate(createEventRequest.getStartDate())
                 .endDate(createEventRequest.getEndDate())
@@ -67,12 +69,12 @@ public class EventManager implements EventService {
                 .location(createEventRequest.getLocation())
                 .coverImage(savedCoverImage)
                 .season(season)
-                .isRanked(createEventRequest.isRanked())
+                .ranked(createEventRequest.isRanked())
                 .prizeInfo(createEventRequest.getPrizeInfo())
                 .build();
 
         logger.info("Event successfully persisted with id: {}", event.getId());
-        return eventMapper.toDto(eventDao.save(event));
+        return eventMapper.eventToEventDto(eventDao.save(event));
     }
 
     @Override
@@ -115,17 +117,23 @@ public class EventManager implements EventService {
         }
 
         logger.info("Event updated successfully: {}", id);
-        return eventMapper.toDto(eventDao.save(event));
+        return eventMapper.eventToEventDto(eventDao.save(event));
     }
 
     @Override
     public List<EventDto> getAllEventsByEventType(EventType eventType) {
-        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityById(eventType.getId())));
+            var events = eventDao.findAllByType(eventTypeService.getEventTypeEntityById(eventType.getId()));
+
+            logger.info("Found {} events for event type: {}", events.size(), eventType.getName());
+
+            return events.stream()
+                    .map(eventMapper::eventToEventDto)
+                    .collect(Collectors.toList());
     }
 
     @Override
     public EventDto getEventById(UUID id) {
-        return eventMapper.toDto(getEventEntityById(id), true, true, null, true, true);
+        return eventMapper.eventToEventDto(getEventEntityById(id));
     }
 
     @Override
@@ -163,25 +171,34 @@ public class EventManager implements EventService {
 
     @Override
     public List<EventDto> getAllFutureEventsByEventType(String eventType) {
-        return convertToDtoList(eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventType)));
+        var futureEvents = eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventType));
+
+        return futureEvents.stream().map(eventMapper::eventToEventDto).collect(Collectors.toList());
     }
 
     @Override
     public List<EventDto> getAllEvents() {
-        return convertToDtoList(eventDao.findAll());
+       var events = eventDao.findAll();
+
+       return events.stream()
+                .map(eventMapper::eventToEventDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDto> getAllEventsByEventTypeName(String eventTypeName) {
         return eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventTypeName))
                 .stream()
-                .map(event -> eventMapper.toDto(event, true, true, null, true, true))
+                .map(eventMapper::eventToEventDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDto> getAllEventByIsActive(boolean isActive) {
-        return convertToDtoList(eventDao.findAllByActive(isActive));
+        return eventDao.findAllByActive(isActive)
+                .stream()
+                .map(eventMapper::eventToEventDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -223,6 +240,92 @@ public class EventManager implements EventService {
     }
 
     @Override
+    @Transactional
+    public void applyToEvent(UUID eventId) {
+        logger.info("Applying to event with id: {}", eventId);
+
+        var eventToAttend = getEventEntityById(eventId);
+        var authenticatedUser = userService.getAuthenticatedUserEntity();
+
+        if (ticketDao.existsByOwner_IdAndEvent_Id(authenticatedUser.getId(), eventId)) {
+            throw new BusinessException("Zaten bu etkinliğe kayıtlısınız!");
+        }
+
+        Ticket ticket = Ticket.builder()
+                .owner(authenticatedUser)
+                .event(eventToAttend)
+                .ticketType(TicketType.REGISTERED)
+                .sent(false)
+                .build();
+
+        ticketDao.save(ticket);
+
+        //skyMailService.sendTicketCreationEmail(authenticatedUser.getEmail(), eventToAttend.getName());
+        logger.info("Created REGISTERED ticket for user: {}", authenticatedUser.getEmail());
+    }
+
+    @Override
+    public Event getEventReference(UUID eventId) {
+
+        logger.info("Getting event reference for event id: {}", eventId);
+
+        return eventDao.getReferenceById(eventId);
+    }
+
+    @Override
+    @Transactional
+    public void applyToEventAsGuest(UUID eventId, GuestTicketRequestDto request) {
+        logger.info("Guest application for event id: {} from email: {}", eventId, request.getEmail());
+
+        var eventToAttend = getEventEntityById(eventId);
+
+        if (ticketDao.existsByGuestEmailAndEvent_Id(request.getEmail(), eventId)) {
+            throw new BusinessException(EventMessages.GUEST_TICKET_ALREADY_EXISTS);
+        }
+
+        Ticket ticket = Ticket.builder()
+                .event(eventToAttend)
+                .ticketType(TicketType.GUEST)
+                .guestFirstName(request.getFirstName())
+                .guestLastName(request.getLastName())
+                .guestEmail(request.getEmail())
+                .guestPhoneNumber(request.getPhoneNumber())
+                .guestBirthday(request.getBirthDate())
+                .guestIsStudent(request.getIsStudent())
+                .guestUniversity(request.getUniversity())
+                .guestFaculty(request.getFaculty())
+                .guestDepartment(request.getDepartment())
+                .guestGrade(request.getGrade())
+                .guestTcIdentityNumber(request.getTcIdentityNumber())
+                .guestCarPlateNumber(request.getCarPlateNumber())
+                .customAnswers(request.getCustomAnswers())
+                .sent(false)
+                .build();
+
+        ticketDao.save(ticket);
+
+        //skyMailService.sendTicketCreationEmail(ticket.getGuestEmail(), eventToAttend.getName());
+        logger.info("Created GUEST ticket for email: {}", ticket.getGuestEmail());
+    }
+
+    @Override
+    public List<EventDto> getEventsBySeasonId(UUID seasonId) {
+        logger.info("Getting events for season id: {}", seasonId);
+
+    Season season = seasonService.getSeasonEntityById(seasonId);
+
+    var events = eventDao.findAllBySeason(season);
+
+    logger.info("Found {} events for season id: {}", events.size(), seasonId);
+
+    return events.stream()
+            .map(eventMapper::eventToEventDto)
+            .collect(Collectors.toList());
+
+
+    }
+
+    @Override
     public Event getEventEntityById(UUID id) {
         return eventDao.findById(id).orElseThrow(() -> {
             logger.error("Event not found with id: {}", id);
@@ -230,10 +333,5 @@ public class EventManager implements EventService {
         });
     }
 
-    private List<EventDto> convertToDtoList(List<Event> events) {
-        if (events == null || events.isEmpty()) return Collections.emptyList();
-        return events.stream()
-                .map(event -> eventMapper.toDto(event, true, false, null, true, true))
-                .collect(Collectors.toList());
-    }
+
 }

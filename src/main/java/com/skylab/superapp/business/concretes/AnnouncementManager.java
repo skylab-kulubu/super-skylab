@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AnnouncementManager implements AnnouncementService {
@@ -117,27 +118,33 @@ public class AnnouncementManager implements AnnouncementService {
     }
 
     @Override
-    public List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages) {
+    public List<AnnouncementDto> getAllAnnouncements() {
         var result = announcementDao.findAll();
         if(result.isEmpty()){
             throw new ResourceNotFoundException(AnnouncementMessages.ANNOUNCEMENT_NOT_FOUND);
         }
 
-        return announcementMapper.toDtoList(result, includeUser, includeEventType, includeImages);
+        return result.stream()
+                .map(announcementMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public AnnouncementDto getAnnouncementById(UUID id, boolean includeEventType) {
+    public AnnouncementDto getAnnouncementById(UUID id) {
         var announcement = getAnnouncementEntityById(id);
 
-        return announcementMapper.toDto(announcement, includeEventType);
+        return announcementMapper.toDto(announcement);
     }
 
     @Override
-    public List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser, boolean includeEventType, boolean includeImages) {
+    public List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId) {
         var eventType = eventTypeService.getEventTypeEntityById(eventTypeId);
 
-        return announcementMapper.toDtoList(announcementDao.findAllByEventType(eventType), includeUser, includeEventType, includeImages);
+        var announcements = announcementDao.findAllByEventType(eventType);
+
+        return announcements.stream()
+                .map(announcementMapper::toDto)
+                .collect(Collectors.toList());
     }
 
 

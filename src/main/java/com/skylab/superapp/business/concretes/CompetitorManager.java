@@ -222,13 +222,19 @@ public class CompetitorManager implements CompetitorService {
         Map<UUID, UserDto> userDtoMap = userService.getAllUsersByIds(userIds).stream()
                 .collect(Collectors.toMap(UserDto::getId, userDto -> userDto));
 
-        return competitorMapper.toDtoList(competitors, userDtoMap, true, true);
+        return competitors.stream().map(competitor -> {
+            CompetitorDto dto = competitorMapper.toDtoWithEvent(competitor);
+            if (competitor.getUser() != null) {
+                dto.setUser(userDtoMap.get(competitor.getUser().getId()));
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private CompetitorDto convertToDto(Competitor competitor) {
         UserDto userDto = competitor.getUser() != null
                 ? userService.getUserById(competitor.getUser().getId())
                 : null;
-        return competitorMapper.toDto(competitor, userDto, true);
+        return competitorMapper.toDto(competitor);
     }
 }

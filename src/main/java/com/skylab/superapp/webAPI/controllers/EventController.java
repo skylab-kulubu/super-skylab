@@ -1,7 +1,5 @@
 package com.skylab.superapp.webAPI.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.results.DataResult;
@@ -13,13 +11,19 @@ import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,38 +34,77 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
+@Tag(name = "Etkinlik Yönetimi", description = "Etkinliklerin listelenmesi, oluşturulması, güncellenmesi ve silinmesi işlemleri")
 public class EventController {
 
     private final EventService eventService;
 
     @GetMapping
-    public ResponseEntity<DataResult<List<EventDto>>> getAllEvents() {
-        log.info("REST request to get all events");
-        var result = eventService.getAllEvents();
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
-    }
+    @Operation(summary = "Tüm Etkinlikleri Getir", description = "Sistemdeki tüm etkinlikleri listeler. Filtreleme parametreleri opsiyoneldir.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Etkinlikler başarıyla listelendi.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessDataResult.class)))
+    })
+    public ResponseEntity<DataResult<List<EventDto>>> getAllEvents(
 
-    @GetMapping("/{id}")
-    public ResponseEntity<DataResult<EventDto>> getEventById(@PathVariable UUID id) {
-        log.info("REST request to get event by id: {}", id);
-        var result = eventService.getEventById(id);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_EVENT_BY_ID, HttpStatus.OK));
-    }
-
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Add new event", description = "Adds a new event with optional cover image")
-    public ResponseEntity<DataResult<EventDto>> addEvent(
-
-            @RequestPart(value = "coverImage", required = false)
-            MultipartFile coverImageFile,
-
-            @Valid
-            @RequestPart("data")
-            CreateEventRequest createEventRequest
+            @Parameter(description = "Etkinlik türü adına göre filtreleme", example = "AGC")
+            @RequestParam(required = false) String typeName
 
     ) {
+        log.info("REST request to get all events. Type filter: {}", typeName);
+
+        List<EventDto> result;
+        if (typeName != null && !typeName.isBlank()) {
+            result = eventService.getAllEventsByEventTypeName(typeName);
+        } else {
+            result = eventService.getAllEvents();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
+    }
+
+
+    @GetMapping("/active")
+    @Operation(summary = "Aktif Etkinlikleri Getir", description = "Yalnızca aktif durumu true olan etkinlikleri listeler.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Aktif etkinlikler başarıyla listelendi.", content = @Content(mediaType = "application/json"))
+    })
+    public ResponseEntity<DataResult<List<EventDto>>> getActiveEvents() {
+        log.info("REST request to get all active events");
+        var result = eventService.getAllEventByIsActive(true);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
+    }
+
+
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Etkinlik Detayını Getir", description = "Belirtilen UUID değerine sahip etkinliğin detaylarını döner.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Etkinlik detayları getirildi."),
+            @ApiResponse(responseCode = "404", description = "Etkinlik bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<DataResult<EventDto>> getEventById(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id) {
+        log.info("REST request to get event by id: {}", id);
+        var result = eventService.getEventById(id);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_EVENT_BY_ID, HttpStatus.OK));
+
+    }
+
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('events.create', 'events.moderator')")
+    @Operation(summary = "Yeni Etkinlik Oluştur", description = "Yeni bir etkinlik kaydı oluşturur. Kapak fotoğrafı opsiyoneldir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Etkinlik başarıyla oluşturuldu."),
+            @ApiResponse(responseCode = "400", description = "Validasyon hatası veya geçersiz veri."),
+            @ApiResponse(responseCode = "401", description = "Yetkilendirme hatası (Token geçersiz).", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content)
+    })
+    public ResponseEntity<DataResult<EventDto>> addEvent(
+            @Parameter(description = "Etkinlik kapak görseli (Multipart)") @RequestPart(value = "coverImage", required = false) MultipartFile coverImageFile,
+            @Parameter(description = "Etkinlik verileri (JSON)") @Valid @RequestPart("data") CreateEventRequest createEventRequest) {
+
         log.info("REST request to add a new event");
 
         var eventResult = eventService.addEvent(createEventRequest, coverImageFile);
@@ -73,52 +116,35 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DataResult<EventDto>> updateEvent(@PathVariable UUID id, @RequestBody UpdateEventRequest updateEventRequest) {
+    @PreAuthorize("hasAnyRole('events.update', 'events.moderator')")
+    @Operation(summary = "Etkinliği Güncelle", description = "Var olan bir etkinliğin bilgilerini günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla güncellendi."),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Güncellenmek istenen etkinlik bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<DataResult<EventDto>> updateEvent(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id,
+                                                            @RequestBody UpdateEventRequest updateEventRequest) {
         log.info("REST request to update event with id: {}", id);
         var result = eventService.updateEvent(id, updateEventRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<DataResult<List<EventDto>>> getActiveEvents() {
-        log.info("REST request to get all active events");
-        var result = eventService.getAllEventByIsActive(true);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
-    }
-
-    @GetMapping("/type/{eventTypeName}")
-    public ResponseEntity<DataResult<List<EventDto>>> getAllByEventType(@PathVariable String eventTypeName) {
-        log.info("REST request to get events by type: {}", eventTypeName);
-        var result = eventService.getAllEventsByEventTypeName(eventTypeName);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ALL_EVENTS, HttpStatus.OK));
-    }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Result> deleteEvent(@PathVariable UUID id) {
+    @PreAuthorize("hasAnyRole('events.delete', 'events.moderator')")
+    @Operation(summary = "Etkinliği Sil", description = "Belirtilen etkinliği sistemden kalıcı olarak siler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla silindi."),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Silinmek istenen etkinlik bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<Result> deleteEvent(
+            @Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id) {
         log.info("REST request to delete event with id: {}", id);
         eventService.deleteEvent(id);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(EventMessages.SUCCESS_DELETE_EVENT, HttpStatus.OK));
-    }
-
-
-    @PostMapping("/{eventId}/seasons/{seasonId}")
-    public ResponseEntity<Result> assignSeasonToEvent(@PathVariable UUID eventId, @PathVariable UUID seasonId) {
-        log.info("REST request to assign season id: {} to event id: {}", seasonId, eventId);
-        eventService.assignSeasonToEvent(eventId, seasonId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(EventMessages.SUCCESS_ASSIGN_SEASON_TO_EVENT, HttpStatus.OK));
-    }
-
-    @DeleteMapping("/{eventId}/season")
-    public ResponseEntity<Result> removeSeasonFromEvent(@PathVariable UUID eventId) {
-        log.info("REST request to remove season from event id: {}", eventId);
-        eventService.removeSeasonFromEvent(eventId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessResult(EventMessages.SUCCESS_REMOVE_SEASON_FROM_EVENT, HttpStatus.OK));
+        return ResponseEntity.status(HttpStatus.OK).body(new SuccessResult("Etkinlik başarıyla silindi.", HttpStatus.OK));
     }
 
 

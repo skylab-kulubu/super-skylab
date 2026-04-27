@@ -23,17 +23,4 @@ public class SeasonDto {
 
     private boolean active;
 
-    //optional - includeEvents=true :) ty ardacelep
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private List<EventDto> events;
-
-
-    public SeasonDto(UUID id, String name, LocalDateTime startDate, LocalDateTime endDate, boolean active, List<EventDto> events) {
-        this.id = id;
-        this.name = name;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.active = active;
-        this.events = events;
-    }
 }

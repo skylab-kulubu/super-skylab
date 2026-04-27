@@ -17,12 +17,11 @@ public interface AnnouncementService {
 
     AnnouncementDto updateAnnouncement(UUID id, UpdateAnnouncementRequest updateAnnouncementRequest);
 
-    List<AnnouncementDto> getAllAnnouncements(boolean includeUser, boolean includeEventType, boolean includeImages);
+    List<AnnouncementDto> getAllAnnouncements();
 
-    AnnouncementDto getAnnouncementById(UUID id, boolean includeEventType);
+    AnnouncementDto getAnnouncementById(UUID id);
 
-    List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId, boolean includeUser,
-                                                           boolean includeEventType, boolean includeImages);
+    List<AnnouncementDto> getAllAnnouncementsByEventTypeId(UUID eventTypeId);
 
     Announcement getAnnouncementEntityById(UUID id);
 }

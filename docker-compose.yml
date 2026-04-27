@@ -8,8 +8,61 @@ services:
     #  - "9010:9010"
     depends_on:
       - super-skylab-db
+    environment:
+      #  TEMEL AYARLAR
+      - SERVER_PORT=9010
+      - APP_NAME=super-skylab
+
+      #  DATABASES
+      - DB_HOST=super-skylab-db
+      - DB_PORT=5432
+      - DB_NAME=superSkyLabDB
+      - DB_USER=postgres
+      - DB_PASS=YOUR_DB_PASSWORD
+
+      - KEYCLOAK_DB_HOST=keycloak-db
+      - KEYCLOAK_DB_PORT=5432
+      - KEYCLOAK_DB_NAME=keycloak
+      - KEYCLOAK_DB_USER=keycloak
+      - KEYCLOAK_DB_PASS=YOUR_KEYCLOAK_DB_PASSWORD
+
+      #  SECURITY & AUTH (KEYCLOAK)
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_EXTERNAL_URL=http://localhost:8080
+      - KEYCLOAK_REALM=e-skylab
+      - KEYCLOAK_CLIENT_ID=super-skylab
+      - KEYCLOAK_CLIENT_SECRET=YOUR_KEYCLOAK_CLIENT_SECRET
+      - KEYCLOAK_LDAP_ID=YOUR_KEYCLOAK_LDAP_ID
+
+      #  MESSAGE BROKER (RABBITMQ)
+      - RABBITMQ_HOST=super-skylab-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=rabbitMQ
+      - RABBITMQ_PASSWORD=YOUR_RABBITMQ_PASSWORD
+
+      #  LDAP
+      - LDAP_URLS=ldap://ldap-server:3389
+      - LDAP_BASE=dc=yildizskylab,dc=com
+      - LDAP_USERNAME=cn=Directory Manager
+      - LDAP_PASSWORD=YOUR_LDAP_PASSWORD
+
+      #  EMAIL
+      - MAIL_HOST=smtp.office365.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=YOUR_EMAIL_ADDRESS
+      - MAIL_PASSWORD=YOUR_EMAIL_APP_PASSWORD
+
+      #  SERVICE DISCOVERY
+      - EUREKA_URL=http://eureka-server:8761/eureka/
+
+      #  CLOUDFLARE R2
+      - R2_ENDPOINT=YOUR_R2_ENDPOINT_URL
+      - R2_PUBLIC_URL=YOUR_R2_PUBLIC_URL
+      - R2_ACCESS_KEY=YOUR_R2_ACCESS_KEY
+      - R2_SECRET_KEY=YOUR_R2_SECRET_KEY
+      - R2_BUCKET_NAME=YOUR_R2_BUCKET_NAME
     networks:
-        - skynet
+      - skynet
 
   super-skylab-db:
     container_name: super-skylab-db
@@ -17,7 +70,7 @@ services:
     environment:
       POSTGRES_DB: superSkyLabDB
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: YOUR_DB_PASSWORD
     #ports:
     #  - "5455:5432"
     volumes:
@@ -27,7 +80,7 @@ services:
 
 networks:
   skynet:
-      external: true
+    external: true
 
 volumes:
   postgres_data:

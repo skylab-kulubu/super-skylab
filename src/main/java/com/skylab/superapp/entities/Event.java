@@ -2,10 +2,12 @@ package com.skylab.superapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +37,7 @@ public class Event extends BaseEntity{
     private Image coverImage;
 
     @Column(name = "is_ranked")
-    private boolean isRanked;
+    private boolean ranked;
 
     @Column(name = "prize_info")
     private String prizeInfo;
@@ -49,6 +51,9 @@ public class Event extends BaseEntity{
 
     @Column(name = "form_url")
     private String formUrl;
+
+    @Column(name = "capacity")
+    private int capacity;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "start_date")
@@ -64,12 +69,6 @@ public class Event extends BaseEntity{
     @Column(name = "is_active")
     private boolean active;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
-    private List<Session> sessions;
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
-    private List<Competitor> participants;
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "event_images",
@@ -78,8 +77,27 @@ public class Event extends BaseEntity{
     )
     private List<Image> images;
 
+    @ManyToMany
+    @JoinTable(
+            name = "event_organizers",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private List<User> organizers;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "event")
+    private List<Ticket> soldTickets;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "event")
+    private List<EventDay> eventDays;
+
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
+
+    @OneToMany(mappedBy = "event")
+    private List<Certificate> certificates = new ArrayList<>();
+
 
 }

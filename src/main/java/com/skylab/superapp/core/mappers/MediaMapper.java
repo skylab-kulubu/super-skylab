@@ -2,43 +2,21 @@ package com.skylab.superapp.core.mappers;
 
 import com.skylab.superapp.entities.DTOs.media.response.MediaUploadResponseDto;
 import com.skylab.superapp.entities.Media;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface MediaMapper {
 
-@Component
-public class MediaMapper {
+    @Mapping(target = "name", source = "fileName")
+    @Mapping(target = "type", source = "fileType")
+    @Mapping(target = "size", source = "fileSize")
+    @Mapping(target = "url", expression = "java(\"https://cdn.yildizskylab.com/\" + savedMedia.getFileUrl())")
+    MediaUploadResponseDto toMediaUploadResponseDto(Media savedMedia);
 
-    public String toString(Media media) {
-        if (media == null) {
-            return null;
-        }
+    default String mapMediaToUrl(Media media) {
+        if (media == null || media.getFileUrl() == null) return null;
         return "https://cdn.yildizskylab.com/" + media.getFileUrl();
     }
-
-    public List<String> toStringList(List<Media> mediaList) {
-        if (mediaList == null) {
-            return List.of();
-        }
-        return mediaList.stream()
-                .map(this::toString)
-                .toList();
-    }
-
-    public MediaUploadResponseDto toMediaUploadResponseDto(Media savedMedia) {
-        if (savedMedia == null) {
-            return null;
-        }
-        MediaUploadResponseDto dto = new MediaUploadResponseDto();
-
-        dto.setId(savedMedia.getId());
-        dto.setName(savedMedia.getFileName());
-        dto.setType(savedMedia.getFileType());
-        dto.setUrl("https://cdn.yildizskylab.com/" + savedMedia.getFileUrl());
-        dto.setSize(savedMedia.getFileSize());
-
-        return dto;
-    }
-
-
 }

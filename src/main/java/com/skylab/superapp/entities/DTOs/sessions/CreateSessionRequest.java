@@ -14,8 +14,8 @@ import java.util.UUID;
 @Setter
 public class CreateSessionRequest {
 
-    @NotNull(message = SessionMessages.EVENT_ID_NOT_NULL)
-    private UUID eventId;
+    @NotNull(message = SessionMessages.EVENT_DAY_ID_NOT_NULL)
+    private UUID eventDayId;
 
     @NotBlank(message = SessionMessages.SESSION_TITLE_NOT_BLANK)
     private String title;

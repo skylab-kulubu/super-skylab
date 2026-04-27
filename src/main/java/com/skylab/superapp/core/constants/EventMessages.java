@@ -1,5 +1,7 @@
 package com.skylab.superapp.core.constants;
 
+import org.springframework.http.HttpStatus;
+
 public final class EventMessages {
 
 
@@ -22,4 +24,9 @@ public final class EventMessages {
     public static final String EVENT_NOT_ASSIGNED_TO_SEASON = "event.not.assigned.to.season";
     public static final String SUCCESS_ASSIGN_SEASON_TO_EVENT = "event.success.assign.season.to.event";
     public static final String SUCCESS_REMOVE_SEASON_FROM_EVENT = "event.success.remove.season.from.event";
+    public static final String SUCCESS_APPLY_TO_EVENT = "event.success.apply.to.event";
+    public static final String GUEST_TICKET_ALREADY_EXISTS = "event.guest.ticket.already.exists";
+    public static final String SUCCESS_GET_SESSIONS_BY_EVENT_ID = "event.success.get.sessions.by.event.id";
+    public static final String APPLY_TO_EVENT_AS_GUEST_SUCCESS = "event.success.apply.to.event.as.guest";
+    public static final String EVENTS_LISTED_FOR_SEASON = "event.success.get.events.for.season";
 }

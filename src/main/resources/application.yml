@@ -1,7 +1,25 @@
+server:
+  port: ${SERVER_PORT}
+
 spring:
   application:
-    name: super-skylab
+    name: ${APP_NAME}
+
+  #  DATABASES 
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+  keycloak-datasource:
+    url: jdbc:postgresql://${KEYCLOAK_DB_HOST}:${KEYCLOAK_DB_PORT}/${KEYCLOAK_DB_NAME}
+    username: ${KEYCLOAK_DB_USER}
+    password: ${KEYCLOAK_DB_PASS}
+    driver-class-name: org.postgresql.Driver
+
   jpa:
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -10,48 +28,38 @@ spring:
         persistence:
           validation:
             mode: none
-    hibernate:
-      ddl-auto: update
-  datasource:
-    url: jdbc:postgresql://super-skylab-db:5432/superSkyLabDB
-    username: postgres
-    password: postgres
-  keycloak-datasource:
-    url: jdbc:postgresql://keycloak-db:5432/keycloak
-    username: keycloak
-    password: keycloak
-    driver-class-name: org.postgresql.Driver
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
 
-
-
-
+  #  SECURITY & AUTH 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/e-skylab
-          jwk-set-uri: http://keycloak:8080/realms/e-skylab/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}
+          jwk-set-uri: ${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
 
+  #  MESSAGE BROKER 
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: /
 
-
+  #  LDAP 
   ldap:
-    urls: ldap://ldap-server:3389
-    base: dc=yildizskylab,dc=com
-    username: cn=Directory Manager
-    password: admin
+    urls: ${LDAP_URLS}
+    base: ${LDAP_BASE}
+    username: ${LDAP_USERNAME}
+    password: ${LDAP_PASSWORD}
     base-environment:
       java.naming.ldap.attributes.binary: entryUUID
 
-
+  #  EMAIL 
   mail:
-    host: smtp.office365.com
-    port: 587
-    username: info@yildizskylab.com
-    password: app-password
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     protocol: smtp
     properties:
       mail:
@@ -59,42 +67,37 @@ spring:
           auth: true
           starttls:
             enable: true
-  rabbitmq:
-    host: super-skylab-rabbitmq
-    port: 5672
-    username: rabbitMQ
-    password: rabbitMQ
-    virtual-host: /
 
+  #  WEB & SERVLET 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+#  SERVICE DISCOVERY 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URL}
+
+#  CUSTOM PROPERTIES 
 keycloak:
-  server-url: http://keycloak:8080
-  internal-url: http://keycloak:8080
-  realm: e-skylab
-  client-id: super-skylab-cli
-  client-secret: mVYEv3uHgnZ2p4sTyF0me93dW3TqjCpd
-  admin-username: admin
-  admin-password: admin
-  ldap-provider-id: -yjSIG5dQRerbMvkGOKruQ
+  server-url: ${KEYCLOAK_SERVER_URL}
+  external-url: ${KEYCLOAK_EXTERNAL_URL}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  ldap-provider-id: ${KEYCLOAK_LDAP_ID}
 
+r2:
+  endpoint: ${R2_ENDPOINT}
+  public-url: ${R2_PUBLIC_URL}
+  access-key: ${R2_ACCESS_KEY}
+  secret-key: ${R2_SECRET_KEY}
+  bucket-name: ${R2_BUCKET_NAME}
 
-server:
-  port: 9010
-
-
+#  DOCUMENTATION 
 springdoc:
   api-docs:
     enabled: true
     path: /v3/api-docs
-
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
-
-r2:
-  endpoint:
-  public-url:
-  access-key:
-  secret-key:
-  bucket-name:
