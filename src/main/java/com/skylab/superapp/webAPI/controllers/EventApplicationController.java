@@ -33,7 +33,7 @@ public class EventApplicationController {
 
     @PostMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Kayıtlı Üye Başvurusu", description = "Token sahibi kullanıcının etkinliğe bilet almasını sağlar.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Kayıtlı Üye Başvurusu", description = "Token sahibi kullanıcının etkinliğe bilet almasını sağlar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Başvuru başarılı, bilet oluşturuldu."),
             @ApiResponse(responseCode = "400", description = "Kullanıcı bu etkinliğe zaten kayıtlı veya iş kuralı ihlali.", content = @Content),

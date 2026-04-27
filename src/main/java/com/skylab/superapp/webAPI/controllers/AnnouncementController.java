@@ -42,7 +42,7 @@ public class AnnouncementController {
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAnyRole('announcements.create', 'announcements.moderator')")
-    @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur. Görsel yüklemesi opsiyoneldir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur. Görsel yüklemesi opsiyoneldir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Duyuru başarıyla eklendi."),
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya eksik parametre.", content = @Content),
@@ -57,7 +57,7 @@ public class AnnouncementController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('announcements.delete', 'announcements.moderator')")
-    @Operation(summary = "Duyuru Sil", description = "Belirtilen duyuruyu sistemden kalıcı olarak siler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Duyuru Sil", description = "Belirtilen duyuruyu sistemden kalıcı olarak siler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Duyuru başarıyla silindi."),
             @ApiResponse(responseCode = "403", description = "Erişim reddedildi.", content = @Content),
@@ -72,7 +72,7 @@ public class AnnouncementController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('announcements.update', 'announcements.moderator')")
-    @Operation(summary = "Duyuru Güncelle", description = "Duyuruya ait verileri kısmi olarak günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Duyuru Güncelle", description = "Duyuruya ait verileri kısmi olarak günceller.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Duyuru başarıyla güncellendi."),
             @ApiResponse(responseCode = "404", description = "Güncellenmek istenen duyuru bulunamadı.", content = @Content)

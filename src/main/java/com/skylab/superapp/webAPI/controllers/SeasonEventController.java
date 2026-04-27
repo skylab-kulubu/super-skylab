@@ -53,7 +53,7 @@ public class SeasonEventController {
 
     @PostMapping("/{eventId}")
     @PreAuthorize("hasAnyRole('events.update', 'events.moderator', 'seasons.manage_events')")
-    @Operation(summary = "Etkinliği Sezona Ata", description = "Var olan bir etkinliği belirtilen sezona dahil eder.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinliği Sezona Ata", description = "Var olan bir etkinliği belirtilen sezona dahil eder.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik sezona başarıyla atandı."),
             @ApiResponse(responseCode = "400", description = "Etkinlik zaten bu sezona atanmış.", content = @Content),
@@ -71,7 +71,7 @@ public class SeasonEventController {
 
     @DeleteMapping("/{eventId}")
     @PreAuthorize("hasAnyRole('events.update', 'events.moderator', 'seasons.manage_events')")
-    @Operation(summary = "Etkinliği Sezondan Çıkar", description = "Belirtilen etkinliğin sezon ile olan bağını koparır.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinliği Sezondan Çıkar", description = "Belirtilen etkinliğin sezon ile olan bağını koparır.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik sezondan başarıyla çıkarıldı."),
             @ApiResponse(responseCode = "400", description = "Etkinlik zaten bir sezona ait değil.", content = @Content)

@@ -48,7 +48,7 @@ public class SessionController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('sessions.create', 'sessions.moderator')")
-    @Operation(summary = "Oturum Oluştur", description = "Sisteme yeni bir oturum tanımlar. Konuşmacı görseli opsiyoneldir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Oturum Oluştur", description = "Sisteme yeni bir oturum tanımlar. Konuşmacı görseli opsiyoneldir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Oturum başarıyla eklendi."),
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya tarihler arası uyumsuzluk.", content = @Content)
@@ -65,7 +65,7 @@ public class SessionController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('sessions.update', 'sessions.moderator')")
-    @Operation(summary = "Oturum Güncelle", description = "Var olan bir oturumun spesifik verilerini günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Oturum Güncelle", description = "Var olan bir oturumun spesifik verilerini günceller.")
     public ResponseEntity<DataResult<SessionDto>> updateSession(
             @Parameter(description = "Oturum UUID") @PathVariable UUID id,
             @RequestBody @Valid UpdateSessionRequest request) {
@@ -80,7 +80,7 @@ public class SessionController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('sessions.delete', 'sessions.moderator')")
-    @Operation(summary = "Oturum Sil", description = "Oturum kaydını sistemden kalıcı olarak temizler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Oturum Sil", description = "Oturum kaydını sistemden kalıcı olarak temizler.")
     public ResponseEntity<DataResult<Void>> deleteSession(@Parameter(description = "Oturum UUID") @PathVariable UUID id) {
         log.info("REST request to delete session with id: {}", id);
         sessionService.deleteSession(id);

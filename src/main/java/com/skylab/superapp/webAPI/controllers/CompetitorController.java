@@ -38,7 +38,7 @@ public class CompetitorController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('competitors.create', 'competitors.moderator')")
-    @Operation(summary = "Yarışmacı Ekle", description = "Belirtilen kullanıcıyı belirli bir etkinliğe yarışmacı olarak kaydeder.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yarışmacı Ekle", description = "Belirtilen kullanıcıyı belirli bir etkinliğe yarışmacı olarak kaydeder.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Yarışmacı başarıyla oluşturuldu."),
             @ApiResponse(responseCode = "400", description = "Kullanıcı zaten yarışmacı veya iş kuralı ihlali.", content = @Content),
@@ -53,7 +53,7 @@ public class CompetitorController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('competitors.list', 'competitors.moderator')")
-    @Operation(summary = "Tüm Yarışmacıları Listele", description = "Sistemdeki tüm etkinliklere ait tüm yarışmacı kayıtlarını getirir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Tüm Yarışmacıları Listele", description = "Sistemdeki tüm etkinliklere ait tüm yarışmacı kayıtlarını getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors() {
         log.info("REST request to get all competitors");
         var result = competitorService.getAllCompetitors();
@@ -63,7 +63,7 @@ public class CompetitorController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('competitors.get', 'competitors.moderator')")
-    @Operation(summary = "Yarışmacı Detayını Getir", description = "Belirtilen yarışmacı ID'sine ait detayları döner.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yarışmacı Detayını Getir", description = "Belirtilen yarışmacı ID'sine ait detayları döner.")
     public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id) {
         log.info("REST request to get competitor by id: {}", id);
         var result = competitorService.getCompetitorById(id);
@@ -73,7 +73,7 @@ public class CompetitorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('competitors.update', 'competitors.moderator')")
-    @Operation(summary = "Yarışmacı Verisini Güncelle", description = "Yarışmacının puanlama veya kazanma durumunu günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yarışmacı Verisini Güncelle", description = "Yarışmacının puanlama veya kazanma durumunu günceller.")
     public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @RequestBody UpdateCompetitorRequest request) {
         log.info("REST request to update competitor with id: {}", id);
         var result = competitorService.updateCompetitor(id, request);
@@ -83,7 +83,7 @@ public class CompetitorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('competitors.delete', 'competitors.moderator')")
-    @Operation(summary = "Yarışmacı Kaydını Sil", description = "Yarışmacı atamasını sistemden kalıcı olarak temizler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yarışmacı Kaydını Sil", description = "Yarışmacı atamasını sistemden kalıcı olarak temizler.")
     public ResponseEntity<Result> deleteCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id) {
         log.info("REST request to delete competitor with id: {}", id);
         competitorService.deleteCompetitor(id);
@@ -93,7 +93,7 @@ public class CompetitorController {
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('competitors.me', 'competitors.moderator')")
-    @Operation(summary = "Aktif Kullanıcının Yarışma Geçmişi", description = "Sisteme giriş yapmış olan kullanıcının katıldığı tüm yarışmaların bilgilerini getirir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Aktif Kullanıcının Yarışma Geçmişi", description = "Sisteme giriş yapmış olan kullanıcının katıldığı tüm yarışmaların bilgilerini getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors() {
         log.info("REST request to get competitors for current authenticated user");
         var result = competitorService.getMyCompetitors();

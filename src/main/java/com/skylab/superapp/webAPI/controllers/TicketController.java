@@ -39,7 +39,7 @@ public class TicketController {
 
     @GetMapping("/{ticketId}")
     @PreAuthorize("hasAnyRole('tickets.get', 'tickets.moderator')")
-    @Operation(summary = "Bilet Detayını Getir", description = "Sistemdeki biletin sahiplik ve etkinlik detaylarını getirir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Bilet Detayını Getir", description = "Sistemdeki biletin sahiplik ve etkinlik detaylarını getirir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Bilet detayları başarıyla getirildi."),
             @ApiResponse(responseCode = "404", description = "Bilet bulunamadı.", content = @Content)
@@ -53,7 +53,7 @@ public class TicketController {
 
     @PostMapping("/{ticketId}/event-days/{eventDayId}/check-in")
     @PreAuthorize("hasAnyRole('tickets.validator', 'tickets.moderator')")
-    @Operation(summary = "Bilet Doğrulama (Check-In)", description = "Etkinlik girişinde yetkili personel tarafından bilet doğrulama (okutma) işlemi yapar.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Bilet Doğrulama (Check-In)", description = "Etkinlik girişinde yetkili personel tarafından bilet doğrulama (okutma) işlemi yapar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Check-in başarıyla kaydedildi."),
             @ApiResponse(responseCode = "400", description = "Geçersiz işlem (Bilet bu etkinliğe ait değil veya mükerrer okutma).", content = @Content),
@@ -67,7 +67,7 @@ public class TicketController {
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Kullanıcı Biletlerini Getir", description = "İstek atan kullanıcının sahip olduğu tüm biletleri listeler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Kullanıcı Biletlerini Getir", description = "İstek atan kullanıcının sahip olduğu tüm biletleri listeler.")
     public DataResult<List<GetTicketResponseDto>> getMyTickets() {
         var tickets = ticketService.getMyTickets();
         return new SuccessDataResult<>(tickets, TicketMessages.SUCCESS_GET_MY_TICKETS, HttpStatus.OK);

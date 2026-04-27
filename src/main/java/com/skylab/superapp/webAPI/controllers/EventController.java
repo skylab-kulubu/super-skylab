@@ -94,7 +94,7 @@ public class EventController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('events.create', 'events.moderator')")
-    @Operation(summary = "Yeni Etkinlik Oluştur", description = "Yeni bir etkinlik kaydı oluşturur. Kapak fotoğrafı opsiyoneldir.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Yeni Etkinlik Oluştur", description = "Yeni bir etkinlik kaydı oluşturur. Kapak fotoğrafı opsiyoneldir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Etkinlik başarıyla oluşturuldu."),
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya geçersiz veri."),
@@ -117,7 +117,7 @@ public class EventController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('events.update', 'events.moderator')")
-    @Operation(summary = "Etkinliği Güncelle", description = "Var olan bir etkinliğin bilgilerini günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinliği Güncelle", description = "Var olan bir etkinliğin bilgilerini günceller.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla güncellendi."),
             @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),
@@ -134,7 +134,7 @@ public class EventController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('events.delete', 'events.moderator')")
-    @Operation(summary = "Etkinliği Sil", description = "Belirtilen etkinliği sistemden kalıcı olarak siler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinliği Sil", description = "Belirtilen etkinliği sistemden kalıcı olarak siler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla silindi."),
             @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),

@@ -61,7 +61,7 @@ public class EventTypeController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('event_types.create', 'event_types.moderator')")
-    @Operation(summary = "Etkinlik Türü Ekle", description = "Yeni bir etkinlik kategorisi ve yetkili rolleri tanımlar.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinlik Türü Ekle", description = "Yeni bir etkinlik kategorisi ve yetkili rolleri tanımlar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Etkinlik türü başarıyla eklendi."),
             @ApiResponse(responseCode = "403", description = "Yetkisiz erişim.", content = @Content)
@@ -75,7 +75,7 @@ public class EventTypeController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('event_types.update', 'event_types.moderator')")
-    @Operation(summary = "Etkinlik Türünü Güncelle", description = "Etkinlik kategorisinin ismini veya yetkili rollerini günceller.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinlik Türünü Güncelle", description = "Etkinlik kategorisinin ismini veya yetkili rollerini günceller.")
     public ResponseEntity<DataResult<EventTypeDto>> updateEventType(@PathVariable UUID id, @RequestBody UpdateEventTypeRequest request) {
         log.info("REST request to update event type with id: {}", id);
         var result = eventTypeService.updateEventType(id, request);
@@ -85,7 +85,7 @@ public class EventTypeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('event_types.delete', 'event_types.moderator')")
-    @Operation(summary = "Etkinlik Türü Sil", description = "Belirtilen etkinlik kategorisini sistemden siler.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Etkinlik Türü Sil", description = "Belirtilen etkinlik kategorisini sistemden siler.")
     public ResponseEntity<Result> deleteEventType(@PathVariable UUID id) {
         log.info("REST request to delete event type with id: {}", id);
         eventTypeService.deleteEventType(id);

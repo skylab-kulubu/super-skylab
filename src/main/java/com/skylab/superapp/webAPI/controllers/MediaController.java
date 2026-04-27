@@ -34,7 +34,7 @@ public class MediaController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('media.upload', 'media.moderator')")
-    @Operation(summary = "Medya Yükle", description = "Sisteme dosya (görsel, döküman vb.) yükler ve dönüş olarak erişim URL'i sağlar.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Medya Yükle", description = "Sisteme dosya (görsel, döküman vb.) yükler ve dönüş olarak erişim URL'i sağlar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Medya başarıyla yüklendi."),
             @ApiResponse(responseCode = "400", description = "Geçersiz dosya tipi veya boyutu.", content = @Content),
