@@ -8,6 +8,7 @@ import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventTypeMapper;
 import com.skylab.superapp.core.security.opa.OpaClient;
+import com.skylab.superapp.core.utilities.security.EventTypeSecurityUtils;
 import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
@@ -15,14 +16,13 @@ import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventTypeManager implements EventTypeService {
@@ -30,10 +30,11 @@ public class EventTypeManager implements EventTypeService {
     private final EventTypeDao eventTypeDao;
     private final EventTypeMapper eventTypeMapper;
 
-    private final Logger logger = LoggerFactory.getLogger(EventTypeManager.class);
     private final UserService userService;
 
     private final OpaClient opaClient;
+
+    private final EventTypeSecurityUtils eventTypeSecurityUtils;
 
 
     @Override
@@ -58,6 +59,8 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest) {
+
+        eventTypeSecurityUtils.checkCreate();
         if (!opaClient.isValidEventType(createEventTypeRequest.getName())) {
             throw new BusinessException(createEventTypeRequest.getName() + "OPA veya e-skylab'de tanımlı değil. Önce e-skylab'de veya OPA'da bu isimde bir rol/kural oluşturun.");
         }
@@ -71,6 +74,8 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest) {
+        eventTypeSecurityUtils.checkUpdate();
+
         var eventType = getEventTypeEntityById(id);
 
         if(updateEventTypeRequest.getName() != null && !updateEventTypeRequest.getName().isEmpty()) {
@@ -90,6 +95,8 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public void deleteEventType(UUID id) {
+
+        eventTypeSecurityUtils.checkDelete();
         var eventType = getEventTypeEntityById(id);
 
         eventTypeDao.delete(eventType);
@@ -112,7 +119,7 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public Set<UserDto> getCoordinatorsByEventTypeName(String eventTypeName) {
-        logger.info("Getting coordinators by event type name: {}", eventTypeName);
+        log.info("Getting coordinators by event type name: {}", eventTypeName);
 
         EventType eventType = getEventTypeEntityByName(eventTypeName);
 
