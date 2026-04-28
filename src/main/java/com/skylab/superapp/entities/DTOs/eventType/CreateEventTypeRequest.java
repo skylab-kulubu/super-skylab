@@ -14,6 +14,4 @@ public class CreateEventTypeRequest {
     @NotNull(message = EventTypeMessages.EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK)
     private String name;
 
-    private Set<String> authorizedRoles;
-
 }

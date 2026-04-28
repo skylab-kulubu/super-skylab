@@ -9,13 +9,14 @@ import com.skylab.superapp.core.identity.keycloak.KeycloakAdminService;
 import com.skylab.superapp.core.identity.ldap.LdapService;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.microsoftGraph.MicrosoftGraphService;
+import com.skylab.superapp.core.utilities.security.UserSecurityUtils;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
 import com.skylab.superapp.entities.User;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,52 +28,44 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserManager implements UserService {
 
     private final UserDao userDao;
     private final UserMapper userMapper;
-    private final Logger logger = LoggerFactory.getLogger(UserManager.class);
     private final ImageService imageService;
-
 
     private final UserIdentityGenerator userIdentityGenerator;
     private final LdapService ldapService;
     private final KeycloakAdminService keycloakAdminService;
     private final MicrosoftGraphService microsoftGraphService;
 
-    public UserManager(UserDao userDao, UserMapper userMapper, ImageService imageService, UserIdentityGenerator userIdentityGenerator, LdapService ldapService, KeycloakAdminService keycloakAdminService, MicrosoftGraphService microsoftGraphService) {
-        this.userDao = userDao;
-        this.userMapper = userMapper;
-        this.imageService = imageService;
-        this.userIdentityGenerator = userIdentityGenerator;
-        this.ldapService = ldapService;
-        this.keycloakAdminService = keycloakAdminService;
-        this.microsoftGraphService = microsoftGraphService;
-    }
+    private final UserSecurityUtils  userSecurityUtils;
 
 
     @Override
     @Transactional
     public User getAuthenticatedUserEntity() {
-        logger.info("Retrieving authenticated user entity from database");
+        log.info("Retrieving authenticated user entity from database");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            logger.warn("No authenticated user found in security context");
+            log.warn("No authenticated user found in security context");
             throw new AccessDeniedException(UserMessages.USER_NOT_AUTHENTICATED);
         }
 
         if (!(authentication.getPrincipal() instanceof Jwt jwt)) {
-            logger.error("Authentication principal is not of type Jwt, actual type: {}", authentication.getPrincipal().getClass().getName());
+            log.error("Authentication principal is not of type Jwt, actual type: {}", authentication.getPrincipal().getClass().getName());
             throw new RuntimeException(UserMessages.PRINCIPAL_IS_NOT_JWT);
         }
 
         UUID userId = UUID.fromString(jwt.getClaimAsString("sub"));
-        logger.info("Authenticated user detected with userId: {}, checking if user exists in database", userId);
+        log.info("Authenticated user detected with userId: {}, checking if user exists in database", userId);
 
         User currentUser = userDao.findById(userId).orElseGet(() -> {
-            logger.info("New authenticated user detected (not synced by RabbitMQ yet), creating user in database for userId: {}", userId);
+            log.info("New authenticated user detected (not synced by RabbitMQ yet), creating user in database for userId: {}", userId);
 
             String generatedSkyNumber = userIdentityGenerator.generateNextSkyNumber();
 
@@ -90,32 +83,32 @@ public class UserManager implements UserService {
             try {
                 keycloakAdminService.updateUserAttribute(userId, "skyNumber", generatedSkyNumber);
             } catch (Exception e) {
-                logger.error("Error syncing skyNumber to Keycloak synchronously: {}", e.getMessage());
+                log.error("Error syncing skyNumber to Keycloak synchronously: {}", e.getMessage());
             }
 
             return userDao.save(newUser);
         });
 
         if (currentUser.getDepartment() == null || currentUser.getDepartment().trim().isEmpty()) {
-            logger.info("Department is missing for user {}, attempting to fetch from MS Graph", userId);
+            log.info("Department is missing for user {}, attempting to fetch from MS Graph", userId);
             try {
                 String msToken = keycloakAdminService.getObsBrokerToken(jwt.getTokenValue());
                 if (msToken != null) {
                     String fetchedDepartment = microsoftGraphService.fetchUserDepartment(msToken);
 
                     if (fetchedDepartment != null && !fetchedDepartment.isBlank()) {
-                        logger.info("Fetched department from MS Graph: {}", fetchedDepartment);
+                        log.info("Fetched department from MS Graph: {}", fetchedDepartment);
 
                         currentUser.setDepartment(fetchedDepartment);
                         userDao.save(currentUser);
 
                         keycloakAdminService.updateUserAttribute(userId, "department", fetchedDepartment);
                     } else {
-                        logger.warn("MS Graph returned empty department for user {}", userId);
+                        log.warn("MS Graph returned empty department for user {}", userId);
                     }
                 }
             } catch (Exception e) {
-                logger.error("Error fetching/syncing department from MS Graph: {}", e.getMessage());
+                log.error("Error fetching/syncing department from MS Graph: {}", e.getMessage());
             }
         }
 
@@ -124,7 +117,9 @@ public class UserManager implements UserService {
 
     @Override
     public List<UserDto> getAllUsers(String email, List<String> roles) {
-        logger.info("Getting users. Email filter: {}, Roles filter: {}", email, roles);
+        log.info("Getting users. Email filter: {}, Roles filter: {}", email, roles);
+
+        userSecurityUtils.checkRead();
 
         List<User> users;
         boolean hasEmailFilter = email != null && !email.isBlank();
@@ -137,7 +132,7 @@ public class UserManager implements UserService {
             }
 
             if (authorizedUserIds.isEmpty()) {
-                logger.info("No users found in Keycloak matching the given roles: {}", roles);
+                log.info("No users found in Keycloak matching the given roles: {}", roles);
                 return Collections.emptyList();
             }
 
@@ -155,7 +150,7 @@ public class UserManager implements UserService {
             }
         }
 
-        logger.info("Found {} users matching the criteria", users.size());
+        log.info("Found {} users matching the criteria", users.size());
 
         return users.stream()
                 .map(userMapper::toDto)
@@ -164,14 +159,14 @@ public class UserManager implements UserService {
 
     @Override
     public UserDto getUserById(UUID id){
-        logger.info("Getting user by id: {}", id);
+        log.info("Getting user by id: {}", id);
 
         User user = userDao.findById(id).orElseThrow(() -> {
-            logger.error("User with id: {} not found in database", id);
+            log.error("User with id: {} not found in database", id);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
 
-        logger.info("User with id: {} found in database, mapping to UserDto", id);
+        log.info("User with id: {} found in database, mapping to UserDto", id);
 
         return userMapper.toDto(user);
     }
@@ -180,7 +175,7 @@ public class UserManager implements UserService {
     @Override
     @Transactional
     public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest){
-        logger.info("Updating authenticated user with data: {}", updateUserRequest);
+        log.info("Updating authenticated user with data: {}", updateUserRequest);
 
         User currentUser = getAuthenticatedUserEntity();
 
@@ -191,7 +186,7 @@ public class UserManager implements UserService {
 
 
         currentUser = userDao.save(currentUser);
-        logger.info("Authenticated user profile updated successfully");
+        log.info("Authenticated user profile updated successfully");
 
         return userMapper.toDto(currentUser);
     }
@@ -200,15 +195,15 @@ public class UserManager implements UserService {
     @Transactional
     @Override
     public void promoteUserToLdap(UUID userId, String targetRole, String initialPassword){
-        logger.info("Promoting user with id: {} to role: {}", userId, targetRole);
+        log.info("Promoting user with id: {} to role: {}", userId, targetRole);
 
         User user = userDao.findById(userId).orElseThrow(() -> {
-            logger.error("User with id: {} not found in database", userId);
+            log.error("User with id: {} not found in database", userId);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
 
         if (user.isLdapUser()){
-            logger.error("User with id: {} is already an LDAP user", userId);
+            log.error("User with id: {} is already an LDAP user", userId);
             throw new RuntimeException(UserMessages.USER_ALREADY_LDAP_USER);
         }
 
@@ -231,22 +226,22 @@ public class UserManager implements UserService {
         user.setUsername(ldapUsername);
         userDao.save(user);
 
-        logger.info("User with id: {} promoted to LDAP user, setting role to: {}", userId, targetRole);
+        log.info("User with id: {} promoted to LDAP user, setting role to: {}", userId, targetRole);
 
 
     }
 
     @Override
     public UserDto getAuthenticatedUser() {
-        logger.info("Getting authenticated user");
+        log.info("Getting authenticated user");
         User currentUser = getAuthenticatedUserEntity();
-        logger.info("Authenticated user found with id: {}, mapping to UserDto", currentUser.getId());
+        log.info("Authenticated user found with id: {}, mapping to UserDto", currentUser.getId());
         return userMapper.toDto(currentUser);
     }
 
     @Override
     public List<UserDto> getAllUsersByIds(List<UUID> ids) {
-        logger.info("Getting users by ids: {}", ids);
+        log.info("Getting users by ids: {}", ids);
         List<User> users = userDao.findAllById(ids);
         return users.stream()
                 .map(userMapper::toDto)
@@ -255,7 +250,7 @@ public class UserManager implements UserService {
 
     @Override
     public Image uploadProfilePictureOfAuthenticatedUser(MultipartFile image) {
-        logger.info("Uploading profile picture of authenticated user");
+        log.info("Uploading profile picture of authenticated user");
 
             User currentUser = getAuthenticatedUserEntity();
             Image savedImage = imageService.uploadImage(image);
@@ -263,7 +258,7 @@ public class UserManager implements UserService {
             currentUser.setProfilePicture(savedImage);
 
             userDao.save(currentUser);
-            logger.info("Profile picture uploaded successfully for user with id: {}", currentUser.getId());
+            log.info("Profile picture uploaded successfully for user with id: {}", currentUser.getId());
 
             return savedImage;
 
@@ -272,10 +267,10 @@ public class UserManager implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(UUID id, UpdateUserRequest updateUserRequest) {
-        logger.info("Updating user with id: {} with data: {}", id, updateUserRequest);
+        log.info("Updating user with id: {} with data: {}", id, updateUserRequest);
 
             User user = userDao.findById(id).orElseThrow(() -> {
-                logger.error("User with id: {} not found in database", id);
+                log.error("User with id: {} not found in database", id);
                 return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
             });
 
@@ -292,13 +287,13 @@ public class UserManager implements UserService {
         if (updateUserRequest.getDepartment() != null) user.setDepartment(updateUserRequest.getDepartment());
 
         if (nameChanged) {
-            logger.info("Name changed, syncing with Keycloak for user: {}", id);
+            log.info("Name changed, syncing with Keycloak for user: {}", id);
             keycloakAdminService.updateUserFullName(id, user.getFirstName(), user.getLastName());
         }
 
 
         user = userDao.save(user);
-        logger.info("User with id: {} updated successfully", id);
+        log.info("User with id: {} updated successfully", id);
 
         return userMapper.toDto(user);
 
@@ -306,33 +301,33 @@ public class UserManager implements UserService {
 
     @Override
     public void deleteUser(UUID id) {
-        logger.info("Deleting user with id: {}", id);
+        log.info("Deleting user with id: {}", id);
 
         User user = userDao.findById(id).orElseThrow(() -> {
-            logger.error("User with id: {} not found in database", id);
+            log.error("User with id: {} not found in database", id);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
 
         if (user.isLdapUser()){
-            logger.info("User with id: {} is an LDAP user, deleting from LDAP", id);
+            log.info("User with id: {} is an LDAP user, deleting from LDAP", id);
             ldapService.deleteUser(user.getUsername());;
-            logger.info("User with id: {} deleted from LDAP successfully", id);
+            log.info("User with id: {} deleted from LDAP successfully", id);
         }
 
         keycloakAdminService.deleteUser(id);
 
         userDao.deleteById(id);
 
-        logger.info("User with id: {} deleted successfully", id);
+        log.info("User with id: {} deleted successfully", id);
 
     }
 
     @Override
     public List<UserDto> getUsersByRoleNames(Set<String> roles) {
-        logger.info("Getting users by role names: {}", roles);
+        log.info("Getting users by role names: {}", roles);
 
         if (roles == null || roles.isEmpty()){
-            logger.info("No roles provided, returning empty list");
+            log.info("No roles provided, returning empty list");
             return Collections.emptyList();
         }
 
@@ -343,14 +338,14 @@ public class UserManager implements UserService {
         }
 
         if (authorizedUserIds.isEmpty()){
-            logger.info("No users found with any of the provided roles: {}", roles);
+            log.info("No users found with any of the provided roles: {}", roles);
             return Collections.emptyList();
         }
 
 
         List<User> users = userDao.findAllById(authorizedUserIds);
 
-        logger.info("Found {} users with provided roles: {}, mapping to UserDto", users.size(), roles);
+        log.info("Found {} users with provided roles: {}, mapping to UserDto", users.size(), roles);
         return users.stream()
                 .map(userMapper::toDto)
                 .collect(Collectors.toList());
@@ -358,10 +353,10 @@ public class UserManager implements UserService {
 
     @Override
     public User getUserEntityById(UUID id) {
-        logger.info("Getting user entity by id: {}", id);
+        log.info("Getting user entity by id: {}", id);
 
         return userDao.findById(id).orElseThrow(() -> {
-            logger.error("User with id: {} not found in database", id);
+            log.error("User with id: {} not found in database", id);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
     }
@@ -372,7 +367,7 @@ public class UserManager implements UserService {
         UUID uuid = UUID.fromString(userId);
 
         User localUser = userDao.findById(uuid).orElseGet(() -> {
-            logger.info("New user detected via sync: {}. Creating local shadow copy.", userId);
+            log.info("New user detected via sync: {}. Creating local shadow copy.", userId);
             return User.builder().id(uuid).build();
         });
 
@@ -389,7 +384,7 @@ public class UserManager implements UserService {
             localUser.setSkyNumber(newSkyNumber);
 
             keycloakAdminService.updateUserAttribute(uuid, "skyNumber", newSkyNumber);
-            logger.info("Assigned NEW SkyNumber {} to user {}", newSkyNumber, userId);
+            log.info("Assigned NEW SkyNumber {} to user {}", newSkyNumber, userId);
         }
 
         localUser.setFirstName(keycloakUser.getFirstName());
@@ -404,7 +399,7 @@ public class UserManager implements UserService {
         }
 
         userDao.save(localUser);
-        logger.info("User {} successfully synced and saved via UserManager", userId);
+        log.info("User {} successfully synced and saved via UserManager", userId);
     }
 
     private String getAttributeSafe(Map<String, List<String>> attributes, String key) {

@@ -15,13 +15,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,7 +35,6 @@ public class CompetitorController {
     private final CompetitorService competitorService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('competitors.create', 'competitors.moderator')")
     @Operation(summary = "Yarışmacı Ekle", description = "Belirtilen kullanıcıyı belirli bir etkinliğe yarışmacı olarak kaydeder.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Yarışmacı başarıyla oluşturuldu."),
@@ -52,7 +49,6 @@ public class CompetitorController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('competitors.list', 'competitors.moderator')")
     @Operation(summary = "Tüm Yarışmacıları Listele", description = "Sistemdeki tüm etkinliklere ait tüm yarışmacı kayıtlarını getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors() {
         log.info("REST request to get all competitors");
@@ -62,7 +58,6 @@ public class CompetitorController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('competitors.get', 'competitors.moderator')")
     @Operation(summary = "Yarışmacı Detayını Getir", description = "Belirtilen yarışmacı ID'sine ait detayları döner.")
     public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id) {
         log.info("REST request to get competitor by id: {}", id);
@@ -72,7 +67,6 @@ public class CompetitorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('competitors.update', 'competitors.moderator')")
     @Operation(summary = "Yarışmacı Verisini Güncelle", description = "Yarışmacının puanlama veya kazanma durumunu günceller.")
     public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @RequestBody UpdateCompetitorRequest request) {
         log.info("REST request to update competitor with id: {}", id);
@@ -82,7 +76,6 @@ public class CompetitorController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('competitors.delete', 'competitors.moderator')")
     @Operation(summary = "Yarışmacı Kaydını Sil", description = "Yarışmacı atamasını sistemden kalıcı olarak temizler.")
     public ResponseEntity<Result> deleteCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id) {
         log.info("REST request to delete competitor with id: {}", id);
@@ -92,7 +85,6 @@ public class CompetitorController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('competitors.me', 'competitors.moderator')")
     @Operation(summary = "Aktif Kullanıcının Yarışma Geçmişi", description = "Sisteme giriş yapmış olan kullanıcının katıldığı tüm yarışmaların bilgilerini getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors() {
         log.info("REST request to get competitors for current authenticated user");

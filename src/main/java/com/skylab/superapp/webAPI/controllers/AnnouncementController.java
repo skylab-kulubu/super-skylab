@@ -14,16 +14,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +38,6 @@ public class AnnouncementController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('announcements.create', 'announcements.moderator')")
     @Operation(summary = "Yeni Duyuru Ekle", description = "Sisteme yeni bir duyuru kaydı oluşturur.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Duyuru başarıyla eklendi."),
@@ -56,7 +52,6 @@ public class AnnouncementController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('announcements.delete', 'announcements.moderator')")
     @Operation(summary = "Duyuru Sil", description = "Belirtilen duyuruyu sistemden kalıcı olarak siler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Duyuru başarıyla silindi."),
@@ -71,7 +66,6 @@ public class AnnouncementController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('announcements.update', 'announcements.moderator')")
     @Operation(summary = "Duyuru Güncelle", description = "Duyuruya ait verileri kısmi olarak günceller.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Duyuru başarıyla güncellendi."),

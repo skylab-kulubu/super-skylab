@@ -13,11 +13,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,7 +36,6 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}")
-    @PreAuthorize("hasAnyRole('tickets.get', 'tickets.moderator')")
     @Operation(summary = "Bilet Detayını Getir", description = "Sistemdeki biletin sahiplik ve etkinlik detaylarını getirir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Bilet detayları başarıyla getirildi."),
@@ -52,7 +49,6 @@ public class TicketController {
 
 
     @PostMapping("/{ticketId}/event-days/{eventDayId}/check-in")
-    @PreAuthorize("hasAnyRole('tickets.validator', 'tickets.moderator')")
     @Operation(summary = "Bilet Doğrulama (Check-In)", description = "Etkinlik girişinde yetkili personel tarafından bilet doğrulama (okutma) işlemi yapar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Check-in başarıyla kaydedildi."),
@@ -66,7 +62,6 @@ public class TicketController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Kullanıcı Biletlerini Getir", description = "İstek atan kullanıcının sahip olduğu tüm biletleri listeler.")
     public DataResult<List<GetTicketResponseDto>> getMyTickets() {
         var tickets = ticketService.getMyTickets();

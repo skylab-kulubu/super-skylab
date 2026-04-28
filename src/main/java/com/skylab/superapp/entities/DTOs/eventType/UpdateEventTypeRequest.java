@@ -8,12 +8,6 @@ import java.util.Set;
 @Getter
 @Setter
 public class UpdateEventTypeRequest {
-
     private String name;
-
-    private Set<String> authorizedRoles;
-
-
-
 
 }

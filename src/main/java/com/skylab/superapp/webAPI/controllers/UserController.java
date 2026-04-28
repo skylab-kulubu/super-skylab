@@ -13,13 +13,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,7 +35,6 @@ public class UserController {
 
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('users.me', 'users.moderator')")
     @Operation(summary = "Aktif Kullanıcı Bilgilerini Getir", description = "Sisteme giriş yapmış kullanıcının profil verilerini döner.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Kullanıcı bilgileri başarıyla getirildi."),
@@ -51,7 +48,6 @@ public class UserController {
     }
 
     @PatchMapping("/me")
-    @PreAuthorize("hasAnyRole('users.me', 'users.moderator')")
     @Operation(summary = "Aktif Kullanıcı Profilini Güncelle", description = "Sisteme giriş yapmış kullanıcının kendi profil bilgilerini güncellemesini sağlar.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Kullanıcı profili güncellendi.")
@@ -64,7 +60,6 @@ public class UserController {
     }
 
     @PostMapping("/me/profile-picture")
-    @PreAuthorize("hasAnyRole('users.me', 'users.moderator')")
     @Operation(summary = "Profil Fotoğrafı Yükle", description = "Kullanıcının profil fotoğrafını skycdn'e yükler ve kaydeder.")
     public ResponseEntity<Result> updateProfilePicture(@RequestParam("image") MultipartFile image) {
         userService.uploadProfilePictureOfAuthenticatedUser(image);
@@ -73,7 +68,6 @@ public class UserController {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('users.list', 'users.moderator')")
     @Operation(summary = "Tüm Kullanıcıları Getir", description = "Sistemdeki tüm kullanıcıları listeler. E-posta ve rol bazlı filtreleme yapılabilir.")
     public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(
             @RequestParam(required = false) String email,
@@ -85,7 +79,6 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('users.get', 'users.moderator')")
     @Operation(summary = "Kullanıcı Detayını Getir", description = "Belirtilen UUID'ye sahip kullanıcının detaylarını döner.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Kullanıcı detayları getirildi."),
@@ -98,7 +91,6 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('users.update', 'users.moderator')")
     @Operation(summary = "Kullanıcı Güncelle (Admin)", description = "Yetkili personelin belirtilen kullanıcının verilerini güncellemesini sağlar.")
     public ResponseEntity<DataResult<UserDto>> updateUserById(@PathVariable UUID id,
                                                  @RequestBody UpdateUserRequest updateUserRequest) {
@@ -111,7 +103,6 @@ public class UserController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('users.delete', 'users.moderator')")
     @Operation(summary = "Kullanıcı Sil", description = "Belirtilen kullanıcıyı sistemden siler. LDAP bağlantısı varsa LDAP üzerinden de silinir.")
     public ResponseEntity<Result> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
@@ -121,7 +112,6 @@ public class UserController {
 
 
     @PostMapping("/{id}/promote")
-    @PreAuthorize("hasAnyRole('users.promote', 'users.moderator')")
     @Operation(summary = "Kullanıcıyı LDAP Üyesine Terfi Ettir", description = "Normal bir uygulamaya kayıtlı kullanıcıyı LDAP dizinine ekler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Kullanıcı başarıyla LDAP üyesi yapıldı."),

@@ -14,16 +14,15 @@ import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import com.skylab.superapp.entities.DTOs.ticket.request.GuestTicketRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventManager implements EventService {
@@ -35,8 +34,7 @@ public class EventManager implements EventService {
     private final SeasonService seasonService;
     private final EventSecurityUtils eventSecurityUtils;
    // private final SkyMailService skyMailService;
-
-    private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
+    
     private final UserService userService;
     private final TicketDao ticketDao;
     private final MediaService mediaService;
@@ -44,10 +42,10 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public EventDto addEvent(CreateEventRequest createEventRequest) {
-        logger.info("Attempting to add new event: {}", createEventRequest.getName());
+        log.info("Attempting to add new event: {}", createEventRequest.getName());
         EventType eventType = eventTypeService.getEventTypeEntityById(createEventRequest.getEventTypeId());
 
-        eventSecurityUtils.checkAuthorization(eventType);
+        eventSecurityUtils.checkCreate(eventType.getName());
 
         Season season = createEventRequest.getSeasonId() != null
                 ? seasonService.getSeasonEntityById(createEventRequest.getSeasonId())
@@ -76,29 +74,29 @@ public class EventManager implements EventService {
                 .prizeInfo(createEventRequest.getPrizeInfo())
                 .build();
 
-        logger.info("Event successfully persisted with id: {}", event.getId());
+        log.info("Event successfully persisted with id: {}", event.getId());
         return eventMapper.eventToEventDto(eventDao.save(event));
     }
 
     @Override
     @Transactional
     public void deleteEvent(UUID id) {
-        logger.info("Attempting to delete event with id: {}", id);
+        log.info("Attempting to delete event with id: {}", id);
         Event event = getEventEntityById(id);
 
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkDelete(event.getType().getName());
 
         eventDao.delete(event);
-        logger.info("Event successfully deleted with id: {}", id);
+        log.info("Event successfully deleted with id: {}", id);
     }
 
     @Override
     @Transactional
     public EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest) {
-        logger.info("Attempting to update event id: {}", id);
+        log.info("Attempting to update event id: {}", id);
         Event event = getEventEntityById(id);
 
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         if (updateEventRequest.getName() != null) event.setName(updateEventRequest.getName());
         if (updateEventRequest.getDescription() != null) event.setDescription(updateEventRequest.getDescription());
@@ -119,7 +117,7 @@ public class EventManager implements EventService {
             event.setSeason(seasonService.getSeasonEntityById(updateEventRequest.getSeasonId()));
         }
 
-        logger.info("Event updated successfully: {}", id);
+        log.info("Event updated successfully: {}", id);
         return eventMapper.eventToEventDto(eventDao.save(event));
     }
 
@@ -127,7 +125,7 @@ public class EventManager implements EventService {
     public List<EventDto> getAllEventsByEventType(EventType eventType) {
             var events = eventDao.findAllByType(eventTypeService.getEventTypeEntityById(eventType.getId()));
 
-            logger.info("Found {} events for event type: {}", events.size(), eventType.getName());
+            log.info("Found {} events for event type: {}", events.size(), eventType.getName());
 
             return events.stream()
                     .map(eventMapper::eventToEventDto)
@@ -142,10 +140,10 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public void addImagesToEvent(UUID eventId, List<UUID> imageIds) {
-        logger.info("Adding {} images to event id: {}", imageIds.size(), eventId);
+        log.info("Adding {} images to event id: {}", imageIds.size(), eventId);
         Event event = getEventEntityById(eventId);
 
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         event.getImages().addAll(imageService.getImagesByIds(imageIds));
         eventDao.save(event);
@@ -154,22 +152,22 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public void removeImagesFromEvent(UUID eventId, List<UUID> imageIds) {
-        logger.info("Removing {} images from event id: {}", imageIds.size(), eventId);
+        log.info("Removing {} images from event id: {}", imageIds.size(), eventId);
         Event event = getEventEntityById(eventId);
 
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         List<Image> images = imageService.getImagesByIds(imageIds);
         for (Image image : images) {
             if (!event.getImages().contains(image)) {
-                logger.warn("Image {} not found in event {}. Aborting removal.", image.getId(), eventId);
+                log.warn("Image {} not found in event {}. Aborting removal.", image.getId(), eventId);
                 throw new ResourceNotFoundException(EventMessages.IMAGE_NOT_FOUND_IN_EVENT);
             }
             event.getImages().remove(image);
         }
         eventDao.save(event);
 
-        logger.info("Images removed successfully from event id: {}", eventId);
+        log.info("Images removed successfully from event id: {}", eventId);
     }
 
     @Override
@@ -207,11 +205,11 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public void assignSeasonToEvent(UUID eventId, UUID seasonId) {
-        logger.info("Assigning event with id: {} to season with id: {}", eventId, seasonId);
+        log.info("Assigning event with id: {} to season with id: {}", eventId, seasonId);
 
         Event event = getEventEntityById(eventId);
 
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         Season season = seasonService.getSeasonEntityById(seasonId);
 
@@ -222,16 +220,16 @@ public class EventManager implements EventService {
         event.setSeason(season);
         eventDao.save(event);
 
-        logger.info("Event with id: {} successfully assigned to season with id: {}", eventId, seasonId);
+        log.info("Event with id: {} successfully assigned to season with id: {}", eventId, seasonId);
     }
 
     @Transactional
     @Override
     public void removeSeasonFromEvent(UUID eventId) {
-        logger.info("Removing season from event with id: {}", eventId);
+        log.info("Removing season from event with id: {}", eventId);
 
         Event event = getEventEntityById(eventId);
-        eventSecurityUtils.checkAuthorization(event.getType());
+        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         if (event.getSeason() == null) {
             throw new BusinessException(EventMessages.EVENT_NOT_ASSIGNED_TO_SEASON);
@@ -239,13 +237,13 @@ public class EventManager implements EventService {
         event.setSeason(null);
         eventDao.save(event);
 
-        logger.info("Season successfully removed from event with id: {}", eventId);
+        log.info("Season successfully removed from event with id: {}", eventId);
     }
 
     @Override
     @Transactional
     public void applyToEvent(UUID eventId) {
-        logger.info("Applying to event with id: {}", eventId);
+        log.info("Applying to event with id: {}", eventId);
 
         var eventToAttend = getEventEntityById(eventId);
         var authenticatedUser = userService.getAuthenticatedUserEntity();
@@ -264,13 +262,13 @@ public class EventManager implements EventService {
         ticketDao.save(ticket);
 
         //skyMailService.sendTicketCreationEmail(authenticatedUser.getEmail(), eventToAttend.getName());
-        logger.info("Created REGISTERED ticket for user: {}", authenticatedUser.getEmail());
+        log.info("Created REGISTERED ticket for user: {}", authenticatedUser.getEmail());
     }
 
     @Override
     public Event getEventReference(UUID eventId) {
 
-        logger.info("Getting event reference for event id: {}", eventId);
+        log.info("Getting event reference for event id: {}", eventId);
 
         return eventDao.getReferenceById(eventId);
     }
@@ -278,7 +276,7 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public void applyToEventAsGuest(UUID eventId, GuestTicketRequestDto request) {
-        logger.info("Guest application for event id: {} from email: {}", eventId, request.getEmail());
+        log.info("Guest application for event id: {} from email: {}", eventId, request.getEmail());
 
         var eventToAttend = getEventEntityById(eventId);
 
@@ -308,18 +306,18 @@ public class EventManager implements EventService {
         ticketDao.save(ticket);
 
         //skyMailService.sendTicketCreationEmail(ticket.getGuestEmail(), eventToAttend.getName());
-        logger.info("Created GUEST ticket for email: {}", ticket.getGuestEmail());
+        log.info("Created GUEST ticket for email: {}", ticket.getGuestEmail());
     }
 
     @Override
     public List<EventDto> getEventsBySeasonId(UUID seasonId) {
-        logger.info("Getting events for season id: {}", seasonId);
+        log.info("Getting events for season id: {}", seasonId);
 
     Season season = seasonService.getSeasonEntityById(seasonId);
 
     var events = eventDao.findAllBySeason(season);
 
-    logger.info("Found {} events for season id: {}", events.size(), seasonId);
+    log.info("Found {} events for season id: {}", events.size(), seasonId);
 
     return events.stream()
             .map(eventMapper::eventToEventDto)
@@ -331,7 +329,7 @@ public class EventManager implements EventService {
     @Override
     public Event getEventEntityById(UUID id) {
         return eventDao.findById(id).orElseThrow(() -> {
-            logger.error("Event not found with id: {}", id);
+            log.error("Event not found with id: {}", id);
             return new ResourceNotFoundException(EventMessages.EVENT_NOT_FOUND);
         });
     }

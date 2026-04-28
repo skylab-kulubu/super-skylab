@@ -13,13 +13,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -70,7 +68,6 @@ public class SeasonController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('seasons.create', 'seasons.moderator')")
     @Operation(summary = "Yeni Sezon Ekle", description = "Sisteme yeni bir sezon (Örn: 2025-2026) ekler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Sezon başarıyla oluşturuldu."),
@@ -84,7 +81,6 @@ public class SeasonController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('seasons.update', 'seasons.moderator')")
     @Operation(summary = "Sezon Güncelle", description = "Belirtilen sezonun isim, tarih veya aktiflik durumunu günceller.")
     public ResponseEntity<DataResult<SeasonDto>> updateSeason(@PathVariable UUID id, @RequestBody UpdateSeasonRequest request) {
         log.info("REST request to update season with id: {}", id);
@@ -96,7 +92,6 @@ public class SeasonController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('seasons.delete', 'seasons.moderator')")
     @Operation(summary = "Sezon Sil", description = "Belirtilen sezonu kalıcı olarak siler.")
     public ResponseEntity<Result> deleteSeason(@PathVariable UUID id) {
         log.info("REST request to delete season with id: {}", id);

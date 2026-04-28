@@ -4,11 +4,11 @@ import com.skylab.superapp.core.security.opa.OpaClient;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EventSecurityUtils extends BaseSecurityUtils {
+public class CompetitorSecurityUtils extends BaseSecurityUtils{
 
-    private static final String RESOURCE = "EVENT";
+    private static final String RESOURCE = "COMPETITOR";
 
-    public EventSecurityUtils(OpaClient opaClient) {
+    public CompetitorSecurityUtils(OpaClient opaClient) {
         super(opaClient);
     }
 
@@ -23,4 +23,18 @@ public class EventSecurityUtils extends BaseSecurityUtils {
     public void checkDelete(String eventTypeName) {
         checkPermission(RESOURCE, "DELETE", eventTypeName);
     }
+
+    public void checkList() {
+        checkPermission(RESOURCE, "LIST", null);
+    }
+
+    public void checkRead() {
+        checkPermission(RESOURCE, "READ", null);
+    }
+
+    public void checkReadMe() {
+        checkPermission(RESOURCE, "READ_ME", null);
+    }
+
+
 }

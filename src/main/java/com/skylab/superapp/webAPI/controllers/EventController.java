@@ -15,17 +15,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -93,7 +89,6 @@ public class EventController {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('events.create', 'events.moderator')")
     @Operation(summary = "Yeni Etkinlik Oluştur", description = "Yeni bir etkinlik kaydı oluşturur. Kapak fotoğrafı opsiyoneldir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Etkinlik başarıyla oluşturuldu."),
@@ -115,7 +110,6 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('events.update', 'events.moderator')")
     @Operation(summary = "Etkinliği Güncelle", description = "Var olan bir etkinliğin bilgilerini günceller.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla güncellendi."),
@@ -132,7 +126,6 @@ public class EventController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('events.delete', 'events.moderator')")
     @Operation(summary = "Etkinliği Sil", description = "Belirtilen etkinliği sistemden kalıcı olarak siler.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla silindi."),

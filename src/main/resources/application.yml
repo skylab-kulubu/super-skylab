@@ -101,3 +101,6 @@ springdoc:
   api-docs:
     enabled: true
     path: /v3/api-docs
+
+opa:
+  url: ${OPA_URL:http://localhost:8181}

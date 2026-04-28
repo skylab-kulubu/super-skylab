@@ -3,15 +3,18 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.EventTypeService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.EventTypeMessages;
+import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventTypeMapper;
+import com.skylab.superapp.core.security.opa.OpaClient;
 import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class EventTypeManager implements EventTypeService {
 
     private final EventTypeDao eventTypeDao;
@@ -29,12 +33,7 @@ public class EventTypeManager implements EventTypeService {
     private final Logger logger = LoggerFactory.getLogger(EventTypeManager.class);
     private final UserService userService;
 
-    @Autowired
-    public EventTypeManager(EventTypeDao eventTypeDao, EventTypeMapper eventTypeMapper, UserService userService) {
-        this.eventTypeDao = eventTypeDao;
-        this.eventTypeMapper = eventTypeMapper;
-        this.userService = userService;
-    }
+    private final OpaClient opaClient;
 
 
     @Override
@@ -59,11 +58,12 @@ public class EventTypeManager implements EventTypeService {
 
     @Override
     public EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest) {
-        Set<String> roles = createEventTypeRequest.getAuthorizedRoles() != null ? createEventTypeRequest.getAuthorizedRoles() : Set.of();
+        if (!opaClient.isValidEventType(createEventTypeRequest.getName())) {
+            throw new BusinessException(createEventTypeRequest.getName() + "OPA veya e-skylab'de tanımlı değil. Önce e-skylab'de veya OPA'da bu isimde bir rol/kural oluşturun.");
+        }
 
         var eventType = EventType.builder()
                 .name(createEventTypeRequest.getName())
-                .authorizedRoles(roles)
                 .build();
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
@@ -77,11 +77,15 @@ public class EventTypeManager implements EventTypeService {
             eventType.setName(updateEventTypeRequest.getName());
         }
 
-        if (updateEventTypeRequest.getAuthorizedRoles() != null) {
-            eventType.setAuthorizedRoles(updateEventTypeRequest.getAuthorizedRoles());
+
+        if (updateEventTypeRequest.getName() != null && !updateEventTypeRequest.getName().isEmpty()) {
+            if (!opaClient.isValidEventType(updateEventTypeRequest.getName())) {
+                throw new BusinessException(updateEventTypeRequest.getName() + "OPA veya e-skylab'de tanımlı değil. Önce e-skylab'de veya OPA'da bu isimde bir rol/kural oluşturun.");
+            }
         }
 
         return eventTypeMapper.toDto(eventTypeDao.save(eventType));
+
     }
 
     @Override
@@ -111,7 +115,8 @@ public class EventTypeManager implements EventTypeService {
         logger.info("Getting coordinators by event type name: {}", eventTypeName);
 
         EventType eventType = getEventTypeEntityByName(eventTypeName);
-        Set<String> roles = eventType.getAuthorizedRoles();
+
+        Set<String> roles = opaClient.getRolesForEventType(eventTypeName);
 
         if (roles == null || roles.isEmpty()) {
             return Collections.emptySet();

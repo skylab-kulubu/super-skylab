@@ -6,6 +6,7 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
+import com.skylab.superapp.core.utilities.security.CompetitorSecurityUtils;
 import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CompetitorManager implements CompetitorService {
 
     private final CompetitorDao competitorDao;
@@ -30,14 +32,7 @@ public class CompetitorManager implements CompetitorService {
     private final CompetitorMapper competitorMapper;
     private final EventSecurityUtils eventSecurityUtils;
 
-    public CompetitorManager(CompetitorDao competitorDao, UserService userService, EventService eventService, EventTypeService eventTypeService, CompetitorMapper competitorMapper, EventSecurityUtils eventSecurityUtils) {
-        this.competitorDao = competitorDao;
-        this.userService = userService;
-        this.eventService = eventService;
-        this.eventTypeService = eventTypeService;
-        this.competitorMapper = competitorMapper;
-        this.eventSecurityUtils = eventSecurityUtils;
-    }
+    private final CompetitorSecurityUtils competitorSecurityUtils;
 
     @Override
     @Transactional
@@ -50,7 +45,7 @@ public class CompetitorManager implements CompetitorService {
         boolean isSelfRegistration = currentUser.getId().equals(user.getId());
         if (!isSelfRegistration) {
             log.debug("Registration is for another user. Verifying authorization...");
-            eventSecurityUtils.checkAuthorization(event.getType());
+            competitorSecurityUtils.checkCreate(event.getType().getName());
         }
 
         if (competitorDao.existsByUserAndEvent(user, event)) {
@@ -79,7 +74,7 @@ public class CompetitorManager implements CompetitorService {
         log.info("Attempting to update competitor with id: {}", id);
         var competitor = getCompetitorEntityById(id);
 
-        eventSecurityUtils.checkAuthorization(competitor.getEvent().getType());
+        competitorSecurityUtils.checkUpdate(competitor.getEvent().getType().getName());
 
         if (request.getUserId() != null) {
             competitor.setUser(userService.getUserEntityById(request.getUserId()));
@@ -105,7 +100,7 @@ public class CompetitorManager implements CompetitorService {
 
         if (!currentUser.getId().equals(competitor.getUser().getId())) {
             log.debug("User is attempting to delete another competitor's record. Verifying authorization...");
-            eventSecurityUtils.checkAuthorization(competitor.getEvent().getType());
+            competitorSecurityUtils.checkDelete(competitor.getEvent().getType().getName());
         }
         competitorDao.delete(competitor);
         log.info("Competitor deleted successfully: {}", competitorId);

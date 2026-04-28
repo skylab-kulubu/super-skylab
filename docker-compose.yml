@@ -61,6 +61,9 @@ services:
       - R2_ACCESS_KEY=YOUR_R2_ACCESS_KEY
       - R2_SECRET_KEY=YOUR_R2_SECRET_KEY
       - R2_BUCKET_NAME=YOUR_R2_BUCKET_NAME
+
+      # OPA
+      - OPA_URL=http://opa:8181
     networks:
       - skynet
 
