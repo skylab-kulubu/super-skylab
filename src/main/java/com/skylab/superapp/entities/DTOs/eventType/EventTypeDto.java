@@ -18,6 +18,4 @@ public class EventTypeDto {
 
     private String name;
 
-    private Set<String> authorizedRoles;
-
 }

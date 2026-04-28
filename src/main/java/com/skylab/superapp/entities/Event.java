@@ -53,7 +53,7 @@ public class Event extends BaseEntity{
     private String formUrl;
 
     @Column(name = "capacity")
-    private int capacity;
+    private Integer capacity;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @Column(name = "start_date")
