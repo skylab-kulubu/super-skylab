@@ -26,7 +26,7 @@ public class OpaClient {
     public boolean isAllowed(OpaInput input) {
         try {
             OpaResponse response = webClient.post()
-                    .uri(opaProperties.getUrl() + "/data/skylab/authz/allow")
+                    .uri(opaProperties.getUrl() + "/v1/data/skylab/authz/allow")
                     .bodyValue(Map.of("input", input))
                     .retrieve()
                     .bodyToMono(OpaResponse.class)
