@@ -24,17 +24,15 @@ public class TicketManager implements TicketService {
     private final TicketDao ticketDao;
     private final UserService userService;
     private final TicketMapper ticketMapper;
-
     private final TicketSecurityUtils ticketSecurityUtils;
-
 
     @Override
     public GetTicketResponseDto getTicketByUserIdAndEventId(UUID userId, UUID eventId) {
-        log.info("Fetching ticket for user ID: {} and event ID: {}", userId, eventId);
+        log.debug("Retrieving ticket. UserId: {}, EventId: {}", userId, eventId);
 
         Ticket ticket = ticketDao.findByOwner_IdAndEvent_Id(userId, eventId)
                 .orElseThrow(() -> {
-                    log.error("Ticket not found for user ID: {} and event ID: {}", userId, eventId);
+                    log.error("Ticket retrieval failed: Resource not found. UserId: {}, EventId: {}", userId, eventId);
                     return new ResourceNotFoundException("Bilet bulunamadı!");
                 });
 
@@ -43,24 +41,20 @@ public class TicketManager implements TicketService {
 
     @Override
     public GetTicketResponseDto getTicketById(UUID ticketId) {
-        log.info("Fetching ticket with ID: {}", ticketId);
+        log.debug("Retrieving ticket. TicketId: {}", ticketId);
         ticketSecurityUtils.checkRead();
 
         Ticket ticket = ticketDao.findById(ticketId).orElseThrow(() -> {
-            log.error("Ticket with ID: {} not found", ticketId);
+            log.error("Ticket retrieval failed: Resource not found. TicketId: {}", ticketId);
             return new ResourceNotFoundException(TicketMessages.TICKET_NOT_FOUND_WITH_ID);
         });
 
-        log.info("Ticket fetched with ID: {}", ticketId);
-
         return ticketMapper.ticketToGetTicketResponseDto(ticket);
-
-
     }
 
     @Override
     public List<GetTicketResponseDto> getTicketsByUserEmail(String email) {
-        log.info("Fetching tickets for user email: {}", email);
+        log.debug("Retrieving tickets. UserEmail: {}", email);
         ticketSecurityUtils.checkRead();
 
         List<Ticket> tickets = ticketDao.findAllByOwner_Email(email);
@@ -72,7 +66,7 @@ public class TicketManager implements TicketService {
 
     @Override
     public List<GetTicketResponseDto> getTicketsByUserId(UUID userId) {
-        log.info("Fetching tickets for user ID: {}", userId);
+        log.debug("Retrieving tickets. UserId: {}", userId);
         ticketSecurityUtils.checkRead();
 
         List<Ticket> tickets = ticketDao.findAllByOwner_Id(userId);
@@ -84,39 +78,32 @@ public class TicketManager implements TicketService {
 
     @Override
     public Ticket getTicketReference(UUID ticketId) {
-      log.info("Fetching ticket reference for ID: {}", ticketId);
-
+        log.debug("Retrieving ticket reference. TicketId: {}", ticketId);
         return ticketDao.getReferenceById(ticketId);
     }
 
     @Override
     public Ticket getTicketEntityById(UUID ticketId) {
-        log.info("Fetching ticket entity with ID: {}", ticketId);
+        log.debug("Retrieving ticket entity. TicketId: {}", ticketId);
 
-
-        Ticket ticket = ticketDao.findById(ticketId).orElseThrow(() -> {
-            log.error("Ticket entity with ID: {} not found", ticketId);
+        return ticketDao.findById(ticketId).orElseThrow(() -> {
+            log.error("Ticket entity retrieval failed: Resource not found. TicketId: {}", ticketId);
             return new ResourceNotFoundException(TicketMessages.TICKET_NOT_FOUND_WITH_ID);
         });
-
-        log.info("Ticket entity fetched with ID: {}", ticketId);
-
-
-        return ticket;
-
     }
 
     @Override
     public List<GetTicketResponseDto> getMyTickets() {
-        log.info("Fetching tickets for the currently authenticated user");
+        log.debug("Retrieving tickets for authenticated user.");
         ticketSecurityUtils.checkReadMe();
-        var authenticatedUser = userService.getAuthenticatedUserEntity();
 
+        var authenticatedUser = userService.getAuthenticatedUserEntity();
         List<Ticket> tickets = ticketDao.findAllByOwner_Id(authenticatedUser.getId());
+
+        log.info("Retrieved tickets for authenticated user successfully. UserId: {}, TotalCount: {}", authenticatedUser.getId(), tickets.size());
 
         return tickets.stream()
                 .map(ticketMapper::ticketToGetTicketResponseDto)
                 .toList();
     }
-
 }

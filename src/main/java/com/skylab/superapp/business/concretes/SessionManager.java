@@ -31,15 +31,15 @@ public class SessionManager implements SessionService {
     private final ImageService imageService;
     private final EventDayService eventDayService;
     private final MediaService mediaService;
-
     private final SessionSecurityUtils sessionSecurityUtils;
-
 
     @Override
     public List<SessionDto> getAllSessions() {
-        log.info("Getting all sessions");
+        log.debug("Retrieving all sessions.");
 
         var sessions = sessionDao.findAll();
+
+        log.info("Retrieved all sessions successfully. TotalCount: {}", sessions.size());
 
         return sessions.stream()
                 .map(sessionMapper::toDto)
@@ -48,18 +48,18 @@ public class SessionManager implements SessionService {
 
     @Override
     public SessionDto getSessionById(UUID id) {
-        log.info("Getting session with id: {}", id);
+        log.debug("Retrieving session. SessionId: {}", id);
         return sessionMapper.toDto(getSessionEntityById(id));
     }
 
     @Override
     public SessionDto updateSession(UUID id, UpdateSessionRequest updateSessionRequest) {
-        log.info("Updating session with id: {}", id);
+        log.info("Initiating session update. SessionId: {}", id);
         var session = getSessionEntityById(id);
 
         sessionSecurityUtils.checkUpdate(session.getEventDay().getEvent().getType().getName());
 
-        session.setTitle(updateSessionRequest.getTitle()==null ? session.getTitle() : updateSessionRequest.getTitle());
+        session.setTitle(updateSessionRequest.getTitle() == null ? session.getTitle() : updateSessionRequest.getTitle());
         session.setSpeakerName(updateSessionRequest.getSpeakerName() == null ? session.getSpeakerName() : updateSessionRequest.getSpeakerName());
         session.setSpeakerLinkedin(updateSessionRequest.getSpeakerLinkedin() == null ? session.getSpeakerLinkedin() : updateSessionRequest.getSpeakerLinkedin());
         session.setDescription(updateSessionRequest.getDescription() == null ? session.getDescription() : updateSessionRequest.getDescription());
@@ -69,20 +69,21 @@ public class SessionManager implements SessionService {
         session.setSessionType(updateSessionRequest.getSessionType() == null ? session.getSessionType() : SessionType.valueOf(updateSessionRequest.getSessionType().name()));
 
         var savedSession = sessionDao.save(session);
-        log.info("Session updated successfully");
+        log.info("Session updated successfully. SessionId: {}", savedSession.getId());
 
         return sessionMapper.toDto(savedSession);
     }
 
     @Override
     public SessionDto addSession(CreateSessionRequest createSessionDto) {
-        log.info("Adding session with title: {}", createSessionDto.getTitle());
+        log.info("Initiating session creation. Title: {}, EventDayId: {}", createSessionDto.getTitle(), createSessionDto.getEventDayId());
 
         var eventDay = eventDayService.getEventDayEntityById(createSessionDto.getEventDayId());
 
         sessionSecurityUtils.checkCreate(eventDay.getEvent().getType().getName());
 
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
+            log.warn("Session creation failed: Start date is after end date. Title: {}", createSessionDto.getTitle());
             throw new SessionStartDateCannotBeAfterEndDateException();
         }
 
@@ -91,7 +92,6 @@ public class SessionManager implements SessionService {
             mediaService.attachImageMedia(createSessionDto.getSpeakerImageId());
             speakerImage = imageService.getImageEntityById(createSessionDto.getSpeakerImageId());
         }
-
 
         Session session = Session.builder()
                 .title(createSessionDto.getTitle())
@@ -107,41 +107,45 @@ public class SessionManager implements SessionService {
                 .build();
 
         var savedSession = sessionDao.save(session);
-        log.info("Session added successfully with id: {}", savedSession.getId());
+        log.info("Session created successfully. SessionId: {}", savedSession.getId());
 
         return sessionMapper.toDto(savedSession);
     }
 
     @Override
     public void deleteSession(UUID id) {
-        log.info("Deleting session with id: {}", id);
-        var session = sessionDao.findById(id).orElseThrow(() -> new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND));
+        log.info("Initiating session deletion. SessionId: {}", id);
+
+        var session = sessionDao.findById(id).orElseThrow(() -> {
+            log.error("Session deletion failed: Resource not found. SessionId: {}", id);
+            return new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND);
+        });
 
         sessionSecurityUtils.checkDelete(session.getEventDay().getEvent().getType().getName());
 
-        log.info("Session found, proceeding to delete");
-
         sessionDao.delete(session);
 
-        log.info("Session deleted successfully");
+        log.info("Session deleted successfully. SessionId: {}", id);
     }
 
     @Override
     public Session getSessionEntityById(UUID id) {
-        log.info("Getting session entity with id: {}", id);
+        log.debug("Retrieving session entity. SessionId: {}", id);
         return sessionDao.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("Session entity retrieval failed: Resource not found. SessionId: {}", id);
+                    return new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND);
+                });
     }
 
     @Override
     public List<SessionDto> getSessionsByEventId(UUID eventId) {
-        log.info("Getting sessions for event with id: {}", eventId);
-        var event = eventService.getEventEntityById(eventId);
-        log.info("Event found, retrieving sessions");
+        log.debug("Retrieving sessions for event. EventId: {}", eventId);
 
+        var event = eventService.getEventEntityById(eventId);
         var sessions = sessionDao.findAllByEventDay_Event(event);
 
-        log.info("Sessions retrieved successfully, count: {}", sessions.size());
+        log.info("Sessions retrieved successfully for event. EventId: {}, TotalCount: {}", eventId, sessions.size());
 
         return sessions.stream()
                 .map(sessionMapper::toDto)

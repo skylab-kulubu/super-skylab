@@ -33,95 +33,85 @@ public class MediaManager implements MediaService {
     private final MediaMapper mediaMapper;
     private final MediaSecurityUtils mediaSecurityUtils;
 
-    private static final Set<String> EXTERNAL_SERVICES = Set.of(
-            "skyforms" //skyforms web client as "skyforms"
-    );
+    private static final Set<String> EXTERNAL_SERVICES = Set.of("skyforms");
 
-
-    
     @Override
     public MediaUploadResponseDto uploadMedia(MultipartFile file) {
-        log.info("Starting media upload process for file: {}", file.getOriginalFilename());
+        log.info("Initiating media upload process. FileName: {}, ContentType: {}", file.getOriginalFilename(), file.getContentType());
 
         mediaSecurityUtils.checkUpload();
 
         Media savedMedia;
 
-        if (file.getContentType() != null &&
-                file.getContentType().startsWith("image/")) {
-
+        if (file.getContentType() != null && file.getContentType().startsWith("image/")) {
             savedMedia = imageService.uploadImage(file);
-
         } else {
-
             savedMedia = fileService.uploadFile(file);
         }
 
         if (isExternalService()) {
-            log.info("File is uploaded by external service. Attaching it!");
+            log.info("Media uploaded by external service. Attaching media automatically. MediaId: {}", savedMedia.getId());
             attachMedia(savedMedia.getId());
         }
 
-
-        log.info("Media upload process completed for file: {}. Media ID: {}", file.getOriginalFilename(), savedMedia.getId());
+        log.info("Media upload process completed successfully. MediaId: {}, FileName: {}", savedMedia.getId(), file.getOriginalFilename());
 
         return mediaMapper.toMediaUploadResponseDto(savedMedia);
     }
 
     @Override
     public MediaUploadResponseDto getMediaById(UUID id) {
-        log.info("Retrieving media with ID: {}", id);
+        log.debug("Retrieving media. MediaId: {}", id);
 
         var media = mediaDao.findById(id)
-                .orElseThrow(() -> new RuntimeException("Media not found with ID: " + id));
-
-        log.info("Media retrieved successfully with ID: {}", id);
+                .orElseThrow(() -> {
+                    log.error("Media retrieval failed: Resource not found. MediaId: {}", id);
+                    return new RuntimeException("Media not found with ID: " + id);
+                });
 
         return mediaMapper.toMediaUploadResponseDto(media);
     }
 
-
     public void attachImageMedia(UUID mediaId) {
+        log.info("Initiating image media attachment. MediaId: {}", mediaId);
+
         Media media = mediaDao.findById(mediaId)
-                .orElseThrow(() -> new ResourceNotFoundException(MediaMessages.MEDIA_NOT_FOUND_WITH_ID));
+                .orElseThrow(() -> {
+                    log.error("Image media attachment failed: Resource not found. MediaId: {}", mediaId);
+                    return new ResourceNotFoundException(MediaMessages.MEDIA_NOT_FOUND_WITH_ID);
+                });
 
         if (!media.getFileType().startsWith("image/")) {
+            log.warn("Image media attachment failed: Media is not an image type. MediaId: {}, FileType: {}", mediaId, media.getFileType());
             throw new ValidationException(MediaMessages.MEDIA_IS_NOT_AN_IMAGE);
         }
 
-        /*
-        if (media.isAttached()) {
-            throw new ValidationException(MediaMessages.MEDIA_ALREADY_ATTACHED);
-        }
-         */
-
         media.setAttached(true);
         mediaDao.save(media);
+
+        log.info("Image media attached successfully. MediaId: {}", mediaId);
     }
 
     public void attachMedia(UUID mediaId) {
-        Media media = mediaDao.findById(mediaId)
-                .orElseThrow(() -> new ResourceNotFoundException(MediaMessages.MEDIA_NOT_FOUND_WITH_ID));
+        log.info("Initiating media attachment. MediaId: {}", mediaId);
 
-        /*
-        if (media.isAttached()) {
-            throw new ValidationException(MediaMessages.MEDIA_ALREADY_ATTACHED);
-        }
-         */
+        Media media = mediaDao.findById(mediaId)
+                .orElseThrow(() -> {
+                    log.error("Media attachment failed: Resource not found. MediaId: {}", mediaId);
+                    return new ResourceNotFoundException(MediaMessages.MEDIA_NOT_FOUND_WITH_ID);
+                });
 
         media.setAttached(true);
         mediaDao.save(media);
-    }
 
+        log.info("Media attached successfully. MediaId: {}", mediaId);
+    }
 
     private boolean isExternalService() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken token)) return false;
+
         String azp = token.getToken().getClaimAsString("azp");
         return EXTERNAL_SERVICES.contains(azp);
     }
-
-
-
-
 }
