@@ -63,7 +63,7 @@ public class OpaClient {
     public Set<String> getRolesForEventType(String eventTypeName) {
         try {
             var response = webClient.get()
-                    .uri(opaProperties.getUrl() + "/v1/data/skylab/authz/event_type_roles/" + eventTypeName)
+                    .uri(opaProperties.getUrl() + "/v1/data/skylab/event_type_roles/" + eventTypeName)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
