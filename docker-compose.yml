@@ -73,7 +73,7 @@ services:
     environment:
       POSTGRES_DB: superSkyLabDB
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: YOUR_DB_PASSWORD
+      POSTGRES_PASSWORD: postgres
     #ports:
     #  - "5455:5432"
     volumes:

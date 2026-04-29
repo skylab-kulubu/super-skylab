@@ -1,7 +1,7 @@
 package com.skylab.superapp.core.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -13,8 +13,14 @@ public class DataSourceConfig {
 
     @Primary
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource")
+    @ConfigurationProperties("spring.datasource")
+    public DataSourceProperties dataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Primary
+    @Bean
     public DataSource dataSource() {
-        return DataSourceBuilder.create().build();
+        return dataSourceProperties().initializeDataSourceBuilder().build();
     }
 }
