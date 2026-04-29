@@ -1,6 +1,7 @@
 package com.skylab.superapp.core.results;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.skylab.superapp.core.constants.Messages;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class Result {
 
 	public Result(boolean success, String message, HttpStatus httpStatus) {
 		this.success = success;
-		this.message = message;
+		this.message = Messages.get(message);
 		this.httpStatus = httpStatus;
 		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 		this.path = request.getRequestURI();
