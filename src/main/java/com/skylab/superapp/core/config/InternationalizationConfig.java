@@ -18,7 +18,6 @@ public class InternationalizationConfig {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
         messageSource.setBasename("classpath:messages");
         messageSource.setDefaultEncoding("UTF-8");
-        messageSource.setDefaultLocale(new Locale("tr"));
         messageSource.setCacheSeconds(3600);
         messageSource.setFallbackToSystemLocale(false);
         return messageSource;
