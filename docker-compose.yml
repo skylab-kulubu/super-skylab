@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  super-skylab-app:
-    container_name: super-skylab-app
+  super-skylab:
+    container_name: super-skylab
     build: .
     #ports:
     #  - "9010:9010"
