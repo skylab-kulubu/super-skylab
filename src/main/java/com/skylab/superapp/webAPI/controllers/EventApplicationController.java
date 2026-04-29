@@ -13,14 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/events/{eventId}/applications")
 @RequiredArgsConstructor
@@ -38,8 +36,6 @@ public class EventApplicationController {
             @ApiResponse(responseCode = "404", description = "Etkinlik bulunamadı.", content = @Content)
     })
     public ResponseEntity<Result> applyToEvent(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID eventId) {
-        log.info("Authenticated user application on event with id: {}", eventId);
-
         eventService.applyToEvent(eventId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -57,7 +53,6 @@ public class EventApplicationController {
             @Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID eventId,
             @Valid @RequestBody GuestTicketRequestDto request) {
 
-        log.info("Guest application on event with id: {}", eventId);
 
         eventService.applyToEventAsGuest(eventId, request);
 

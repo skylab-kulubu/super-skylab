@@ -4,6 +4,7 @@ import com.skylab.superapp.business.abstracts.EventDayService;
 import com.skylab.superapp.business.abstracts.TicketCheckInService;
 import com.skylab.superapp.business.abstracts.TicketService;
 import com.skylab.superapp.core.constants.TicketCheckInMessages;
+import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.utilities.security.TicketSecurityUtils;
 import com.skylab.superapp.dataAccess.TicketCheckInDao;
 import com.skylab.superapp.entities.EventDay;
@@ -37,12 +38,12 @@ public class TicketCheckInManager implements TicketCheckInService {
 
         if (!ticket.getEvent().getId().equals(eventDay.getEvent().getId())) {
             log.warn("Check-in failed: Ticket event mismatch. TicketId: {}, EventDayId: {}", ticketId, eventDayId);
-            throw new IllegalArgumentException(TicketCheckInMessages.TICKET_EVENT_MISMATCH);
+            throw new BusinessException(TicketCheckInMessages.TICKET_EVENT_MISMATCH);
         }
 
         if (ticketCheckInDao.existsByTicket_IdAndEventDay_Id(ticketId, eventDayId)) {
             log.warn("Check-in failed: Ticket already checked in. TicketId: {}, EventDayId: {}", ticketId, eventDayId);
-            throw new IllegalStateException(TicketCheckInMessages.TICKET_ALREADY_CHECKED_IN);
+            throw new BusinessException(TicketCheckInMessages.TICKET_ALREADY_CHECKED_IN);
         }
 
         TicketCheckIn ticketCheckIn = TicketCheckIn.builder()

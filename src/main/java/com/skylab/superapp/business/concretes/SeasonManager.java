@@ -2,7 +2,9 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.SeasonService;
 import com.skylab.superapp.core.constants.SeasonMessages;
-import com.skylab.superapp.core.exceptions.*;
+import com.skylab.superapp.core.exceptions.BusinessException;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
+import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.SeasonMapper;
 import com.skylab.superapp.core.utilities.security.SeasonSecurityUtils;
 import com.skylab.superapp.dataAccess.SeasonDao;
@@ -37,7 +39,7 @@ public class SeasonManager implements SeasonService {
 
         if (seasonDao.existsByName(createSeasonRequest.getName())) {
             log.warn("Season creation failed: Name already exists. SeasonName: {}", createSeasonRequest.getName());
-            throw new SeasonNameAlreadyExistsException();
+            throw new BusinessException(SeasonMessages.SEASON_NAME_ALREADY_EXISTS);
         }
 
         Season season = Season.builder()
@@ -79,7 +81,7 @@ public class SeasonManager implements SeasonService {
 
         if (newStartDate != null && newEndDate != null && newStartDate.isAfter(newEndDate)) {
             log.warn("Season update failed: Start date is after end date. SeasonId: {}", id);
-            throw new SeasonStartDateCannotBeAfterEndDateException();
+            throw new ValidationException(SeasonMessages.START_DATE_CANNOT_BE_AFTER_END_DATE);
         }
 
         if (updateSeasonRequest.getStartDate() != null) season.setStartDate(updateSeasonRequest.getStartDate());

@@ -3,6 +3,7 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.core.config.r2.FolderType;
 import com.skylab.superapp.core.constants.ImageMessages;
+import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.ImageMapper;
@@ -72,7 +73,7 @@ public class ImageManager implements ImageService {
             return savedImage;
         } catch (Exception e) {
             log.error("Image upload failed: Unexpected error during processing. FileName: {}, ErrorMessage: {}", image.getOriginalFilename(), e.getMessage(), e);
-            throw new RuntimeException(ImageMessages.IMAGE_UPLOAD_ERROR);
+            throw new BusinessException(ImageMessages.IMAGE_UPLOAD_ERROR);
         }
     }
 
@@ -108,7 +109,7 @@ public class ImageManager implements ImageService {
 
         if (!missing.isEmpty()) {
             log.error("Image batch retrieval failed: Some resources not found. MissingIds: {}", missing);
-            throw new ResourceNotFoundException("Images not found for ids: " + missing);
+            throw new ResourceNotFoundException(ImageMessages.IMAGE_NOT_FOUND);
         }
 
         return images;
@@ -121,7 +122,7 @@ public class ImageManager implements ImageService {
         return imageDao.findById(coverImageId)
                 .orElseThrow(() -> {
                     log.error("Image entity retrieval failed: Resource not found. ImageId: {}", coverImageId);
-                    return new ResourceNotFoundException("Image not found with id: " + coverImageId);
+                    return new ResourceNotFoundException(ImageMessages.IMAGE_NOT_FOUND);
                 });
     }
 
@@ -140,7 +141,7 @@ public class ImageManager implements ImageService {
     private String getFileExtension(String fileName) {
         if (fileName == null || !fileName.contains(".")) {
             log.warn("File extension validation failed: No extension found. FileName: {}", fileName);
-            throw new IllegalArgumentException("File has no extension: " + fileName);
+            throw new ValidationException(ImageMessages.IMAGE_EXTENSION_MISSING);
         }
         return fileName.substring(fileName.lastIndexOf("."));
     }

@@ -4,8 +4,8 @@ import com.skylab.superapp.core.security.opa.OpaClient;
 import com.skylab.superapp.core.security.opa.OpaInput;
 import com.skylab.superapp.core.security.opa.OpaResource;
 import com.skylab.superapp.core.security.opa.OpaUser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,23 +14,20 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
+@RequiredArgsConstructor
 public abstract class BaseSecurityUtils {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final OpaClient opaClient;
 
-    protected BaseSecurityUtils(OpaClient opaClient) {
-        this.opaClient = opaClient;
-    }
-
-
     protected void checkPermission(String resourceType, String action, String eventTypeName) {
-        logger.debug("OPA sorgusu başlatıldı - Kaynak: {}, Aksiyon: {}, EventType: {}", resourceType, action, eventTypeName);
+        log.debug("Initiating OPA permission check. Resource: {}, Action: {}, EventType: {}", resourceType, action, eventTypeName);
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
-            throw new AccessDeniedException("Kullanıcı girişi yapılmamış!");
+            log.warn("OPA authorization failed: User is not authenticated. Resource: {}, Action: {}", resourceType, action);
+            throw new AccessDeniedException("user.not.authenticated");
         }
 
         List<String> roles = auth.getAuthorities().stream()
@@ -51,11 +48,12 @@ public abstract class BaseSecurityUtils {
                 .build();
 
         if (!opaClient.isAllowed(input)) {
-            logger.error("OPA REDDETTİ! Kaynak: {} Aksiyon: {} Kullanıcı: {} Roller: {}",
+            log.warn("OPA authorization denied. Resource: {}, Action: {}, User: {}, Roles: {}",
                     resourceType, action, auth.getName(), roles);
-            throw new AccessDeniedException("Bu işlem için yetkiniz bulunmamaktadır.");
+
+            throw new AccessDeniedException("security.access.denied");
         }
 
-        logger.debug("OPA ONAYLADI! Kaynak: {} Aksiyon: {}", resourceType, action);
+        log.debug("OPA authorization granted. Resource: {}, Action: {}, User: {}", resourceType, action, auth.getName());
     }
 }

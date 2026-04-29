@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/competitors")
 @RequiredArgsConstructor
@@ -42,7 +40,6 @@ public class CompetitorController {
             @ApiResponse(responseCode = "403", description = "Yetkisiz erişim.", content = @Content)
     })
     public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@RequestBody CreateCompetitorRequest request) {
-        log.info("REST request to add new competitor for user id: {} to event id: {}", request.getUserId(), request.getEventId());
         var result = competitorService.addCompetitor(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.CREATED));
@@ -51,7 +48,6 @@ public class CompetitorController {
     @GetMapping
     @Operation(summary = "Tüm Yarışmacıları Listele", description = "Sistemdeki tüm etkinliklere ait tüm yarışmacı kayıtlarını getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getAllCompetitors() {
-        log.info("REST request to get all competitors");
         var result = competitorService.getAllCompetitors();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
@@ -60,7 +56,6 @@ public class CompetitorController {
     @GetMapping("/{id}")
     @Operation(summary = "Yarışmacı Detayını Getir", description = "Belirtilen yarışmacı ID'sine ait detayları döner.")
     public ResponseEntity<DataResult<CompetitorDto>> getCompetitorById(@PathVariable UUID id) {
-        log.info("REST request to get competitor by id: {}", id);
         var result = competitorService.getCompetitorById(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
@@ -69,7 +64,6 @@ public class CompetitorController {
     @PutMapping("/{id}")
     @Operation(summary = "Yarışmacı Verisini Güncelle", description = "Yarışmacının puanlama veya kazanma durumunu günceller.")
     public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @RequestBody UpdateCompetitorRequest request) {
-        log.info("REST request to update competitor with id: {}", id);
         var result = competitorService.updateCompetitor(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.OK));
@@ -78,7 +72,6 @@ public class CompetitorController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Yarışmacı Kaydını Sil", description = "Yarışmacı atamasını sistemden kalıcı olarak temizler.")
     public ResponseEntity<Result> deleteCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id) {
-        log.info("REST request to delete competitor with id: {}", id);
         competitorService.deleteCompetitor(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(CompetitorMessages.COMPETITOR_DELETE_SUCCESS, HttpStatus.OK));
@@ -87,7 +80,6 @@ public class CompetitorController {
     @GetMapping("/me")
     @Operation(summary = "Aktif Kullanıcının Yarışma Geçmişi", description = "Sisteme giriş yapmış olan kullanıcının katıldığı tüm yarışmaların bilgilerini getirir.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getMyCompetitors() {
-        log.info("REST request to get competitors for current authenticated user");
         var result = competitorService.getMyCompetitors();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
@@ -96,7 +88,6 @@ public class CompetitorController {
     @GetMapping("/leaderboard/type/{eventTypeName}")
     @Operation(summary = "Genel Liderlik Tablosu", description = "Belirtilen etkinlik türüne ait tüm zamanların liderlik sıralamasını getirir. Oturum kontrolü gerektirmez.")
     public ResponseEntity<DataResult<List<LeaderboardDto>>> getLeaderboard(@Parameter(description = "Etkinlik Türü Adı") @PathVariable String eventTypeName) {
-        log.info("REST request to get global leaderboard for event type: {}", eventTypeName);
         List<LeaderboardDto> result = competitorService.getLeaderboardByEventType(eventTypeName);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
@@ -106,7 +97,6 @@ public class CompetitorController {
     @Operation(summary = "Sezonluk Liderlik Tablosu", description = "Belirtilen sezon ve etkinlik türüne ait dönemsel liderlik sıralamasını getirir. Oturum kontrolü gerektirmez.")
     public ResponseEntity<DataResult<List<LeaderboardDto>>> getSeasonLeaderboard(@Parameter(description = "Sezon UUID") @PathVariable UUID seasonId,
                                                                                  @Parameter(description = "Etkinlik Türü Adı") @PathVariable String eventTypeName) {
-        log.info("REST request to get season leaderboard for season id: {} and event type: {}", seasonId, eventTypeName);
         List<LeaderboardDto> result = competitorService.getLeaderboardBySeasonAndEventType(seasonId, eventTypeName);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));

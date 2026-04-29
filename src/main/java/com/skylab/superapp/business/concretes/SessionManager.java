@@ -2,7 +2,8 @@ package com.skylab.superapp.business.concretes;
 
 import com.skylab.superapp.business.abstracts.*;
 import com.skylab.superapp.core.constants.SessionMessages;
-import com.skylab.superapp.core.exceptions.*;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
+import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.SessionMapper;
 import com.skylab.superapp.core.utilities.security.SessionSecurityUtils;
 import com.skylab.superapp.dataAccess.SessionDao;
@@ -84,7 +85,7 @@ public class SessionManager implements SessionService {
 
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
             log.warn("Session creation failed: Start date is after end date. Title: {}", createSessionDto.getTitle());
-            throw new SessionStartDateCannotBeAfterEndDateException();
+            throw new ValidationException(SessionMessages.START_DATE_CANNOT_BE_AFTER_END_DATE);
         }
 
         Image speakerImage = null;

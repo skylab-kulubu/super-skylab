@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/sessions")
 @RequiredArgsConstructor
@@ -36,7 +34,6 @@ public class SessionController {
     @GetMapping
     @Operation(summary = "Tüm Oturumları Listele", description = "Sistemdeki mevcut tüm bağımsız oturumları listeler.")
     public ResponseEntity<DataResult<List<SessionDto>>> getAllSessions() {
-        log.info("REST request to get all sessions");
         var result = sessionService.getAllSessions();
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -50,7 +47,6 @@ public class SessionController {
             @ApiResponse(responseCode = "400", description = "Validasyon hatası veya tarihler arası uyumsuzluk.", content = @Content)
     })
     public ResponseEntity<DataResult<SessionDto>> addSession(@Parameter(description = "Oturum Verileri (JSON)") @RequestPart("data") @Valid CreateSessionRequest request) {
-        log.info("REST request to add new session with title: {}", request.getTitle());
         var result = sessionService.addSession(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, SessionMessages.SESSION_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
@@ -63,7 +59,6 @@ public class SessionController {
             @Parameter(description = "Oturum UUID") @PathVariable UUID id,
             @RequestBody @Valid UpdateSessionRequest request) {
 
-        log.info("REST request to update session with id: {}", id);
         var result = sessionService.updateSession(id, request);
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -74,7 +69,6 @@ public class SessionController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Oturum Sil", description = "Oturum kaydını sistemden kalıcı olarak temizler.")
     public ResponseEntity<DataResult<Void>> deleteSession(@Parameter(description = "Oturum UUID") @PathVariable UUID id) {
-        log.info("REST request to delete session with id: {}", id);
         sessionService.deleteSession(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(null, SessionMessages.SESSION_DELETED_SUCCESSFULLY, HttpStatus.OK));

@@ -2,13 +2,12 @@ package com.skylab.superapp.core.identity.keycloak;
 
 import com.skylab.superapp.core.properties.KeycloakProperties;
 import jakarta.ws.rs.core.Response;
-import org.keycloak.admin.client.CreatedResponseUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,24 +19,24 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
-
+@Slf4j
 @Service
 public class KeycloakAdminService {
 
     private final Keycloak keycloak;
-    private final Logger logger = LoggerFactory.getLogger(KeycloakAdminService.class);
     private final KeycloakProperties keycloakProperties;
     private final JdbcTemplate keycloakJdbc;
 
-
-    public KeycloakAdminService(Keycloak keycloak, KeycloakProperties keycloakProperties, @Qualifier("keycloakJdbcTemplate") JdbcTemplate keycloakJdbc) {
+    public KeycloakAdminService(Keycloak keycloak,
+                                KeycloakProperties keycloakProperties,
+                                @Qualifier("keycloakJdbcTemplate") JdbcTemplate keycloakJdbc) {
         this.keycloak = keycloak;
         this.keycloakProperties = keycloakProperties;
         this.keycloakJdbc = keycloakJdbc;
     }
 
-    public void updateUserFullName(UUID userId, String firstName, String lastName){
-        logger.info("Updating Keycloak user {} full name to {} {}", userId, firstName, lastName);
+    public void updateUserFullName(UUID userId, String firstName, String lastName) {
+        log.info("Updating user full name in Keycloak. UserId: {}, NewName: {} {}", userId, firstName, lastName);
 
         try {
             UserResource userResource = keycloak.realm(keycloakProperties.getRealm()).users().get(userId.toString());
@@ -47,25 +46,23 @@ public class KeycloakAdminService {
             user.setLastName(lastName);
 
             userResource.update(user);
-            logger.info("Successfully updated Keycloak user {} full name to {} {}", userId, firstName, lastName);
+            log.info("Successfully updated user full name in Keycloak. UserId: {}", userId);
 
-        } catch (Exception e){
-            logger.error("Error updating Keycloak user {} full name to {} {}", userId, firstName, lastName);
-            throw new RuntimeException("An error occured while updating user!");
+        } catch (Exception e) {
+            log.error("Failed to update user full name in Keycloak. UserId: {}, Error: {}", userId, e.getMessage());
+            throw new RuntimeException("An error occurred while updating user full name!");
         }
     }
 
-
-
-
     public void linkUserToLdap(UUID userId, String generatedLdapUsername) {
-        logger.info("Linking Keycloak user {} to LDAP with 'davsum' method via DB", userId);
+        log.info("Linking Keycloak user to LDAP via DB. UserId: {}, LdapUsername: {}", userId, generatedLdapUsername);
 
         String providerId = keycloakProperties.getLdapProviderId();
         String ldapDn = "uid=" + generatedLdapUsername + ",ou=people,dc=yildizskylab,dc=com";
         String now = String.valueOf(System.currentTimeMillis());
 
         try {
+            log.debug("Cleaning existing LDAP attributes for UserId: {}", userId);
             keycloakJdbc.update("DELETE FROM user_attribute WHERE user_id = ? AND name IN ('LDAP_ID', 'LDAP_ENTRY_DN', 'createTimestamp', 'modifyTimestamp')", userId.toString());
 
             insertAttribute(userId, "LDAP_ID", generatedLdapUsername);
@@ -73,20 +70,22 @@ public class KeycloakAdminService {
             insertAttribute(userId, "createTimestamp", now);
             insertAttribute(userId, "modifyTimestamp", now);
 
+            log.debug("Updating federation link in user_entity. UserId: {}, ProviderId: {}", userId, providerId);
             keycloakJdbc.update("UPDATE user_entity SET federation_link = ?, username = ? WHERE id = ?",
                     providerId, generatedLdapUsername, userId.toString());
 
             try {
                 keycloakJdbc.update("INSERT INTO federated_user (id, storage_provider_id, realm_id) SELECT id, ?, realm_id FROM user_entity WHERE id = ?",
                         providerId, userId.toString());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.debug("User already exists in federated_user table. UserId: {}", userId);
+            }
 
-            //LMAO
-            logger.info("Successfully linked Keycloak user {} to LDAP.", userId);
+            log.info("Successfully linked user to LDAP. UserId: {}", userId);
 
         } catch (Exception e) {
-            logger.error("DB error: {}", e.getMessage());
-            throw new RuntimeException("Exception while trying to link: ", e);
+            log.error("Database error while linking user to LDAP. UserId: {}, Error: {}", userId, e.getMessage());
+            throw new RuntimeException("Exception while trying to link user: ", e);
         }
     }
 
@@ -96,30 +95,29 @@ public class KeycloakAdminService {
     }
 
     public void deleteUser(UUID id) {
-        logger.info("Deleting Keycloak user with id {}", id);
+        log.info("Initiating Keycloak user deletion. UserId: {}", id);
 
         try {
             Response response = keycloak.realm(keycloakProperties.getRealm()).users().delete(id.toString());
-            if (response.getStatus() >= 200 && response.getStatus() < 300) {
-                logger.info("Successfully deleted user {} from Keycloak", id);
-            } else if (response.getStatus() == 404) {
-                logger.warn("User {} not found in Keycloak. It might have already been deleted.", id);
+            int status = response.getStatus();
+
+            if (status >= 200 && status < 300) {
+                log.info("User deleted from Keycloak successfully. UserId: {}", id);
+            } else if (status == 404) {
+                log.warn("User not found in Keycloak during deletion. UserId: {}", id);
             } else {
-                logger.error("Failed to delete user {} from Keycloak. HTTP Status: {}", id, response.getStatus());
-                throw new RuntimeException("An error occurred while deleting user from Keycloak! HTTP Status: " + response.getStatus());
+                log.error("Failed to delete user from Keycloak. UserId: {}, HttpStatus: {}", id, status);
+                throw new RuntimeException("Error deleting user from Keycloak! Status: " + status);
             }
-
-
             response.close();
-        }catch (Exception e){
-            logger.error("Error deleting Keycloak user with id {}", id, e);
-            throw new RuntimeException("An error occured while deleting user from Keycloak!");
+        } catch (Exception e) {
+            log.error("Unexpected error during Keycloak user deletion. UserId: {}, Error: {}", id, e.getMessage());
+            throw new RuntimeException("An error occurred while deleting user from Keycloak!");
         }
-
-        }
+    }
 
     public Set<UUID> getUserIdsByRoleName(String roleName) {
-        logger.info("Getting user ids by role name {} (including inherited)", roleName);
+        log.debug("Retrieving user IDs for role: {}", roleName);
         Set<UUID> allUserIds = new HashSet<>();
 
         try {
@@ -133,13 +131,10 @@ public class KeycloakAdminService {
                 addedNew = false;
                 for (RoleRepresentation role : allRealmRoles) {
                     if (Boolean.TRUE.equals(role.isComposite()) && !rolesToQuery.contains(role.getName())) {
-
                         Set<RoleRepresentation> composites = keycloak.realm(keycloakProperties.getRealm())
                                 .roles().get(role.getName()).getRoleComposites();
 
-                        boolean containsTarget = composites.stream()
-                                .anyMatch(c -> rolesToQuery.contains(c.getName()));
-
+                        boolean containsTarget = composites.stream().anyMatch(c -> rolesToQuery.contains(c.getName()));
                         if (containsTarget) {
                             rolesToQuery.add(role.getName());
                             addedNew = true;
@@ -148,16 +143,16 @@ public class KeycloakAdminService {
                 }
             } while (addedNew);
 
-            logger.info("Target role '{}' is provided by these roles: {}", roleName, rolesToQuery);
+            log.debug("Roles hierarchy resolved for '{}': {}", roleName, rolesToQuery);
 
-            for (String roleToQuery : rolesToQuery) {
-                allUserIds.addAll(getUsersFromRole(roleToQuery));
+            for (String queryRole : rolesToQuery) {
+                allUserIds.addAll(getUsersFromRole(queryRole));
             }
 
             return allUserIds;
 
         } catch (Exception e) {
-            logger.error("Error getting user ids by role name {}", roleName, e);
+            log.error("Error retrieving user IDs for role: {}. Error: {}", roleName, e.getMessage());
             return Collections.emptySet();
         }
     }
@@ -172,6 +167,7 @@ public class KeycloakAdminService {
             return ids;
 
         } catch (jakarta.ws.rs.NotFoundException e) {
+            log.debug("Role '{}' not found in Realm, searching in Clients.", roleName);
             List<org.keycloak.representations.idm.ClientRepresentation> clients =
                     keycloak.realm(keycloakProperties.getRealm()).clients().findAll();
 
@@ -183,35 +179,31 @@ public class KeycloakAdminService {
 
                     members.forEach(u -> ids.add(UUID.fromString(u.getId())));
                     return ids;
-                } catch (jakarta.ws.rs.NotFoundException ignored) {
-
-                }
+                } catch (jakarta.ws.rs.NotFoundException ignored) {}
             }
-            logger.warn("Role '{}' not found in Realm or any Client!", roleName);
+            log.warn("Role '{}' not found in Realm or any Client!", roleName);
             return ids;
         }
     }
 
-    public void updateUserAttribute(UUID userId, String attributeKey, String attributeValue){
-        logger.info("Updating Keycloak user {} attribute {} to {}", userId, attributeKey, attributeValue);
+    public void updateUserAttribute(UUID userId, String attributeKey, String attributeValue) {
+        log.info("Updating Keycloak user attribute. UserId: {}, Key: {}, Value: {}", userId, attributeKey, attributeValue);
 
         var userResource = keycloak.realm(keycloakProperties.getRealm()).users().get(userId.toString());
         var user = userResource.toRepresentation();
 
         Map<String, List<String>> attributes = user.getAttributes();
-        if (attributes == null){
-            attributes = new HashMap<>();
-        }
+        if (attributes == null) attributes = new HashMap<>();
 
         attributes.put(attributeKey, Collections.singletonList(attributeValue));
         user.setAttributes(attributes);
         userResource.update(user);
 
-        logger.info("Successfully updated Keycloak user {} attribute {} to {}", userId, attributeKey, attributeValue);
+        log.info("Successfully updated user attribute. UserId: {}, Key: {}", userId, attributeKey);
     }
 
     public String getObsBrokerToken(String userJwt) {
-        logger.info("Getting OBS broker token from Keycloak for user with JWT");
+        log.debug("Requesting OBS broker token from Keycloak.");
 
         String brokerUrl = keycloakProperties.getServerUrl() +
                 "/realms/" + keycloakProperties.getRealm() +
@@ -220,39 +212,29 @@ public class KeycloakAdminService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(userJwt);
-
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
             RestTemplate restTemplate = new RestTemplate();
-
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    brokerUrl,
-                    HttpMethod.GET,
-                    entity,
-                    Map.class
-            );
+            ResponseEntity<Map> response = restTemplate.exchange(brokerUrl, HttpMethod.GET, entity, Map.class);
 
             if (response.getBody() != null && response.getBody().containsKey("access_token")) {
-                logger.info("Successfully retrieved OBS token from Keycloak broker.");
+                log.info("Successfully retrieved OBS broker token.");
                 return (String) response.getBody().get("access_token");
             }
+            log.warn("OBS broker token response did not contain access_token.");
 
         } catch (Exception e) {
-            logger.error("Error occured, details::", e);
+            log.error("Failed to retrieve OBS broker token. Error: {}", e.getMessage());
         }
-
         return null;
     }
 
-
     public UserRepresentation getUserById(String userId) {
+        log.debug("Fetching Keycloak user by ID: {}", userId);
         try {
-            return keycloak.realm(keycloakProperties.getRealm())
-                    .users()
-                    .get(userId)
-                    .toRepresentation();
+            return keycloak.realm(keycloakProperties.getRealm()).users().get(userId).toRepresentation();
         } catch (Exception e) {
-            logger.error("Error fetching user by ID {} from Keycloak: {}", userId, e.getMessage());
+            log.error("Failed to fetch user from Keycloak. UserId: {}, Error: {}", userId, e.getMessage());
             return null;
         }
     }

@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/seasons/{seasonId}/events")
 @RequiredArgsConstructor
@@ -41,7 +39,6 @@ public class SeasonEventController {
     })
     public ResponseEntity<DataResult<List<EventDto>>> getEventsBySeason(
             @Parameter(description = "Sezon UUID") @PathVariable UUID seasonId) {
-        log.info("REST request to get events for season id: {}", seasonId);
         var result = eventService.getEventsBySeasonId(seasonId);
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -59,7 +56,6 @@ public class SeasonEventController {
     public ResponseEntity<Result> addEventToSeason(
             @Parameter(description = "Sezon UUID") @PathVariable UUID seasonId,
             @Parameter(description = "Etkinlik UUID") @PathVariable UUID eventId) {
-        log.info("REST request to assign event id: {} to season id: {}", eventId, seasonId);
         eventService.assignSeasonToEvent(eventId, seasonId);
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -75,7 +71,6 @@ public class SeasonEventController {
     public ResponseEntity<Result> removeEventFromSeason(
             @Parameter(description = "Sezon UUID") @PathVariable UUID seasonId,
             @Parameter(description = "Etkinlik UUID") @PathVariable UUID eventId) {
-        log.info("REST request to remove event id: {} from season id: {}", eventId, seasonId);
         eventService.removeSeasonFromEvent(eventId);
         //TODO: Check if the event is actually associated with the season before attempting to remove it, and return appropriate response if not.
 

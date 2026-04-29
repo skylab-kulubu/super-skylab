@@ -9,9 +9,6 @@ public final class EventTypeMessages {
     public static final String EVENT_TYPE_DELETED = "event.type.deleted";
     public static final String EVENT_TYPE_NAME_CANNOT_BE_NULL_OR_BLANK = "event.type.name.cannot.be.null.or.blank";
     public static final String COORDINATORS_FOUND = "event.type.coordinators.found";
-
-    private EventTypeMessages() {}
-
-    public static final String FOUND = "event.type.found";
+    public static final String EVENT_TYPE_NOT_DEFINED_IN_OPA = "event.type.not.defined.in.opa";
     public static final String EVENT_TYPE_NOT_FOUND = "event.type.not.found";
 }

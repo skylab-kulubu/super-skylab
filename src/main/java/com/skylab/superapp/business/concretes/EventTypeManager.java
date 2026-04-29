@@ -67,7 +67,7 @@ public class EventTypeManager implements EventTypeService {
 
         if (!opaClient.isValidEventType(createEventTypeRequest.getName())) {
             log.warn("Event type creation failed: Name not defined in OPA or e-skylab. EventTypeName: {}", createEventTypeRequest.getName());
-            throw new BusinessException(createEventTypeRequest.getName() + " OPA veya e-skylab'de tanımlı değil. Önce e-skylab'de veya OPA'da bu isimde bir rol/kural oluşturun.");
+            throw new BusinessException(EventTypeMessages.EVENT_TYPE_NOT_DEFINED_IN_OPA);
         }
 
         var eventType = EventType.builder()
@@ -90,7 +90,7 @@ public class EventTypeManager implements EventTypeService {
         if (updateEventTypeRequest.getName() != null && !updateEventTypeRequest.getName().isEmpty()) {
             if (!opaClient.isValidEventType(updateEventTypeRequest.getName())) {
                 log.warn("Event type update failed: New name not defined in OPA or e-skylab. EventTypeId: {}, RequestedName: {}", id, updateEventTypeRequest.getName());
-                throw new BusinessException(updateEventTypeRequest.getName() + " OPA veya e-skylab'de tanımlı değil. Önce e-skylab'de veya OPA'da bu isimde bir rol/kural oluşturun.");
+                throw new BusinessException(EventTypeMessages.EVENT_TYPE_NOT_DEFINED_IN_OPA);
             }
             eventType.setName(updateEventTypeRequest.getName());
         }

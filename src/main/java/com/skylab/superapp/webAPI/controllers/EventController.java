@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
@@ -46,7 +44,6 @@ public class EventController {
             @RequestParam(required = false) String typeName
 
     ) {
-        log.info("REST request to get all events. Type filter: {}", typeName);
 
         List<EventDto> result;
         if (typeName != null && !typeName.isBlank()) {
@@ -64,7 +61,6 @@ public class EventController {
             @ApiResponse(responseCode = "200", description = "Aktif etkinlikler başarıyla listelendi.", content = @Content(mediaType = "application/json"))
     })
     public ResponseEntity<DataResult<List<EventDto>>> getActiveEvents() {
-        log.info("REST request to get all active events");
         var result = eventService.getAllEventByIsActive(true);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_ACTIVE_EVENTS, HttpStatus.OK));
@@ -79,7 +75,6 @@ public class EventController {
             @ApiResponse(responseCode = "404", description = "Etkinlik bulunamadı.", content = @Content)
     })
     public ResponseEntity<DataResult<EventDto>> getEventById(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id) {
-        log.info("REST request to get event by id: {}", id);
         var result = eventService.getEventById(id);
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -99,11 +94,9 @@ public class EventController {
     public ResponseEntity<DataResult<EventDto>> addEvent(
             @Parameter(description = "Etkinlik verileri (JSON)") @Valid @RequestPart("data") CreateEventRequest createEventRequest) {
 
-        log.info("REST request to add a new event");
 
         var eventResult = eventService.addEvent(createEventRequest);
 
-        log.info("Successfully created event with id: {}", eventResult.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(eventResult, EventMessages.SUCCESS_ADD_EVENT, HttpStatus.CREATED));
@@ -118,7 +111,6 @@ public class EventController {
     })
     public ResponseEntity<DataResult<EventDto>> updateEvent(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id,
                                                             @RequestBody UpdateEventRequest updateEventRequest) {
-        log.info("REST request to update event with id: {}", id);
         var result = eventService.updateEvent(id, updateEventRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
@@ -134,7 +126,6 @@ public class EventController {
     })
     public ResponseEntity<Result> deleteEvent(
             @Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id) {
-        log.info("REST request to delete event with id: {}", id);
         eventService.deleteEvent(id);
         return ResponseEntity.status(HttpStatus.OK).body(new SuccessResult("Etkinlik başarıyla silindi.", HttpStatus.OK));
     }

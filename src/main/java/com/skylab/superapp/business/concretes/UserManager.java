@@ -3,7 +3,8 @@ package com.skylab.superapp.business.concretes;
 import com.skylab.superapp.business.abstracts.ImageService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.UserMessages;
-import com.skylab.superapp.core.exceptions.*;
+import com.skylab.superapp.core.exceptions.BusinessException;
+import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.identity.UserIdentityGenerator;
 import com.skylab.superapp.core.identity.keycloak.KeycloakAdminService;
 import com.skylab.superapp.core.identity.ldap.LdapService;
@@ -55,7 +56,7 @@ public class UserManager implements UserService {
 
         if (!(authentication.getPrincipal() instanceof Jwt jwt)) {
             log.error("Authentication failed: Principal is not JWT. ActualType: {}", authentication.getPrincipal().getClass().getName());
-            throw new RuntimeException(UserMessages.PRINCIPAL_IS_NOT_JWT);
+            throw new AccessDeniedException(UserMessages.PRINCIPAL_IS_NOT_JWT);
         }
 
         UUID userId = UUID.fromString(jwt.getClaimAsString("sub"));
@@ -194,7 +195,7 @@ public class UserManager implements UserService {
 
         if (user.isLdapUser()) {
             log.warn("LDAP promotion failed: User is already an LDAP user. UserId: {}", userId);
-            throw new RuntimeException(UserMessages.USER_ALREADY_LDAP_USER);
+            throw new BusinessException(UserMessages.USER_ALREADY_LDAP_USER);
         }
 
         String ldapUsername = userIdentityGenerator.generateLdapUsername(

@@ -257,7 +257,7 @@ public class EventManager implements EventService {
 
         if (ticketDao.existsByOwner_IdAndEvent_Id(authenticatedUser.getId(), eventId)) {
             log.warn("Event registration failed: User already registered. EventId: {}, UserId: {}", eventId, authenticatedUser.getId());
-            throw new BusinessException("Zaten bu etkinliğe kayıtlısınız!");
+            throw new BusinessException(EventMessages.USER_ALREADY_REGISTERED);
         }
 
         Ticket ticket = Ticket.builder()

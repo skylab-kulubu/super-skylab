@@ -66,7 +66,7 @@ public class MediaManager implements MediaService {
         var media = mediaDao.findById(id)
                 .orElseThrow(() -> {
                     log.error("Media retrieval failed: Resource not found. MediaId: {}", id);
-                    return new RuntimeException("Media not found with ID: " + id);
+                    return new ResourceNotFoundException(MediaMessages.MEDIA_NOT_FOUND_WITH_ID);
                 });
 
         return mediaMapper.toMediaUploadResponseDto(media);

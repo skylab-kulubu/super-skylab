@@ -8,14 +8,12 @@ import com.skylab.superapp.entities.DTOs.User.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/event-types/{eventTypeName}/coordinators")
 @RequiredArgsConstructor
@@ -27,7 +25,6 @@ public class EventTypeCoordinatorController {
     @GetMapping
     @Operation(summary = "Kategori Koordinatörlerini Getir", description = "Belirtilen etkinlik türünün (Örn: AGC) sorumlu koordinatör listesini getirir. Genel erişime açıktır.")
     public ResponseEntity<DataResult<Set<UserDto>>> getCoordinatorsByEventType(@PathVariable String eventTypeName) {
-        log.info("REST request to get coordinators for event type: {}", eventTypeName);
 
         Set<UserDto> result = eventTypeService.getCoordinatorsByEventTypeName(eventTypeName);
 

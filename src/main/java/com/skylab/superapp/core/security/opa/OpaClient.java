@@ -18,12 +18,12 @@ import java.util.Set;
 public class OpaClient {
 
     private final WebClient webClient;
-
     private final OpaProperties opaProperties;
 
-
-
     public boolean isAllowed(OpaInput input) {
+        log.debug("Initiating OPA authorization check. Resource: {}, Action: {}",
+                input.getResource().getType(), input.getAction());
+
         try {
             OpaResponse response = webClient.post()
                     .uri(opaProperties.getUrl() + "/v1/data/skylab/authz/allow")
@@ -32,19 +32,20 @@ public class OpaClient {
                     .bodyToMono(OpaResponse.class)
                     .block();
 
+            boolean isAllowed = response != null && Boolean.TRUE.equals(response.getResult());
+            log.debug("OPA authorization check completed. IsAllowed: {}", isAllowed);
 
-            return response != null && Boolean.TRUE.equals(response.getResult());
-
+            return isAllowed;
 
         } catch (Exception e) {
-            throw new AccessDeniedException("OPA Servisine erişilemedi!");
+            log.error("OPA service connection failed during authorization check. ErrorMessage: {}", e.getMessage(), e);
+            throw new AccessDeniedException("opa.service.unavailable");
         }
-
-
     }
 
-
     public boolean isValidEventType(String eventTypeName) {
+        log.debug("Initiating OPA event type validation. EventTypeName: {}", eventTypeName);
+
         try {
             OpaResponse response = webClient.post()
                     .uri(opaProperties.getUrl() + "/v1/data/skylab/event_types/is_valid")
@@ -53,14 +54,20 @@ public class OpaClient {
                     .bodyToMono(OpaResponse.class)
                     .block();
 
-            return response != null && Boolean.TRUE.equals(response.getResult());
+            boolean isValid = response != null && Boolean.TRUE.equals(response.getResult());
+            log.debug("OPA event type validation completed. EventTypeName: {}, IsValid: {}", eventTypeName, isValid);
+
+            return isValid;
+
         } catch (Exception e) {
-            throw new AccessDeniedException("OPA Servisine erişilemedi!.");
+            log.error("OPA service connection failed during event type validation. EventTypeName: {}, ErrorMessage: {}", eventTypeName, e.getMessage(), e);
+            throw new AccessDeniedException("opa.service.unavailable");
         }
     }
 
-
     public Set<String> getRolesForEventType(String eventTypeName) {
+        log.debug("Initiating OPA role retrieval for event type. EventTypeName: {}", eventTypeName);
+
         try {
             var response = webClient.get()
                     .uri(opaProperties.getUrl() + "/v1/data/skylab/event_type_roles/" + eventTypeName)
@@ -69,14 +76,17 @@ public class OpaClient {
                     .block();
 
             if (response == null || response.get("result") == null) {
+                log.debug("OPA role retrieval completed: No roles found. EventTypeName: {}", eventTypeName);
                 return Set.of();
             }
 
             List<String> roles = (List<String>) response.get("result");
+            log.info("OPA roles retrieved successfully. EventTypeName: {}, RoleCount: {}", eventTypeName, roles.size());
+
             return new HashSet<>(roles);
 
         } catch (Exception e) {
-            log.warn("OPA'dan rol listesi alınamadı: {}", eventTypeName);
+            log.error("OPA service connection failed during role retrieval. EventTypeName: {}, ErrorMessage: {}", eventTypeName, e.getMessage(), e);
             return Set.of();
         }
     }

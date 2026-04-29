@@ -8,7 +8,6 @@ import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/events/{eventId}/sessions")
 @RequiredArgsConstructor
@@ -31,7 +29,6 @@ public class EventSessionController {
     @GetMapping
     @Operation(summary = "Etkinliğin Oturumlarını Getir", description = "Verilen etkinlik ID'sine ait tüm oturumları listeler.")
     public ResponseEntity<DataResult<List<SessionDto>>> getSessionsByEventId(@PathVariable UUID eventId) {
-        log.info("REST request to get sessions for event id: {}", eventId);
         var result = sessionService.getSessionsByEventId(eventId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_SESSIONS_BY_EVENT_ID, HttpStatus.OK));

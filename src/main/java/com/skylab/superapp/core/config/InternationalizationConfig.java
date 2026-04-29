@@ -27,11 +27,8 @@ public class InternationalizationConfig {
     @Bean
     public LocaleResolver localeResolver() {
         AcceptHeaderLocaleResolver localeResolver = new AcceptHeaderLocaleResolver();
-        localeResolver.setDefaultLocale(new Locale("tr"));
-        localeResolver.setSupportedLocales(Arrays.asList(
-                new Locale("tr"),
-                Locale.ENGLISH
-        ));
+        localeResolver.setDefaultLocale(Locale.ENGLISH);
+        localeResolver.setSupportedLocales(Arrays.asList(Locale.ENGLISH, new Locale("tr")));
         return localeResolver;
     }
 }

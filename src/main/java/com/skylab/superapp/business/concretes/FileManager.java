@@ -35,12 +35,12 @@ public class FileManager implements FileService {
 
         if (file.isEmpty()) {
             log.warn("File upload failed: File is empty. FileName: {}", file.getOriginalFilename());
-            throw new ValidationException(FileMessages.FILE_IS_EMPTY);
+            throw new ValidationException(FileMessages.FILE_CANNOT_BE_EMPTY);
         }
 
         if (file.getSize() > 20 * 1024 * 1024) {
-            log.warn("File upload failed: File size exceeds 20MB limit. FileName: {}, FileSize: {}", file.getOriginalFilename(), file.getSize());
-            throw new ValidationException(FileMessages.FILE_SIZE_EXCEEDED);
+            log.warn("File upload failed: File size exceeds 20MB limit. FileName: {}", file.getOriginalFilename());
+            throw new ValidationException(FileMessages.FILE_SIZE_LIMIT_EXCEEDED);
         }
 
         try {
@@ -67,7 +67,7 @@ public class FileManager implements FileService {
 
         } catch (Exception e) {
             log.error("File upload failed: Unexpected error during processing. FileName: {}, ErrorMessage: {}", file.getOriginalFilename(), e.getMessage(), e);
-            throw new BusinessException(FileMessages.FILE_UPLOAD_FAILED + ": " + e.getMessage());
+            throw new BusinessException(FileMessages.FILE_UPLOAD_ERROR);
         }
     }
 
@@ -85,7 +85,7 @@ public class FileManager implements FileService {
     private String getFileExtension(String fileName) {
         if (fileName == null || !fileName.contains(".")) {
             log.warn("File extension validation failed: No extension found. FileName: {}", fileName);
-            throw new ValidationException(FileMessages.FILE_HAS_NO_EXTENSION);
+            throw new ValidationException(FileMessages.FILE_EXTENSION_MISSING);
         }
         return fileName.substring(fileName.lastIndexOf("."));
     }
@@ -97,7 +97,7 @@ public class FileManager implements FileService {
         File file = fileDao.findById(fileId)
                 .orElseThrow(() -> {
                     log.error("File deletion failed: Resource not found. FileId: {}", fileId);
-                    return new ResourceNotFoundException("File not found with ID: " + fileId);
+                    return new ResourceNotFoundException(FileMessages.FILE_NOT_FOUND_WITH_ID);
                 });
 
         r2StorageService.deleteFile(file.getFileUrl());

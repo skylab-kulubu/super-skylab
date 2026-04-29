@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,17 +24,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tickets")
+@RequiredArgsConstructor
 @Tag(name = "Bilet İşlemleri", description = "Kullanıcı biletlerinin sorgulanması ve Check-in onaylama işlemleri.")
 public class TicketController {
 
     private final TicketService ticketService;
     private final TicketCheckInService ticketCheckInService;
 
-
-    public TicketController(TicketService ticketService, TicketCheckInService ticketCheckInService) {
-        this.ticketService = ticketService;
-        this.ticketCheckInService = ticketCheckInService;
-    }
 
     @GetMapping("/{ticketId}")
     @Operation(summary = "Bilet Detayını Getir", description = "Sistemdeki biletin sahiplik ve etkinlik detaylarını getirir.")

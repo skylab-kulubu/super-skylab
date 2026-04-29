@@ -6,6 +6,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.google.zxing.qrcode.encoder.ByteMatrix;
 import com.google.zxing.qrcode.encoder.Encoder;
 import com.google.zxing.qrcode.encoder.QRCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -18,37 +19,64 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class ZxingQRCodeManager implements QRCodeService {
 
     @Override
     public byte[] generateQRCode(String data, int width, int height) throws IOException {
+        log.info("Initiating standard QR code generation. DataLength: {}, Width: {}, Height: {}",
+                data != null ? data.length() : 0, width, height);
+
         try {
             BufferedImage qrImage = createCircularQRCode(data, width, height, null);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ImageIO.write(qrImage, "PNG", byteArrayOutputStream);
-            return byteArrayOutputStream.toByteArray();
+
+            byte[] result = byteArrayOutputStream.toByteArray();
+            log.info("Standard QR code generated successfully. ByteSize: {}", result.length);
+
+            return result;
         } catch (WriterException e) {
+            log.error("Standard QR code generation failed: Writer exception occurred. ErrorMessage: {}", e.getMessage(), e);
             throw new IOException("Error while generating QRCode: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Standard QR code generation failed: Unexpected error. ErrorMessage: {}", e.getMessage(), e);
+            throw e;
         }
     }
 
     @Override
     public byte[] generateQRCodeWithLogo(String data, int width, int height, String logoPath, int dummy) throws IOException {
+        log.info("Initiating QR code with logo generation. DataLength: {}, Width: {}, Height: {}, LogoPath: {}",
+                data != null ? data.length() : 0, width, height, logoPath);
+
         try {
             int[] finderPatternPixelSize = new int[1];
             BufferedImage qrImage = createCircularQRCode(data, width, height, finderPatternPixelSize);
+
+            log.debug("Overlaying logo onto QR code. LogoPath: {}", logoPath);
             BufferedImage qrWithLogo = addLogoToQRCode(qrImage, logoPath, finderPatternPixelSize[0]);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ImageIO.write(qrWithLogo, "PNG", byteArrayOutputStream);
-            return byteArrayOutputStream.toByteArray();
+
+            byte[] result = byteArrayOutputStream.toByteArray();
+            log.info("QR code with logo generated successfully. ByteSize: {}", result.length);
+
+            return result;
         } catch (WriterException e) {
+            log.error("QR code with logo generation failed: Writer exception occurred. ErrorMessage: {}", e.getMessage(), e);
             throw new IOException("Error while generating QRCode: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("QR code with logo generation failed: Unexpected error. ErrorMessage: {}", e.getMessage(), e);
+            throw e;
         }
     }
 
     private BufferedImage createCircularQRCode(String data, int width, int height, int[] finderPatternPixelSizeOut) throws WriterException {
+        log.debug("Processing circular QR code matrix formatting.");
+
         final Map<EncodeHintType, Object> encodingHints = new HashMap<>();
         encodingHints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         QRCode code = Encoder.encode(data, ErrorCorrectionLevel.H, encodingHints);
@@ -63,8 +91,10 @@ public class ZxingQRCodeManager implements QRCodeService {
 
         ByteMatrix input = code.getMatrix();
         if (input == null) {
-            throw new IllegalStateException();
+            log.error("QR matrix generation failed: Encoder returned null matrix.");
+            throw new IllegalStateException("Encoder returned null matrix.");
         }
+
         int inputWidth = input.getWidth();
         int inputHeight = input.getHeight();
         int quietZone = 4;
@@ -120,6 +150,8 @@ public class ZxingQRCodeManager implements QRCodeService {
     }
 
     private BufferedImage addLogoToQRCode(BufferedImage qrCodeImage, String logoPath, int logoSize) throws IOException {
+        log.debug("Loading logo resource from classpath. LogoPath: {}", logoPath);
+
         ClassPathResource logoResource = new ClassPathResource(logoPath);
         InputStream logoStream = logoResource.getInputStream();
         BufferedImage logoImage = ImageIO.read(logoStream);

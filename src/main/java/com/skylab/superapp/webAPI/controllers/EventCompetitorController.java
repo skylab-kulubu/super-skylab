@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/events/{eventId}/competitors")
 @RequiredArgsConstructor
@@ -29,7 +27,6 @@ public class EventCompetitorController {
     @GetMapping
     @Operation(summary = "Etkinlik Yarışmacılarını Listele", description = "Belirtilen UUID'ye sahip etkinlikteki tüm yarışmacı kayıtlarını getirir. Genel erişime açıktır.")
     public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByEventId(@Parameter(description = "Etkinlik UUID") @PathVariable UUID eventId) {
-        log.info("REST request to get competitors for event id: {}", eventId);
         var result = competitorService.getCompetitorsByEventId(eventId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
@@ -38,7 +35,6 @@ public class EventCompetitorController {
     @GetMapping("/winner")
     @Operation(summary = "Etkinlik Kazananını Getir", description = "Belirtilen etkinliği kazanan yarışmacı bilgisini döner. Genel erişime açıktır.")
     public ResponseEntity<DataResult<CompetitorDto>> getEventWinner(@Parameter(description = "Etkinlik UUID") @PathVariable UUID eventId) {
-        log.info("REST request to get the winner for event id: {}", eventId);
         var result = competitorService.getEventWinner(eventId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));

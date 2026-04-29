@@ -1,7 +1,6 @@
 package com.skylab.superapp.core.utilities.microsoftGraph;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -9,10 +8,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class MicrosoftGraphService {
 
-    private final Logger logger = LoggerFactory.getLogger(MicrosoftGraphService.class);
     private final RestTemplate restTemplate;
 
     public MicrosoftGraphService() {
@@ -20,7 +19,7 @@ public class MicrosoftGraphService {
     }
 
     public String fetchUserDepartment(String microsoftAccessToken) {
-        logger.info("Microsoft Graph API'den bölüm bilgisi çekiliyor...");
+        log.debug("Initiating department fetch from Microsoft Graph API.");
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -38,15 +37,14 @@ public class MicrosoftGraphService {
 
             if (response.getBody() != null && response.getBody().containsKey("department")) {
                 String department = (String) response.getBody().get("department");
-                logger.info("Graph API'den bölüm başarıyla alındı: {}", department);
+                log.info("Department fetched successfully from Microsoft Graph API. Department: {}", department);
                 return department;
             }
 
         } catch (Exception e) {
-            logger.error("Microsoft Graph API'den bölüm çekilirken hata oluştu: {}", e.getMessage());
+            log.error("Microsoft Graph API fetch failed: Unexpected error. ErrorMessage: {}", e.getMessage(), e);
         }
 
         return null;
     }
-
 }

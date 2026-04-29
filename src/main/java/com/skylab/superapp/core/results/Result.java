@@ -2,6 +2,7 @@ package com.skylab.superapp.core.results;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -15,16 +16,36 @@ public class Result {
 	private String path;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private final LocalDateTime timeStamp = LocalDateTime.now();
-	
+	private final String correlationId;
+
+	public Result(boolean success, String message, HttpStatus httpStatus) {
+		this.success = success;
+		this.message = message;
+		this.httpStatus = httpStatus;
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+		this.path = request.getRequestURI();
+		this.correlationId = MDC.get("correlationId");
+
+	}
+
+	public Result(boolean success, HttpStatus httpStatus) {
+		this.success = success;
+		this.httpStatus = httpStatus;
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+		this.path = request.getRequestURI();
+		this.correlationId = MDC.get("correlationId");
+	}
+
+
 	public boolean isSuccess() {
 		return success;
 	}
-	
+
 	public String getMessage() {
 		return message;
 	}
 
-	public HttpStatus getHttpStatus(){
+	public HttpStatus getHttpStatus() {
 		return httpStatus;
 	}
 
@@ -36,18 +57,7 @@ public class Result {
 		return timeStamp;
 	}
 
-	public Result(boolean success, String message, HttpStatus httpStatus) {
-		this.success = success;
-		this.message = message;
-		this.httpStatus = httpStatus;
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-		this.path = request.getRequestURI();
-	}
-
-	public Result(boolean success, HttpStatus httpStatus) {
-		this.success = success;
-		this.httpStatus = httpStatus;
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-		this.path = request.getRequestURI();
+	public String getCorrelationId() {
+		return correlationId;
 	}
 }
