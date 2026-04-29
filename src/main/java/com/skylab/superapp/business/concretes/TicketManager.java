@@ -26,6 +26,7 @@ public class TicketManager implements TicketService {
     private final TicketMapper ticketMapper;
     private final TicketSecurityUtils ticketSecurityUtils;
 
+
     @Override
     public GetTicketResponseDto getTicketByUserIdAndEventId(UUID userId, UUID eventId) {
         log.debug("Retrieving ticket. UserId: {}, EventId: {}", userId, eventId);
