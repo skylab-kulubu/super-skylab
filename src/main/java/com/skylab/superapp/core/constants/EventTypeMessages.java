@@ -11,4 +11,6 @@ public final class EventTypeMessages {
     public static final String COORDINATORS_FOUND = "event.type.coordinators.found";
     public static final String EVENT_TYPE_NOT_DEFINED_IN_OPA = "event.type.not.defined.in.opa";
     public static final String EVENT_TYPE_NOT_FOUND = "event.type.not.found";
+    public static final String EVENT_TYPE_HAS_RELATED_EVENTS = "event.type.has.related.events";
+    public static final String EVENT_TYPE_HAS_RELATED_ANNOUNCEMENTS = "event.type.has.related.announcements";
 }

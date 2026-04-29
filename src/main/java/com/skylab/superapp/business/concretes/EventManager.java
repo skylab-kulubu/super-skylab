@@ -88,6 +88,22 @@ public class EventManager implements EventService {
 
         eventSecurityUtils.checkDelete(event.getType().getName());
 
+
+        if (event.getSoldTickets() != null && !event.getSoldTickets().isEmpty()) {
+            log.warn("Event deletion failed: Has tickets. EventId: {}", id);
+            throw new BusinessException(EventMessages.EVENT_HAS_TICKETS);
+        }
+
+        if (event.getEventDays() != null && !event.getEventDays().isEmpty()) {
+            log.warn("Event deletion failed: Has event days. EventId: {}", id);
+            throw new BusinessException(EventMessages.EVENT_HAS_EVENT_DAYS);
+        }
+
+        if (event.getCertificates() != null && !event.getCertificates().isEmpty()) {
+            log.warn("Event deletion failed: Has certificates. EventId: {}", id);
+            throw new BusinessException(EventMessages.EVENT_HAS_CERTIFICATES);
+        }
+
         eventDao.delete(event);
         log.info("Event deleted successfully. EventId: {}", id);
     }
@@ -230,10 +246,17 @@ public class EventManager implements EventService {
 
     @Transactional
     @Override
-    public void removeSeasonFromEvent(UUID eventId) {
+    public void removeSeasonFromEvent(UUID eventId, UUID seasonId) {
         log.info("Removing season from event. EventId: {}", eventId);
 
         Event event = getEventEntityById(eventId);
+
+        if (event.getSeason() == null || !event.getSeason().getId().equals(seasonId)) {
+            log.warn("Season removal failed: Event not assigned to specified season. EventId: {}, SeasonId: {}", eventId, seasonId);
+            throw new BusinessException(EventMessages.EVENT_NOT_ASSIGNED_TO_THIS_SEASON);
+        }
+
+
         eventSecurityUtils.checkUpdate(event.getType().getName());
 
         if (event.getSeason() == null) {

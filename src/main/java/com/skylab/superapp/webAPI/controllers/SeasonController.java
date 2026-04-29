@@ -86,4 +86,12 @@ public class SeasonController {
                 .body(new SuccessResult(SeasonMessages.SEASON_DELETED_SUCCESSFULLY, HttpStatus.OK));
     }
 
+    @GetMapping("/name/{name}")
+    @Operation(summary = "Sezon Adına Göre Getir", description = "Belirtilen isimle eşleşen sezonu getirir.")
+    public ResponseEntity<DataResult<SeasonDto>> getSeasonByName(@PathVariable String name) {
+        var result = seasonService.getSeasonByName(name);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_GET_SUCCESS, HttpStatus.OK));
+    }
+
 }

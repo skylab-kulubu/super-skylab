@@ -33,7 +33,7 @@ public class Season extends BaseEntity{
     @Column(name = "is_active")
     private boolean active;
 
-    @OneToMany(mappedBy = "season" , cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "season", fetch = FetchType.LAZY)
     private List<Event> events;
 
 

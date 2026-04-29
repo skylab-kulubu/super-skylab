@@ -101,4 +101,22 @@ public class CompetitorController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
+
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Kullanıcıya Göre Yarışmacıları Listele")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByUserId(
+            @Parameter(description = "Kullanıcı UUID") @PathVariable UUID userId) {
+        var result = competitorService.getCompetitorsByUserId(userId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
+
+    @GetMapping("/event-type/{eventTypeId}")
+    @Operation(summary = "Etkinlik Türüne Göre Yarışmacıları Listele")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByEventTypeId(
+            @Parameter(description = "Etkinlik Türü UUID") @PathVariable UUID eventTypeId) {
+        var result = competitorService.getCompetitorsByEventTypeId(eventTypeId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
+    }
 }

@@ -25,4 +25,5 @@ public interface SeasonService {
     List<SeasonDto> getActiveSeasons();
 
     Season getSeasonEntityById(UUID id);
+
 }

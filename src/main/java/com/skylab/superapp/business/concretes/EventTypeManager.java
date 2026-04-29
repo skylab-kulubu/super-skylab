@@ -107,6 +107,21 @@ public class EventTypeManager implements EventTypeService {
         eventTypeSecurityUtils.checkDelete();
 
         var eventType = getEventTypeEntityById(id);
+
+
+        if (eventTypeDao.existsEventByTypeId(id)) {
+            log.warn("Event type deletion failed: Has related events. EventTypeId: {}", id);
+            throw new BusinessException(EventTypeMessages.EVENT_TYPE_HAS_RELATED_EVENTS);
+        }
+
+        if (eventTypeDao.existsAnnouncementByTypeId(id)) {
+            log.warn("Event type deletion failed: Has related announcements. EventTypeId: {}", id);
+            throw new BusinessException(EventTypeMessages.EVENT_TYPE_HAS_RELATED_ANNOUNCEMENTS);
+        }
+
+
+
+
         eventTypeDao.delete(eventType);
 
         log.info("Event type deleted successfully. EventTypeId: {}", id);

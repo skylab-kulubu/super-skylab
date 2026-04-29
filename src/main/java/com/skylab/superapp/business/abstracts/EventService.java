@@ -40,7 +40,7 @@ public interface EventService {
 
     void assignSeasonToEvent(UUID eventId, UUID seasonId);
 
-    void removeSeasonFromEvent(UUID eventId);
+    void removeSeasonFromEvent(UUID eventId, UUID seasonId);
 
     void applyToEvent(UUID eventId);
 

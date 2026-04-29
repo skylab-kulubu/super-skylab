@@ -71,8 +71,7 @@ public class SeasonEventController {
     public ResponseEntity<Result> removeEventFromSeason(
             @Parameter(description = "Sezon UUID") @PathVariable UUID seasonId,
             @Parameter(description = "Etkinlik UUID") @PathVariable UUID eventId) {
-        eventService.removeSeasonFromEvent(eventId);
-        //TODO: Check if the event is actually associated with the season before attempting to remove it, and return appropriate response if not.
+        eventService.removeSeasonFromEvent(eventId, seasonId);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessResult(EventMessages.SUCCESS_REMOVE_SEASON_FROM_EVENT, HttpStatus.OK));

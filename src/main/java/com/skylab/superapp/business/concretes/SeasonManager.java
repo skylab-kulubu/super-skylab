@@ -63,6 +63,11 @@ public class SeasonManager implements SeasonService {
         seasonSecurityUtils.checkDelete();
         var season = getSeasonEntityById(id);
 
+        if (season.getEvents() != null && !season.getEvents().isEmpty()) {
+            log.warn("Season deletion failed: Has related events. SeasonId: {}", id);
+            throw new BusinessException(SeasonMessages.SEASON_HAS_RELATED_EVENTS);
+        }
+
         seasonDao.delete(season);
 
         log.info("Season deleted successfully. SeasonId: {}", id);

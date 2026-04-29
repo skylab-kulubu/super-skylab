@@ -66,6 +66,34 @@ public class TicketController {
     }
 
 
+    @GetMapping("/user/{userId}/event/{eventId}")
+    @Operation(summary = "Kullanıcı ve Etkinliğe Göre Bilet Getir")
+    public ResponseEntity<DataResult<GetTicketResponseDto>> getTicketByUserIdAndEventId(
+            @PathVariable UUID userId,
+            @PathVariable UUID eventId) {
+        var ticket = ticketService.getTicketByUserIdAndEventId(userId, eventId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(ticket, TicketMessages.SUCCESS_GET_TICKET_BY_ID, HttpStatus.OK));
+    }
+
+    @GetMapping
+    @Operation(summary = "Biletleri Filtrele", description = "E-posta veya kullanıcı ID'sine göre bilet listeler.")
+    public ResponseEntity<DataResult<List<GetTicketResponseDto>>> getTickets(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) UUID userId) {
+        List<GetTicketResponseDto> result;
+        if (email != null && !email.isBlank()) {
+            result = ticketService.getTicketsByUserEmail(email);
+        } else if (userId != null) {
+            result = ticketService.getTicketsByUserId(userId);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, TicketMessages.SUCCESS_GET_TICKET_BY_ID, HttpStatus.OK));
+    }
+
+
 
 
 }
