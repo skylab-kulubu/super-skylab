@@ -128,5 +128,16 @@ public class TicketManager implements TicketService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<GetTicketResponseDto> searchTicketsByEventId(UUID eventId, String query) {
+        log.debug("Searching tickets for event. EventId: {}, Query: {}", eventId, query);
+
+        ticketSecurityUtils.checkRead();
+
+        return ticketDao.searchByEventIdAndQuery(eventId, query.trim())
+                .stream().map(ticketMapper::ticketToGetTicketResponseDto)
+                .collect(Collectors.toList());
+    }
+
 
 }

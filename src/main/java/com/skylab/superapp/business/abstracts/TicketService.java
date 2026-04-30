@@ -24,4 +24,6 @@ public interface TicketService {
 
     List<GetTicketResponseDto> getTicketsByEventId(UUID eventId);
 
+    List<GetTicketResponseDto> searchTicketsByEventId(UUID eventId, String query);
+
 }
