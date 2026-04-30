@@ -7,7 +7,6 @@ import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
 import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.EventDao;
-import com.skylab.superapp.dataAccess.TicketDao;
 import com.skylab.superapp.entities.*;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
@@ -33,11 +32,9 @@ public class EventManager implements EventService {
     private final EventMapper eventMapper;
     private final SeasonService seasonService;
     private final EventSecurityUtils eventSecurityUtils;
-    // private final SkyMailService skyMailService;
-
     private final UserService userService;
-    private final TicketDao ticketDao;
     private final MediaService mediaService;
+    private final TicketFactory ticketFactory;
 
     @Override
     @Transactional
@@ -274,26 +271,10 @@ public class EventManager implements EventService {
     @Transactional
     public void applyToEvent(UUID eventId) {
         log.info("Processing event registration. EventId: {}", eventId);
-
-        var eventToAttend = getEventEntityById(eventId);
-        var authenticatedUser = userService.getAuthenticatedUserEntity();
-
-        if (ticketDao.existsByOwner_IdAndEvent_Id(authenticatedUser.getId(), eventId)) {
-            log.warn("Event registration failed: User already registered. EventId: {}, UserId: {}", eventId, authenticatedUser.getId());
-            throw new BusinessException(EventMessages.USER_ALREADY_REGISTERED);
-        }
-
-        Ticket ticket = Ticket.builder()
-                .owner(authenticatedUser)
-                .event(eventToAttend)
-                .ticketType(TicketType.REGISTERED)
-                .sent(false)
-                .build();
-
-        ticketDao.save(ticket);
-
-        //skyMailService.sendTicketCreationEmail(authenticatedUser.getEmail(), eventToAttend.getName());
-        log.info("Event registration completed successfully. EventId: {}, UserEmail: {}", eventId, authenticatedUser.getEmail());
+        var event = getEventEntityById(eventId);
+        var user = userService.getAuthenticatedUserEntity();
+        ticketFactory.createRegisteredTicket(user, event);
+        log.info("Event registration completed. EventId: {}, UserId: {}", eventId, user.getId());
     }
 
     @Override
@@ -305,38 +286,10 @@ public class EventManager implements EventService {
     @Override
     @Transactional
     public void applyToEventAsGuest(UUID eventId, GuestTicketRequestDto request) {
-        log.info("Processing guest event registration. EventId: {}, GuestEmail: {}", eventId, request.getEmail());
-
-        var eventToAttend = getEventEntityById(eventId);
-
-        if (ticketDao.existsByGuestEmailAndEvent_Id(request.getEmail(), eventId)) {
-            log.warn("Guest registration failed: Email already registered for event. EventId: {}, GuestEmail: {}", eventId, request.getEmail());
-            throw new BusinessException(EventMessages.GUEST_TICKET_ALREADY_EXISTS);
-        }
-
-        Ticket ticket = Ticket.builder()
-                .event(eventToAttend)
-                .ticketType(TicketType.GUEST)
-                .guestFirstName(request.getFirstName())
-                .guestLastName(request.getLastName())
-                .guestEmail(request.getEmail())
-                .guestPhoneNumber(request.getPhoneNumber())
-                .guestBirthday(request.getBirthDate())
-                .guestIsStudent(request.getIsStudent())
-                .guestUniversity(request.getUniversity())
-                .guestFaculty(request.getFaculty())
-                .guestDepartment(request.getDepartment())
-                .guestGrade(request.getGrade())
-                .guestTcIdentityNumber(request.getTcIdentityNumber())
-                .guestCarPlateNumber(request.getCarPlateNumber())
-                .customAnswers(request.getCustomAnswers())
-                .sent(false)
-                .build();
-
-        ticketDao.save(ticket);
-
-        //skyMailService.sendTicketCreationEmail(ticket.getGuestEmail(), eventToAttend.getName());
-        log.info("Guest event registration completed successfully. EventId: {}, GuestEmail: {}", eventId, ticket.getGuestEmail());
+        log.info("Processing guest registration. EventId: {}, GuestEmail: {}", eventId, request.getEmail());
+        var event = getEventEntityById(eventId);
+        ticketFactory.createGuestTicket(event, request);
+        log.info("Guest registration completed. EventId: {}, GuestEmail: {}", eventId, request.getEmail());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.skylab.superapp.business.concretes;
 
+import com.skylab.superapp.business.abstracts.EventService;
 import com.skylab.superapp.business.abstracts.TicketService;
 import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.TicketMessages;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ public class TicketManager implements TicketService {
     private final UserService userService;
     private final TicketMapper ticketMapper;
     private final TicketSecurityUtils ticketSecurityUtils;
+    private final EventService eventService;
 
 
     @Override
@@ -59,6 +62,10 @@ public class TicketManager implements TicketService {
         ticketSecurityUtils.checkRead();
 
         List<Ticket> tickets = ticketDao.findAllByOwner_Email(email);
+
+        List<Ticket> guestTickets = ticketDao.findAllByGuestEmail(email);
+
+        tickets.addAll(guestTickets);
 
         return tickets.stream()
                 .map(ticketMapper::ticketToGetTicketResponseDto)
@@ -107,4 +114,19 @@ public class TicketManager implements TicketService {
                 .map(ticketMapper::ticketToGetTicketResponseDto)
                 .toList();
     }
+
+    @Override
+    public List<GetTicketResponseDto> getTicketsByEventId(UUID eventId) {
+        log.debug("Retrieving tickets for event. EventId: {}", eventId);
+
+        ticketSecurityUtils.checkRead();
+
+        var event = eventService.getEventEntityById(eventId);
+        return ticketDao.findAllByEvent(event)
+                .stream()
+                .map(ticketMapper::ticketToGetTicketResponseDto)
+                .collect(Collectors.toList());
+    }
+
+
 }

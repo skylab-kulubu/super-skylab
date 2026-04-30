@@ -22,5 +22,6 @@ public interface TicketService {
 
     List<GetTicketResponseDto> getMyTickets();
 
+    List<GetTicketResponseDto> getTicketsByEventId(UUID eventId);
 
 }

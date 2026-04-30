@@ -10,4 +10,5 @@ public interface TicketMapper {
 
     GetTicketResponseDto ticketToGetTicketResponseDto(Ticket ticket);
 
+
 }
