@@ -24,4 +24,7 @@ public interface SessionService {
     Session getSessionEntityById(UUID id);
 
     List<SessionDto> getSessionsByEventId(UUID eventId);
+
+    List<SessionDto> getSessionsByEventDayId(UUID eventDayId);
+
 }

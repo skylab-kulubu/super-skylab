@@ -17,6 +17,8 @@ public class GetEventDayResponseDto {
 
     private UUID id;
 
+    private String name;
+
     private LocalDateTime startDate;
 
     private LocalDateTime endDate;

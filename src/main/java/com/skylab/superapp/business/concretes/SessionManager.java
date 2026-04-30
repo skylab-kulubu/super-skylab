@@ -152,4 +152,14 @@ public class SessionManager implements SessionService {
                 .map(sessionMapper::toDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<SessionDto> getSessionsByEventDayId(UUID eventDayId) {
+        log.debug("Retrieving sessions for eventDay. EventDayId: {}", eventDayId);
+        var eventDay = eventDayService.getEventDayEntityById(eventDayId);
+        return sessionDao.findAllByEventDay(eventDay)
+                .stream()
+                .map(sessionMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

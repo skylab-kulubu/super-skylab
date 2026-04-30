@@ -10,10 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,8 +25,14 @@ public class EventSessionController {
 
     @GetMapping
     @Operation(summary = "Etkinliğin Oturumlarını Getir", description = "Verilen etkinlik ID'sine ait tüm oturumları listeler.")
-    public ResponseEntity<DataResult<List<SessionDto>>> getSessionsByEventId(@PathVariable UUID eventId) {
-        var result = sessionService.getSessionsByEventId(eventId);
+    public ResponseEntity<DataResult<List<SessionDto>>> getSessionsByEventId(@PathVariable UUID eventId, @RequestParam(required = false) UUID eventDayId) {
+        List<SessionDto> result;
+        if (eventDayId != null) {
+            result = sessionService.getSessionsByEventDayId(eventDayId);
+        } else {
+            result = sessionService.getSessionsByEventId(eventId);
+        }
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_GET_SESSIONS_BY_EVENT_ID, HttpStatus.OK));
     }

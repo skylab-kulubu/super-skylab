@@ -28,6 +28,9 @@ public class EventDay extends BaseEntity{
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
+    @Column(name = "name")
+    private String name;
+
     @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "event_id")

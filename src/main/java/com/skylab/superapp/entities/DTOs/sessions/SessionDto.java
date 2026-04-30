@@ -35,6 +35,8 @@ public class SessionDto {
 
     private int orderIndex;
 
+    private UUID eventDayId;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private EventDto event;
 

@@ -76,6 +76,7 @@ public class EventDayManager implements EventDayService {
 
 
         EventDay eventDay = new EventDay();
+        eventDay.setName(request.getName());
         eventDay.setEvent(event);
         eventDay.setStartDate(request.getStartDate());
         eventDay.setEndDate(request.getEndDate());

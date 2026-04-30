@@ -13,6 +13,9 @@ import java.util.UUID;
 public class CreateEventDayRequest {
 
     private UUID eventId;
+
+    private String name;
+
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 }
