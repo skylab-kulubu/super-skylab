@@ -42,7 +42,10 @@ public class KeycloakUserEventConsumer {
             String userId = rootNode.has("userId") ? rootNode.get("userId").asText() :
                     rootNode.path("resourcePath").asText().replace("users/", "");
 
-            if (!"REGISTER".equals(type) && !"UPDATE".equals(operationType) && !"CREATE".equals(operationType)) {
+            boolean isRegister = "REGISTER".equals(type);
+            boolean isCreateOrUpdate = "CREATE".equals(operationType) || "UPDATE".equals(operationType);
+
+            if (!isRegister && !isCreateOrUpdate) {
                 return;
             }
 
