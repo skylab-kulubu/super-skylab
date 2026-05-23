@@ -31,6 +31,9 @@ public class User extends BaseEntity{
     @Column(name = "email")
     private String email;
 
+    @Column(name = "school_email")
+    private String schoolEmail;
+
     @Column(name = "sky_number")
     private String skyNumber;
 

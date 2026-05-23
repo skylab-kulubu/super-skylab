@@ -74,6 +74,7 @@ public class UserManager implements UserService {
                     .email(jwt.getClaimAsString("email"))
                     .username(jwt.getClaimAsString("preferred_username"))
                     .university(jwt.getClaimAsString("university"))
+                    .schoolEmail(jwt.getClaimAsString("school_email"))
                     .skyNumber(generatedSkyNumber)
                     .isLdapUser(false)
                     .build();
@@ -86,6 +87,18 @@ public class UserManager implements UserService {
 
             return userDao.save(newUser);
         });
+
+        if (currentUser.getSchoolEmail() == null || currentUser.getSchoolEmail().isBlank()) {
+            String schoolEmailFromJwt = jwt.getClaimAsString("school_email");
+            if (schoolEmailFromJwt != null && !schoolEmailFromJwt.isBlank()) {
+                currentUser.setSchoolEmail(schoolEmailFromJwt);
+                userDao.save(currentUser);
+                log.info("School email backfilled from JWT. UserId: {}, SchoolEmail: {}", userId, schoolEmailFromJwt);
+            } else {
+                log.debug("School email not present in JWT for user. UserId: {}", userId);
+            }
+        }
+
 
         if (currentUser.getDepartment() == null || currentUser.getDepartment().trim().isEmpty()) {
             log.debug("Fetching missing department from MS Graph. UserId: {}", userId);
@@ -113,13 +126,13 @@ public class UserManager implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers(String email, List<String> roles) {
-        log.debug("Retrieving users. EmailFilter: {}, RolesFilter: {}", email, roles);
+    public List<UserDto> getAllUsers(String search, List<String> roles) {
+        log.debug("Retrieving users. SearchFilter: {}, RolesFilter: {}", search, roles);
 
         userSecurityUtils.checkRead();
 
         List<User> users;
-        boolean hasEmailFilter = email != null && !email.isBlank();
+        boolean hasSearch = search != null && !search.isBlank();
         boolean hasRoleFilter = roles != null && !roles.isEmpty();
 
         if (hasRoleFilter) {
@@ -133,14 +146,14 @@ public class UserManager implements UserService {
                 return Collections.emptyList();
             }
 
-            if (hasEmailFilter) {
-                users = userDao.findByEmailContainingIgnoreCaseAndIdIn(email, authorizedUserIds);
+            if (hasSearch) {
+                users = userDao.searchUsersInIds(search, authorizedUserIds);
             } else {
                 users = userDao.findAllById(authorizedUserIds);
             }
         } else {
-            if (hasEmailFilter) {
-                users = userDao.findByEmailContainingIgnoreCase(email);
+            if (hasSearch) {
+                users = userDao.searchUsers(search);
             } else {
                 users = userDao.findAll();
             }
@@ -373,6 +386,7 @@ public class UserManager implements UserService {
             localUser.setDepartment(getAttributeSafe(attributes, "department"));
             localUser.setUniversity(getAttributeSafe(attributes, "university"));
             localUser.setFaculty(getAttributeSafe(attributes, "faculty"));
+            localUser.setSchoolEmail(getAttributeSafe(attributes, "schoolEmail"));
         }
 
         userDao.save(localUser);

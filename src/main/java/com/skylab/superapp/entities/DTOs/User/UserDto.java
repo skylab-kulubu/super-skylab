@@ -20,6 +20,8 @@ public class UserDto {
     private UUID id;
 
     private String email;
+    private String schoolEmail;
+
     private String firstName;
     private String lastName;
 

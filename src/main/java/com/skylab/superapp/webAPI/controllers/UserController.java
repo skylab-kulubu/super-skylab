@@ -10,6 +10,7 @@ import com.skylab.superapp.entities.DTOs.User.PromoteUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -66,12 +67,27 @@ public class UserController {
 
 
     @GetMapping
-    @Operation(summary = "Tüm Kullanıcıları Getir", description = "Sistemdeki tüm kullanıcıları listeler. E-posta ve rol bazlı filtreleme yapılabilir.")
+    @Operation(
+            summary = "Tüm Kullanıcıları Getir",
+            description = "Sistemdeki tüm kullanıcıları listeler. " +
+                    "'search' parametresi ile e-posta, okul maili, kullanıcı adı, ad ve soyad alanlarında arama yapılabilir. " +
+                    "'roles' parametresi ile rol bazlı filtreleme yapılabilir."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Kullanıcılar başarıyla listelendi.")
+    })
     public ResponseEntity<DataResult<List<UserDto>>> getAllUsers(
-            @RequestParam(required = false) String email,
+            @Parameter(description = "Arama terimi. E-posta, okul maili, kullanıcı adı, ad veya soyad alanlarında eşleşme arar.")
+            @RequestParam(required = false) String search,
+            @RequestParam(name = "email", required = false) String emailLegacy,
+            @Parameter(description = "Rol filtreleri. Örnek: skyforms:form:manage")
             @RequestParam(required = false) List<String> roles) {
 
-        var result = userService.getAllUsers(email, roles);
+
+        //will remove emailSupport later!
+        String effectiveSearch = (search != null && !search.isBlank()) ? search : emailLegacy;
+
+        var result = userService.getAllUsers(effectiveSearch, roles);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
     }
