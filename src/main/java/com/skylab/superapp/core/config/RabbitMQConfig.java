@@ -2,9 +2,11 @@ package com.skylab.superapp.core.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
@@ -59,7 +61,6 @@ public class RabbitMQConfig {
         return factory;
     }
 
-
     @Bean
     public MessageConverter simpleMessageConverter() {
         SimpleMessageConverter converter = new SimpleMessageConverter();
@@ -72,6 +73,13 @@ public class RabbitMQConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(simpleMessageConverter());
+
+        factory.setAdviceChain(RetryInterceptorBuilder.stateless()
+                .maxRetries(5)
+                .backOffOptions(5000, 2.0, 10000)
+                .recoverer(new RejectAndDontRequeueRecoverer())
+                .build());
+
         return factory;
     }
 }
