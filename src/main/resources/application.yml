@@ -108,3 +108,8 @@ springdoc:
 
 opa:
   url: ${OPA_URL:http://localhost:8181}
+
+skymail:
+  templates:
+    welcome: ${SKYMAIL_TEMPLATE_WELCOME}
+    promotion: ${SKYMAIL_TEMPLATE_PROMOTION}

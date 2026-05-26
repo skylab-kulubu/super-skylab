@@ -64,6 +64,10 @@ services:
 
       # OPA
       - OPA_URL=http://opa:8181
+
+      #  SKYMAIL
+      - SKYMAIL_TEMPLATE_WELCOME=YOUR_WELCOME_TEMPLATE_UUID
+      - SKYMAIL_TEMPLATE_PROMOTION=YOUR_PROMOTION_TEMPLATE_UUID
     networks:
       - skynet
 

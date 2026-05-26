@@ -9,6 +9,7 @@ import com.skylab.superapp.core.identity.UserIdentityGenerator;
 import com.skylab.superapp.core.identity.keycloak.KeycloakAdminService;
 import com.skylab.superapp.core.identity.ldap.LdapService;
 import com.skylab.superapp.core.mappers.UserMapper;
+import com.skylab.superapp.core.utilities.mail.skymail.SkyMailService;
 import com.skylab.superapp.core.utilities.microsoftGraph.MicrosoftGraphService;
 import com.skylab.superapp.core.utilities.security.UserSecurityUtils;
 import com.skylab.superapp.dataAccess.UserDao;
@@ -42,6 +43,7 @@ public class UserManager implements UserService {
     private final KeycloakAdminService keycloakAdminService;
     private final MicrosoftGraphService microsoftGraphService;
     private final UserSecurityUtils userSecurityUtils;
+    private final SkyMailService skyMailService;
 
     @Override
     @Transactional
@@ -85,7 +87,19 @@ public class UserManager implements UserService {
                 log.error("Keycloak sync failed: Could not update skyNumber. UserId: {}, Error: {}", userId, e.getMessage(), e);
             }
 
-            return userDao.save(newUser);
+            User savedUser = userDao.save(newUser);
+
+            String fullName = (savedUser.getFirstName() + " " + savedUser.getLastName()).trim();
+            skyMailService.send("welcome", savedUser.getEmail(), fullName, Map.of(
+                    "FirstName", savedUser.getFirstName() != null ? savedUser.getFirstName() : "",
+                    "LastName",  savedUser.getLastName()  != null ? savedUser.getLastName()  : "",
+                    "Email",     savedUser.getEmail()      != null ? savedUser.getEmail()      : "",
+                    "Username",  savedUser.getUsername()   != null ? savedUser.getUsername()   : "",
+                    "SkyNumber", savedUser.getSkyNumber()  != null ? savedUser.getSkyNumber()  : "",
+                    "CreatedAt", savedUser.getCreatedAt()  != null ? savedUser.getCreatedAt().toString() : ""
+            ));
+
+            return savedUser;
         });
 
         if (currentUser.getSchoolEmail() == null || currentUser.getSchoolEmail().isBlank()) {
@@ -356,6 +370,8 @@ public class UserManager implements UserService {
     public void syncUserFromKeycloak(String userId, UserRepresentation keycloakUser) {
         UUID uuid = UUID.fromString(userId);
 
+        boolean isNew = !userDao.existsById(uuid);
+
         User localUser = userDao.findById(uuid).orElseGet(() -> {
             log.info("Keycloak sync: New user detected. Creating local shadow copy. UserId: {}", userId);
             return User.builder().id(uuid).build();
@@ -389,8 +405,20 @@ public class UserManager implements UserService {
             localUser.setSchoolEmail(getAttributeSafe(attributes, "schoolEmail"));
         }
 
-        userDao.save(localUser);
+        User savedUser = userDao.save(localUser);
         log.info("Keycloak sync completed successfully. UserId: {}", userId);
+
+        if (isNew) {
+            String fullName = (savedUser.getFirstName() + " " + savedUser.getLastName()).trim();
+            skyMailService.send("welcome", savedUser.getEmail(), fullName, Map.of(
+                    "FirstName", savedUser.getFirstName() != null ? savedUser.getFirstName() : "",
+                    "LastName",  savedUser.getLastName()  != null ? savedUser.getLastName()  : "",
+                    "Email",     savedUser.getEmail()      != null ? savedUser.getEmail()      : "",
+                    "Username",  savedUser.getUsername()   != null ? savedUser.getUsername()   : "",
+                    "SkyNumber", savedUser.getSkyNumber()  != null ? savedUser.getSkyNumber()  : "",
+                    "CreatedAt", savedUser.getCreatedAt()  != null ? savedUser.getCreatedAt().toString() : ""
+            ));
+        }
     }
 
     private String getAttributeSafe(Map<String, List<String>> attributes, String key) {
