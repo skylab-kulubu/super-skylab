@@ -43,6 +43,7 @@ public class SkyMailTokenProvider {
         form.add("grant_type", "client_credentials");
         form.add("client_id", keycloakProperties.getClientId());
         form.add("client_secret", keycloakProperties.getClientSecret());
+        form.add("scope", "openid");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
