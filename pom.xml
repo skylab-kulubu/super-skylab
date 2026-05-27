@@ -189,6 +189,11 @@
 			<artifactId>micrometer-tracing-bridge-otel</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-sdk</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
