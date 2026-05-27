@@ -10,6 +10,6 @@ import lombok.Setter;
 public class OpaContext {
     private String ipAddress;
     private long timestamp;
-    private String correlationId;
+    private String traceId;
     private String channel;
 }

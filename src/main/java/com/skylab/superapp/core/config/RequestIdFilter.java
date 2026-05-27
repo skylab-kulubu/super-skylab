@@ -3,20 +3,18 @@ package com.skylab.superapp.core.config;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.UUID;
+
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class CorrelationIdFilter implements Filter {
+public class RequestIdFilter implements Filter {
 
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
-    private static final String MDC_KEY = "correlationId";
+    private static final String REQUEST_ID_HEADER = "X-Request-ID";
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -25,19 +23,12 @@ public class CorrelationIdFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-        if (correlationId == null || correlationId.isEmpty()) {
-            correlationId = UUID.randomUUID().toString();
+
+        String requestId = request.getHeader(REQUEST_ID_HEADER);
+        if (requestId != null && !requestId.isEmpty()) {
+            response.addHeader(REQUEST_ID_HEADER, requestId);
         }
 
-        MDC.put(MDC_KEY, correlationId);
-
-        response.addHeader(CORRELATION_ID_HEADER, correlationId);
-
-        try {
-            filterChain.doFilter(request, response);
-        } finally {
-            MDC.remove(MDC_KEY);
-        }
+        filterChain.doFilter(request, response);
     }
 }

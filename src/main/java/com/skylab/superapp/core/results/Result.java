@@ -17,7 +17,7 @@ public class Result {
 	private String path;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private final LocalDateTime timeStamp = LocalDateTime.now();
-	private final String correlationId;
+	private final String traceId;
 
 	public Result(boolean success, String message, HttpStatus httpStatus) {
 		this.success = success;
@@ -25,7 +25,7 @@ public class Result {
 		this.httpStatus = httpStatus;
 		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 		this.path = request.getRequestURI();
-		this.correlationId = MDC.get("correlationId");
+		this.traceId = MDC.get("traceId");
 
 	}
 
@@ -34,7 +34,7 @@ public class Result {
 		this.httpStatus = httpStatus;
 		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 		this.path = request.getRequestURI();
-		this.correlationId = MDC.get("correlationId");
+		this.traceId = MDC.get("traceId");
 	}
 
 
@@ -58,7 +58,7 @@ public class Result {
 		return timeStamp;
 	}
 
-	public String getCorrelationId() {
-		return correlationId;
+	public String getTraceId() {
+		return traceId;
 	}
 }

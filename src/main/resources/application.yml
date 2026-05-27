@@ -1,9 +1,18 @@
 server:
   port: ${SERVER_PORT}
 
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      type: W3C
+
 logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] %-5level %logger{36} - %msg%n"
+  level:
+    com.skylab: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
 
 spring:
   application:
