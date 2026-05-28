@@ -8,7 +8,7 @@ import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventTypeMapper;
 import com.skylab.superapp.core.security.opa.OpaClient;
-import com.skylab.superapp.core.utilities.security.EventTypeSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
@@ -31,7 +31,6 @@ public class EventTypeManager implements EventTypeService {
     private final EventTypeMapper eventTypeMapper;
     private final UserService userService;
     private final OpaClient opaClient;
-    private final EventTypeSecurityUtils eventTypeSecurityUtils;
 
     @Override
     public EventTypeDto getEventTypeById(UUID eventTypeId) {
@@ -61,9 +60,9 @@ public class EventTypeManager implements EventTypeService {
     }
 
     @Override
+    @Authorize(resource = "EVENT_TYPE", action = "CREATE")
     public EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest) {
         log.info("Initiating event type creation. EventTypeName: {}", createEventTypeRequest.getName());
-        eventTypeSecurityUtils.checkCreate();
 
         if (!opaClient.isValidEventType(createEventTypeRequest.getName())) {
             log.warn("Event type creation failed: Name not defined in OPA or e-skylab. EventTypeName: {}", createEventTypeRequest.getName());
@@ -81,9 +80,9 @@ public class EventTypeManager implements EventTypeService {
     }
 
     @Override
+    @Authorize(resource = "EVENT_TYPE", action = "UPDATE")
     public EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest) {
         log.info("Initiating event type update. EventTypeId: {}", id);
-        eventTypeSecurityUtils.checkUpdate();
 
         var eventType = getEventTypeEntityById(id);
 
@@ -102,9 +101,9 @@ public class EventTypeManager implements EventTypeService {
     }
 
     @Override
+    @Authorize(resource = "EVENT_TYPE", action = "DELETE")
     public void deleteEventType(UUID id) {
         log.info("Initiating event type deletion. EventTypeId: {}", id);
-        eventTypeSecurityUtils.checkDelete();
 
         var eventType = getEventTypeEntityById(id);
 
@@ -113,14 +112,6 @@ public class EventTypeManager implements EventTypeService {
             log.warn("Event type deletion failed: Has related events. EventTypeId: {}", id);
             throw new BusinessException(EventTypeMessages.EVENT_TYPE_HAS_RELATED_EVENTS);
         }
-
-        if (eventTypeDao.existsAnnouncementByTypeId(id)) {
-            log.warn("Event type deletion failed: Has related announcements. EventTypeId: {}", id);
-            throw new BusinessException(EventTypeMessages.EVENT_TYPE_HAS_RELATED_ANNOUNCEMENTS);
-        }
-
-
-
 
         eventTypeDao.delete(eventType);
 
@@ -156,15 +147,11 @@ public class EventTypeManager implements EventTypeService {
     public Set<UserDto> getCoordinatorsByEventTypeName(String eventTypeName) {
         log.info("Processing coordinator retrieval for event type. EventTypeName: {}", eventTypeName);
 
-        EventType eventType = getEventTypeEntityByName(eventTypeName);
-        Set<String> roles = opaClient.getRolesForEventType(eventTypeName);
 
-        if (roles == null || roles.isEmpty()) {
-            log.debug("No coordinator roles found for event type in OPA. EventTypeName: {}", eventTypeName);
-            return Collections.emptySet();
-        }
+        getEventTypeEntityByName(eventTypeName);
 
-        List<UserDto> users = userService.getUsersByRoleNames(roles);
+
+        List<UserDto> users = userService.getUsersByGroupName(eventTypeName, true);
         log.info("Coordinators retrieved successfully. EventTypeName: {}, CoordinatorCount: {}", eventTypeName, users.size());
 
         return new HashSet<>(users);

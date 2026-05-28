@@ -12,4 +12,5 @@ import java.util.List;
 public class OpaUser {
     private String id;
     private List<String> roles;
+    private List<String> groups;
 }

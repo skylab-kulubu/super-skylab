@@ -6,7 +6,8 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CompetitorMapper;
-import com.skylab.superapp.core.utilities.security.CompetitorSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.CompetitorDao;
 import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.*;
@@ -29,22 +30,19 @@ public class CompetitorManager implements CompetitorService {
     private final EventService eventService;
     private final EventTypeService eventTypeService;
     private final CompetitorMapper competitorMapper;
-    private final CompetitorSecurityUtils competitorSecurityUtils;
 
     @Override
     @Transactional
-    public CompetitorDto addCompetitor(CreateCompetitorRequest request) {
+    @Authorize(resource = "COMPETITOR", action = "CREATE")
+    public CompetitorDto addCompetitor(@AuthzKey CreateCompetitorRequest request) {
         log.info("Initiating competitor registration. UserId: {}, EventId: {}", request.getUserId(), request.getEventId());
 
         var user = userService.getUserEntityById(request.getUserId());
         var event = eventService.getEventEntityById(request.getEventId());
         var currentUser = userService.getAuthenticatedUser();
 
+        // Self mi baskasi adina mi karari OPA'da (resource.ownerId == user.id) verilir.
         boolean isSelfRegistration = currentUser.getId().equals(user.getId());
-        if (!isSelfRegistration) {
-            log.debug("Registration is for a different user. Verifying authorization. InitiatorId: {}, TargetUserId: {}", currentUser.getId(), user.getId());
-            competitorSecurityUtils.checkCreate(event.getType().getName());
-        }
 
         if (competitorDao.existsByUserAndEvent(user, event)) {
             log.warn("Competitor registration failed: Mapping already exists. UserId: {}, EventId: {}", request.getUserId(), request.getEventId());
@@ -71,11 +69,10 @@ public class CompetitorManager implements CompetitorService {
 
     @Override
     @Transactional
-    public CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest request) {
+    @Authorize(resource = "COMPETITOR", action = "UPDATE")
+    public CompetitorDto updateCompetitor(@AuthzKey UUID id, UpdateCompetitorRequest request) {
         log.info("Initiating competitor update. CompetitorId: {}", id);
         var competitor = getCompetitorEntityById(id);
-
-        competitorSecurityUtils.checkUpdate(competitor.getEvent().getType().getName());
 
         if (request.getUserId() != null) {
             competitor.setUser(userService.getUserEntityById(request.getUserId()));
@@ -96,17 +93,13 @@ public class CompetitorManager implements CompetitorService {
 
     @Override
     @Transactional
-    public void deleteCompetitor(UUID competitorId) {
+    @Authorize(resource = "COMPETITOR", action = "DELETE")
+    public void deleteCompetitor(@AuthzKey UUID competitorId) {
         log.info("Initiating competitor deletion. CompetitorId: {}", competitorId);
 
         Competitor competitor = getCompetitorEntityById(competitorId);
-        var currentUser = userService.getAuthenticatedUser();
 
-        if (!currentUser.getId().equals(competitor.getUser().getId())) {
-            log.debug("Initiating cross-user deletion authorization check. InitiatorId: {}, TargetUserId: {}", currentUser.getId(), competitor.getUser().getId());
-            competitorSecurityUtils.checkDelete(competitor.getEvent().getType().getName());
-        }
-
+        // Self mi (kendi kaydi) yetkili mi karari OPA'da (resource.ownerId == user.id) verilir.
         competitorDao.delete(competitor);
         log.info("Competitor deleted successfully. CompetitorId: {}", competitorId);
     }

@@ -6,7 +6,8 @@ import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.CertificateMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.CertificateMapper;
-import com.skylab.superapp.core.utilities.security.CertificateSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.CertificateDao;
 import com.skylab.superapp.entities.Certificate;
 import com.skylab.superapp.entities.DTOs.certificate.CertificateDto;
@@ -31,16 +32,15 @@ public class CertificateManager implements CertificateService {
     private final CertificateMapper certificateMapper;
     private final EventService eventService;
     private final UserService userService;
-    private final CertificateSecurityUtils certificateSecurityUtils;
 
 
     @Override
     @Transactional
-    public CertificateDto createCertificate(CreateCertificateRequest request) {
+    @Authorize(resource = "CERTIFICATE", action = "CREATE")
+    public CertificateDto createCertificate(@AuthzKey CreateCertificateRequest request) {
         log.info("Initiating certificate creation. EventId: {}", request.getEventId());
 
         var event = eventService.getEventEntityById(request.getEventId());
-        certificateSecurityUtils.checkCreate(event.getType().getName());
 
         List<User> owners = request.getOwnerIds() != null
                 ? request.getOwnerIds().stream()
@@ -66,11 +66,11 @@ public class CertificateManager implements CertificateService {
 
     @Override
     @Transactional
-    public CertificateDto updateCertificate(UUID id, UpdateCertificateRequest request) {
+    @Authorize(resource = "CERTIFICATE", action = "UPDATE")
+    public CertificateDto updateCertificate(@AuthzKey UUID id, UpdateCertificateRequest request) {
         log.info("Initiating certificate update. CertificateId: {}", id);
 
         var certificate = getCertificateEntityById(id);
-        certificateSecurityUtils.checkUpdate(certificate.getEvent().getType().getName());
 
         if (request.getName() != null) certificate.setName(request.getName());
         if (request.getDescription() != null) certificate.setDescription(request.getDescription());
@@ -86,12 +86,12 @@ public class CertificateManager implements CertificateService {
 
     @Override
     @Transactional
-    public void deleteCertificate(UUID id) {
+    @Authorize(resource = "CERTIFICATE", action = "DELETE")
+    public void deleteCertificate(@AuthzKey UUID id) {
         log.info("Initiating certificate deletion. CertificateId: {}", id);
 
 
         var certificate = getCertificateEntityById(id);
-        certificateSecurityUtils.checkDelete(certificate.getEvent().getType().getName());
 
 
         certificateDao.delete(certificate);
@@ -99,19 +99,17 @@ public class CertificateManager implements CertificateService {
     }
 
     @Override
+    @Authorize(resource = "CERTIFICATE", action = "READ")
     public CertificateDto getCertificateById(UUID id) {
         log.debug("Retrieving certificate. CertificateId: {}", id);
-
-        certificateSecurityUtils.checkRead();
 
         return certificateMapper.toDto(getCertificateEntityById(id));
     }
 
     @Override
+    @Authorize(resource = "CERTIFICATE", action = "READ")
     public List<CertificateDto> getCertificatesByEventId(UUID eventId) {
         log.debug("Retrieving certificates by event. EventId: {}", eventId);
-
-        certificateSecurityUtils.checkRead();
 
 
         var event = eventService.getEventEntityById(eventId);
@@ -121,10 +119,9 @@ public class CertificateManager implements CertificateService {
     }
 
     @Override
+    @Authorize(resource = "CERTIFICATE", action = "READ")
     public List<CertificateDto> getCertificatesByUserId(UUID userId) {
         log.debug("Retrieving certificates by user. UserId: {}", userId);
-
-        certificateSecurityUtils.checkRead();
 
         return certificateDao.findAllByOwners_Id(userId).stream()
                 .map(certificateMapper::toDto)
@@ -132,10 +129,9 @@ public class CertificateManager implements CertificateService {
     }
 
     @Override
+    @Authorize(resource = "CERTIFICATE", action = "READ_ME")
     public List<CertificateDto> getMyCertificates() {
         log.debug("Retrieving certificates for authenticated user.");
-
-        certificateSecurityUtils.checkReadMe();
 
         var currentUser = userService.getAuthenticatedUserEntity();
         return getCertificatesByUserId(currentUser.getId());

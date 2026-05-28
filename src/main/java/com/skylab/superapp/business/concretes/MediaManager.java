@@ -7,7 +7,7 @@ import com.skylab.superapp.core.constants.MediaMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.MediaMapper;
-import com.skylab.superapp.core.utilities.security.MediaSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.MediaDao;
 import com.skylab.superapp.entities.DTOs.media.response.MediaUploadResponseDto;
 import com.skylab.superapp.entities.Media;
@@ -31,15 +31,13 @@ public class MediaManager implements MediaService {
     private final ImageService imageService;
     private final FileService fileService;
     private final MediaMapper mediaMapper;
-    private final MediaSecurityUtils mediaSecurityUtils;
 
     private static final Set<String> EXTERNAL_SERVICES = Set.of("skyforms");
 
     @Override
+    @Authorize(resource = "MEDIA", action = "UPLOAD")
     public MediaUploadResponseDto uploadMedia(MultipartFile file) {
         log.info("Initiating media upload process. FileName: {}, ContentType: {}", file.getOriginalFilename(), file.getContentType());
-
-        mediaSecurityUtils.checkUpload();
 
         Media savedMedia;
 

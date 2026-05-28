@@ -23,5 +23,9 @@ public class EventType extends BaseEntity{
     @Column(name ="name")
     private String name;
 
+    // Bu etkinligi yoneten Keycloak takim/grup adi (yetki sahipligi).
+    // null ise konvansiyona dusulur (sahip takim == name). Explicit ownership = denetlenebilir.
+    @Column(name = "owner_group")
+    private String ownerGroup;
 
 }

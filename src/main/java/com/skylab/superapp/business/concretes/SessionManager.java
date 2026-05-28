@@ -5,7 +5,8 @@ import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.SessionMapper;
-import com.skylab.superapp.core.utilities.security.SessionSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.SessionDao;
 import com.skylab.superapp.entities.DTOs.sessions.CreateSessionRequest;
 import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
@@ -32,7 +33,6 @@ public class SessionManager implements SessionService {
     private final ImageService imageService;
     private final EventDayService eventDayService;
     private final MediaService mediaService;
-    private final SessionSecurityUtils sessionSecurityUtils;
 
     @Override
     public List<SessionDto> getAllSessions() {
@@ -54,11 +54,10 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public SessionDto updateSession(UUID id, UpdateSessionRequest updateSessionRequest) {
+    @Authorize(resource = "SESSION", action = "UPDATE")
+    public SessionDto updateSession(@AuthzKey UUID id, UpdateSessionRequest updateSessionRequest) {
         log.info("Initiating session update. SessionId: {}", id);
         var session = getSessionEntityById(id);
-
-        sessionSecurityUtils.checkUpdate(session.getEventDay().getEvent().getType().getName());
 
         session.setTitle(updateSessionRequest.getTitle() == null ? session.getTitle() : updateSessionRequest.getTitle());
         session.setSpeakerName(updateSessionRequest.getSpeakerName() == null ? session.getSpeakerName() : updateSessionRequest.getSpeakerName());
@@ -76,12 +75,11 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public SessionDto addSession(CreateSessionRequest createSessionDto) {
+    @Authorize(resource = "SESSION", action = "CREATE")
+    public SessionDto addSession(@AuthzKey CreateSessionRequest createSessionDto) {
         log.info("Initiating session creation. Title: {}, EventDayId: {}", createSessionDto.getTitle(), createSessionDto.getEventDayId());
 
         var eventDay = eventDayService.getEventDayEntityById(createSessionDto.getEventDayId());
-
-        sessionSecurityUtils.checkCreate(eventDay.getEvent().getType().getName());
 
         if (createSessionDto.getStartTime().isAfter(createSessionDto.getEndTime())) {
             log.warn("Session creation failed: Start date is after end date. Title: {}", createSessionDto.getTitle());
@@ -114,15 +112,14 @@ public class SessionManager implements SessionService {
     }
 
     @Override
-    public void deleteSession(UUID id) {
+    @Authorize(resource = "SESSION", action = "DELETE")
+    public void deleteSession(@AuthzKey UUID id) {
         log.info("Initiating session deletion. SessionId: {}", id);
 
         var session = sessionDao.findById(id).orElseThrow(() -> {
             log.error("Session deletion failed: Resource not found. SessionId: {}", id);
             return new ResourceNotFoundException(SessionMessages.SESSION_NOT_FOUND);
         });
-
-        sessionSecurityUtils.checkDelete(session.getEventDay().getEvent().getType().getName());
 
         sessionDao.delete(session);
 

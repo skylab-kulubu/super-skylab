@@ -35,6 +35,8 @@ public interface UserService{
 
     List<UserDto> getUsersByRoleNames(Set<String> roles);
 
+    List<UserDto> getUsersByGroupName(String groupName, boolean includeSubGroups);
+
     User getUserEntityById(UUID id);
 
     void syncUserFromKeycloak(String userId, UserRepresentation keycloakUser);

@@ -11,7 +11,7 @@ import com.skylab.superapp.core.identity.ldap.LdapService;
 import com.skylab.superapp.core.mappers.UserMapper;
 import com.skylab.superapp.core.utilities.mail.skymail.SkyMailService;
 import com.skylab.superapp.core.utilities.microsoftGraph.MicrosoftGraphService;
-import com.skylab.superapp.core.utilities.security.UserSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.UserDao;
 import com.skylab.superapp.entities.DTOs.User.*;
 import com.skylab.superapp.entities.Image;
@@ -42,7 +42,6 @@ public class UserManager implements UserService {
     private final LdapService ldapService;
     private final KeycloakAdminService keycloakAdminService;
     private final MicrosoftGraphService microsoftGraphService;
-    private final UserSecurityUtils userSecurityUtils;
     private final SkyMailService skyMailService;
 
     @Override
@@ -140,10 +139,9 @@ public class UserManager implements UserService {
     }
 
     @Override
+    @Authorize(resource = "USER", action = "READ")
     public List<UserDto> getAllUsers(String search, List<String> roles) {
         log.debug("Retrieving users. SearchFilter: {}, RolesFilter: {}", search, roles);
-
-        userSecurityUtils.checkRead();
 
         List<User> users;
         boolean hasSearch = search != null && !search.isBlank();
@@ -349,6 +347,31 @@ public class UserManager implements UserService {
         List<User> users = userDao.findAllById(authorizedUserIds);
 
         log.info("Users by roles retrieved successfully. TotalCount: {}", users.size());
+
+        return users.stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDto> getUsersByGroupName(String groupName, boolean includeSubGroups) {
+        log.debug("Retrieving users by group. GroupName: {}, recursive: {}", groupName, includeSubGroups);
+
+        if (groupName == null || groupName.isBlank()) {
+            log.debug("User retrieval by group aborted: No group provided.");
+            return Collections.emptyList();
+        }
+
+        Set<UUID> memberIds = keycloakAdminService.getUserIdsByGroupName(groupName, includeSubGroups);
+
+        if (memberIds.isEmpty()) {
+            log.debug("User retrieval: No members for group. GroupName: {}", groupName);
+            return Collections.emptyList();
+        }
+
+        List<User> users = userDao.findAllById(memberIds);
+
+        log.info("Users by group retrieved successfully. GroupName: {}, TotalCount: {}", groupName, users.size());
 
         return users.stream()
                 .map(userMapper::toDto)

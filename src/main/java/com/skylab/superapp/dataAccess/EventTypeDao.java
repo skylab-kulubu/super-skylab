@@ -16,7 +16,4 @@ public interface EventTypeDao extends JpaRepository<EventType, UUID> {
     @Query("SELECT COUNT(e) > 0 FROM Event e WHERE e.type.id = :id")
     boolean existsEventByTypeId(@Param("id") UUID id);
 
-    @Query("SELECT COUNT(a) > 0 FROM Announcement a WHERE a.eventType.id = :id")
-    boolean existsAnnouncementByTypeId(@Param("id") UUID id);
-
 }

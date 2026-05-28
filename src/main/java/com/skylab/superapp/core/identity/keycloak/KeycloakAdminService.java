@@ -5,7 +5,9 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -183,6 +185,59 @@ public class KeycloakAdminService {
             }
             log.warn("Role '{}' not found in Realm or any Client!", roleName);
             return ids;
+        }
+    }
+
+
+    public Set<UUID> getUserIdsByGroupName(String groupName, boolean includeSubGroups) {
+        log.debug("Retrieving user IDs for group: {} (recursive={})", groupName, includeSubGroups);
+        try {
+            var realm = keycloak.realm(keycloakProperties.getRealm());
+
+            List<GroupRepresentation> matches = realm.groups().groups(groupName, 0, 100);
+            GroupRepresentation target = findGroupByName(matches, groupName);
+
+            if (target == null) {
+                log.warn("Group not found by name: {}", groupName);
+                return Collections.emptySet();
+            }
+
+            Set<UUID> userIds = new HashSet<>();
+            collectGroupMembers(target.getId(), includeSubGroups, userIds);
+            log.debug("Resolved {} users for group '{}'", userIds.size(), groupName);
+            return userIds;
+
+        } catch (Exception e) {
+            log.error("Error retrieving user IDs for group: {}. Error: {}", groupName, e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    private GroupRepresentation findGroupByName(List<GroupRepresentation> groups, String name) {
+        if (groups == null) return null;
+        for (GroupRepresentation g : groups) {
+            if (name.equals(g.getName())) {
+                return g;
+            }
+            GroupRepresentation nested = findGroupByName(g.getSubGroups(), name);
+            if (nested != null) return nested;
+        }
+        return null;
+    }
+
+    private void collectGroupMembers(String groupId, boolean includeSubGroups, Set<UUID> acc) {
+        GroupResource groupResource = keycloak.realm(keycloakProperties.getRealm()).groups().group(groupId);
+
+        groupResource.members(0, 2000)
+                .forEach(u -> acc.add(UUID.fromString(u.getId())));
+
+        if (includeSubGroups) {
+            List<GroupRepresentation> children = groupResource.getSubGroups(0, 1000, true);
+            if (children != null) {
+                for (GroupRepresentation child : children) {
+                    collectGroupMembers(child.getId(), true, acc);
+                }
+            }
         }
     }
 

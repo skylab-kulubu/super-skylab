@@ -10,5 +10,7 @@ import lombok.Setter;
 public class OpaResource {
     private String type;
     private String eventType;
+    private String ownerGroup;
+    private String ownerId;
     private String tenant;      // for cms -- later
 }

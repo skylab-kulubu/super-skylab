@@ -97,6 +97,7 @@ public class Event extends BaseEntity{
     private Season season;
 
     @OneToMany(mappedBy = "event")
+    @Builder.Default
     private List<Certificate> certificates = new ArrayList<>();
 
 
