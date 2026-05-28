@@ -1,0 +1,50 @@
+name: SuperSkylab Feature Branch Build (GHCR)
+
+
+on:
+  push:
+    branches:
+      - 'feat/**'
+      - 'feature/**'
+      - 'fix/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sanitize branch name
+        id: branch
+        run: |
+          slug=$(echo "${{ github.ref_name }}" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+          echo "slug=$slug" >> $GITHUB_OUTPUT
+          echo "Branch slug: $slug"
+
+      - name: Build and Push (branch tag + commit SHA tag)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/skylab-kulubu/super-skylab:${{ steps.branch.outputs.slug }}
+            ghcr.io/skylab-kulubu/super-skylab:${{ steps.branch.outputs.slug }}-${{ github.sha }}
+
+      - name: Summary
+        run: |
+          echo "## Built image" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/skylab-kulubu/super-skylab:${{ steps.branch.outputs.slug }}\` (branch latest)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/skylab-kulubu/super-skylab:${{ steps.branch.outputs.slug }}-${{ github.sha }}\` (this commit)" >> $GITHUB_STEP_SUMMARY
