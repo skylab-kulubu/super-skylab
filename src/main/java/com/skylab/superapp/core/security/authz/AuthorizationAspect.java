@@ -46,7 +46,7 @@ public class AuthorizationAspect {
                 .collect(Collectors.toMap(ResourceContextResolver::resourceType, Function.identity()));
     }
 
-    @Before("@annotation(authorize)")
+    @Before(value = "@annotation(authorize)", argNames = "joinPoint,authorize")
     public void enforce(JoinPoint joinPoint, Authorize authorize) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
