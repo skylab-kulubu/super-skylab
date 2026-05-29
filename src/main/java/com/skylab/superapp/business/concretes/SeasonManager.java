@@ -6,7 +6,7 @@ import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.SeasonMapper;
-import com.skylab.superapp.core.utilities.security.SeasonSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.SeasonDao;
 import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
@@ -28,14 +28,12 @@ public class SeasonManager implements SeasonService {
 
     private final SeasonDao seasonDao;
     private final SeasonMapper seasonMapper;
-    private final SeasonSecurityUtils seasonSecurityUtils;
 
     @Override
     @Transactional
+    @Authorize(resource = "SEASON", action = "CREATE")
     public SeasonDto addSeason(CreateSeasonRequest createSeasonRequest) {
         log.info("Initiating season creation. SeasonName: {}", createSeasonRequest.getName());
-
-        seasonSecurityUtils.checkCreate();
 
         if (seasonDao.existsByName(createSeasonRequest.getName())) {
             log.warn("Season creation failed: Name already exists. SeasonName: {}", createSeasonRequest.getName());
@@ -57,10 +55,10 @@ public class SeasonManager implements SeasonService {
     }
 
     @Override
+    @Authorize(resource = "SEASON", action = "DELETE")
     public void deleteSeason(UUID id) {
         log.info("Initiating season deletion. SeasonId: {}", id);
 
-        seasonSecurityUtils.checkDelete();
         var season = getSeasonEntityById(id);
 
         if (season.getEvents() != null && !season.getEvents().isEmpty()) {
@@ -75,10 +73,10 @@ public class SeasonManager implements SeasonService {
 
     @Override
     @Transactional
+    @Authorize(resource = "SEASON", action = "UPDATE")
     public SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest) {
         log.info("Initiating season update. SeasonId: {}", id);
 
-        seasonSecurityUtils.checkUpdate();
         var season = getSeasonEntityById(id);
 
         var newStartDate = updateSeasonRequest.getStartDate() != null ? updateSeasonRequest.getStartDate() : season.getStartDate();

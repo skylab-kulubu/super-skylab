@@ -7,10 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -65,29 +62,4 @@ public class OpaClient {
         }
     }
 
-    public Set<String> getRolesForEventType(String eventTypeName) {
-        log.debug("Initiating OPA role retrieval for event type. EventTypeName: {}", eventTypeName);
-
-        try {
-            var response = webClient.get()
-                    .uri(opaProperties.getUrl() + "/v1/data/skylab/event_type_roles/" + eventTypeName)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-
-            if (response == null || response.get("result") == null) {
-                log.debug("OPA role retrieval completed: No roles found. EventTypeName: {}", eventTypeName);
-                return Set.of();
-            }
-
-            List<String> roles = (List<String>) response.get("result");
-            log.info("OPA roles retrieved successfully. EventTypeName: {}, RoleCount: {}", eventTypeName, roles.size());
-
-            return new HashSet<>(roles);
-
-        } catch (Exception e) {
-            log.error("OPA service connection failed during role retrieval. EventTypeName: {}, ErrorMessage: {}", eventTypeName, e.getMessage(), e);
-            return Set.of();
-        }
-    }
 }

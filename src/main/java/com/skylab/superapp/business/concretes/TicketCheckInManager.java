@@ -5,7 +5,8 @@ import com.skylab.superapp.business.abstracts.TicketCheckInService;
 import com.skylab.superapp.business.abstracts.TicketService;
 import com.skylab.superapp.core.constants.TicketCheckInMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
-import com.skylab.superapp.core.utilities.security.TicketSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.TicketCheckInDao;
 import com.skylab.superapp.entities.EventDay;
 import com.skylab.superapp.entities.Ticket;
@@ -24,17 +25,14 @@ public class TicketCheckInManager implements TicketCheckInService {
     private final TicketCheckInDao ticketCheckInDao;
     private final TicketService ticketService;
     private final EventDayService eventDayService;
-    private final TicketSecurityUtils ticketSecurityUtils;
 
     @Override
-    public void checkInToEvent(UUID ticketId, UUID eventDayId) {
+    @Authorize(resource = "TICKET", action = "VALIDATE")
+    public void checkInToEvent(@AuthzKey UUID ticketId, UUID eventDayId) {
         log.info("Initiating ticket check-in. TicketId: {}, EventDayId: {}", ticketId, eventDayId);
 
         Ticket ticket = ticketService.getTicketEntityById(ticketId);
         EventDay eventDay = eventDayService.getEventDayEntityById(eventDayId);
-
-        String eventTypeName = extractEventTypeName(ticket);
-        ticketSecurityUtils.checkValidate(eventTypeName);
 
         if (!ticket.getEvent().getId().equals(eventDay.getEvent().getId())) {
             log.warn("Check-in failed: Ticket event mismatch. TicketId: {}, EventDayId: {}", ticketId, eventDayId);

@@ -5,9 +5,10 @@ import com.skylab.superapp.core.constants.EventMessages;
 import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.EventMapper;
-import com.skylab.superapp.core.utilities.security.EventSecurityUtils;
 import com.skylab.superapp.dataAccess.EventDao;
 import com.skylab.superapp.entities.*;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
@@ -31,18 +32,16 @@ public class EventManager implements EventService {
     private final EventTypeService eventTypeService;
     private final EventMapper eventMapper;
     private final SeasonService seasonService;
-    private final EventSecurityUtils eventSecurityUtils;
     private final UserService userService;
     private final MediaService mediaService;
     private final TicketFactory ticketFactory;
 
     @Override
     @Transactional
-    public EventDto addEvent(CreateEventRequest createEventRequest) {
+    @Authorize(resource = "EVENT", action = "CREATE")
+    public EventDto addEvent(@AuthzKey CreateEventRequest createEventRequest) {
         log.info("Initiating event creation. EventName: {}", createEventRequest.getName());
         EventType eventType = eventTypeService.getEventTypeEntityById(createEventRequest.getEventTypeId());
-
-        eventSecurityUtils.checkCreate(eventType.getName());
 
         Season season = createEventRequest.getSeasonId() != null
                 ? seasonService.getSeasonEntityById(createEventRequest.getSeasonId())
@@ -79,12 +78,10 @@ public class EventManager implements EventService {
 
     @Override
     @Transactional
-    public void deleteEvent(UUID id) {
+    @Authorize(resource = "EVENT", action = "DELETE")
+    public void deleteEvent(@AuthzKey UUID id) {
         log.info("Initiating event deletion. EventId: {}", id);
         Event event = getEventEntityById(id);
-
-        eventSecurityUtils.checkDelete(event.getType().getName());
-
 
         if (event.getSoldTickets() != null && !event.getSoldTickets().isEmpty()) {
             log.warn("Event deletion failed: Has tickets. EventId: {}", id);
@@ -107,11 +104,10 @@ public class EventManager implements EventService {
 
     @Override
     @Transactional
-    public EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest) {
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public EventDto updateEvent(@AuthzKey UUID id, UpdateEventRequest updateEventRequest) {
         log.info("Initiating event update. EventId: {}", id);
         Event event = getEventEntityById(id);
-
-        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         if (updateEventRequest.getName() != null) event.setName(updateEventRequest.getName());
         if (updateEventRequest.getDescription() != null) event.setDescription(updateEventRequest.getDescription());
@@ -156,11 +152,10 @@ public class EventManager implements EventService {
 
     @Override
     @Transactional
-    public void addImagesToEvent(UUID eventId, List<UUID> imageIds) {
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public void addImagesToEvent(@AuthzKey UUID eventId, List<UUID> imageIds) {
         log.info("Attaching images to event. EventId: {}, ImageCount: {}", eventId, imageIds.size());
         Event event = getEventEntityById(eventId);
-
-        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         event.getImages().addAll(imageService.getImagesByIds(imageIds));
         eventDao.save(event);
@@ -170,11 +165,10 @@ public class EventManager implements EventService {
 
     @Override
     @Transactional
-    public void removeImagesFromEvent(UUID eventId, List<UUID> imageIds) {
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public void removeImagesFromEvent(@AuthzKey UUID eventId, List<UUID> imageIds) {
         log.info("Detaching images from event. EventId: {}, ImageCount: {}", eventId, imageIds.size());
         Event event = getEventEntityById(eventId);
-
-        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         List<Image> images = imageService.getImagesByIds(imageIds);
         for (Image image : images) {
@@ -221,12 +215,11 @@ public class EventManager implements EventService {
 
     @Override
     @Transactional
-    public void assignSeasonToEvent(UUID eventId, UUID seasonId) {
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public void assignSeasonToEvent(@AuthzKey UUID eventId, UUID seasonId) {
         log.info("Assigning season to event. EventId: {}, SeasonId: {}", eventId, seasonId);
 
         Event event = getEventEntityById(eventId);
-
-        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         Season season = seasonService.getSeasonEntityById(seasonId);
 
@@ -243,7 +236,8 @@ public class EventManager implements EventService {
 
     @Transactional
     @Override
-    public void removeSeasonFromEvent(UUID eventId, UUID seasonId) {
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public void removeSeasonFromEvent(@AuthzKey UUID eventId, UUID seasonId) {
         log.info("Removing season from event. EventId: {}", eventId);
 
         Event event = getEventEntityById(eventId);
@@ -253,8 +247,6 @@ public class EventManager implements EventService {
             throw new BusinessException(EventMessages.EVENT_NOT_ASSIGNED_TO_THIS_SEASON);
         }
 
-
-        eventSecurityUtils.checkUpdate(event.getType().getName());
 
         if (event.getSeason() == null) {
             log.warn("Season removal failed: Event is not assigned to any season. EventId: {}", eventId);

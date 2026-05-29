@@ -7,7 +7,8 @@ import com.skylab.superapp.core.exceptions.BusinessException;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.exceptions.ValidationException;
 import com.skylab.superapp.core.mappers.EventDayMapper;
-import com.skylab.superapp.core.utilities.security.EventDaySecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
+import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.EventDayDao;
 import com.skylab.superapp.entities.DTOs.eventDay.CreateEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.GetEventDayResponseDto;
@@ -30,7 +31,6 @@ public class EventDayManager implements EventDayService {
     private final EventDayDao eventDayDao;
     private final EventDayMapper eventDayMapper;
     private final EventService eventService;
-    private final EventDaySecurityUtils eventDaySecurityUtils;
 
     @Override
     public EventDay getEventDayReference(UUID eventDayId) {
@@ -63,11 +63,11 @@ public class EventDayManager implements EventDayService {
 
     @Override
     @Transactional
-    public GetEventDayResponseDto createEventDay(CreateEventDayRequest request) {
+    @Authorize(resource = "EVENT_DAY", action = "CREATE")
+    public GetEventDayResponseDto createEventDay(@AuthzKey CreateEventDayRequest request) {
         log.info("Initiating event day creation. EventId: {}", request.getEventId());
 
         var event = eventService.getEventEntityById(request.getEventId());
-        eventDaySecurityUtils.checkCreate(event.getType().getName());
 
         if (request.getStartDate() != null && request.getEndDate() != null
                 && request.getStartDate().isAfter(request.getEndDate())) {
@@ -90,11 +90,11 @@ public class EventDayManager implements EventDayService {
 
     @Override
     @Transactional
-    public GetEventDayResponseDto updateEventDay(UUID id, UpdateEventDayRequest request) {
+    @Authorize(resource = "EVENT_DAY", action = "UPDATE")
+    public GetEventDayResponseDto updateEventDay(@AuthzKey UUID id, UpdateEventDayRequest request) {
         log.info("Initiating event day update. EventDayId: {}", id);
 
         var eventDay = getEventDayEntityById(id);
-        eventDaySecurityUtils.checkUpdate(eventDay.getEvent().getType().getName());
 
         var newStart = request.getStartDate() != null ? request.getStartDate() : eventDay.getStartDate();
         var newEnd = request.getEndDate() != null ? request.getEndDate() : eventDay.getEndDate();
@@ -114,11 +114,11 @@ public class EventDayManager implements EventDayService {
 
     @Override
     @Transactional
-    public void deleteEventDay(UUID id) {
+    @Authorize(resource = "EVENT_DAY", action = "DELETE")
+    public void deleteEventDay(@AuthzKey UUID id) {
         log.info("Initiating event day deletion. EventDayId: {}", id);
 
         var eventDay = getEventDayEntityById(id);
-        eventDaySecurityUtils.checkDelete(eventDay.getEvent().getType().getName());
 
         if (eventDay.getSessions() != null && !eventDay.getSessions().isEmpty()) {
             log.warn("Event day deletion failed: Has sessions. EventDayId: {}", id);
@@ -130,9 +130,9 @@ public class EventDayManager implements EventDayService {
     }
 
     @Override
+    @Authorize(resource = "EVENT_DAY", action = "READ")
     public List<GetEventDayResponseDto> getEventDaysByEventId(UUID eventId) {
         log.debug("Retrieving event days by event. EventId: {}", eventId);
-        eventDaySecurityUtils.checkRead();
 
         var event = eventService.getEventEntityById(eventId);
         var eventDays = eventDayDao.findAllByEvent(event);

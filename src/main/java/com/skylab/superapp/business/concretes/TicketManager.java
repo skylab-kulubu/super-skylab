@@ -6,7 +6,7 @@ import com.skylab.superapp.business.abstracts.UserService;
 import com.skylab.superapp.core.constants.TicketMessages;
 import com.skylab.superapp.core.exceptions.ResourceNotFoundException;
 import com.skylab.superapp.core.mappers.TicketMapper;
-import com.skylab.superapp.core.utilities.security.TicketSecurityUtils;
+import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.TicketDao;
 import com.skylab.superapp.entities.DTOs.ticket.response.GetTicketResponseDto;
 import com.skylab.superapp.entities.Ticket;
@@ -26,7 +26,6 @@ public class TicketManager implements TicketService {
     private final TicketDao ticketDao;
     private final UserService userService;
     private final TicketMapper ticketMapper;
-    private final TicketSecurityUtils ticketSecurityUtils;
     private final EventService eventService;
 
 
@@ -44,9 +43,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ")
     public GetTicketResponseDto getTicketById(UUID ticketId) {
         log.debug("Retrieving ticket. TicketId: {}", ticketId);
-        ticketSecurityUtils.checkRead();
 
         Ticket ticket = ticketDao.findById(ticketId).orElseThrow(() -> {
             log.error("Ticket retrieval failed: Resource not found. TicketId: {}", ticketId);
@@ -57,9 +56,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ")
     public List<GetTicketResponseDto> getTicketsByUserEmail(String email) {
         log.debug("Retrieving tickets. UserEmail: {}", email);
-        ticketSecurityUtils.checkRead();
 
         List<Ticket> tickets = ticketDao.findAllByOwner_Email(email);
 
@@ -73,9 +72,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ")
     public List<GetTicketResponseDto> getTicketsByUserId(UUID userId) {
         log.debug("Retrieving tickets. UserId: {}", userId);
-        ticketSecurityUtils.checkRead();
 
         List<Ticket> tickets = ticketDao.findAllByOwner_Id(userId);
 
@@ -101,9 +100,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ_ME")
     public List<GetTicketResponseDto> getMyTickets() {
         log.debug("Retrieving tickets for authenticated user.");
-        ticketSecurityUtils.checkReadMe();
 
         var authenticatedUser = userService.getAuthenticatedUserEntity();
         List<Ticket> tickets = ticketDao.findAllByOwner_Id(authenticatedUser.getId());
@@ -116,10 +115,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ")
     public List<GetTicketResponseDto> getTicketsByEventId(UUID eventId) {
         log.debug("Retrieving tickets for event. EventId: {}", eventId);
-
-        ticketSecurityUtils.checkRead();
 
         var event = eventService.getEventEntityById(eventId);
         return ticketDao.findAllByEvent(event)
@@ -129,10 +127,9 @@ public class TicketManager implements TicketService {
     }
 
     @Override
+    @Authorize(resource = "TICKET", action = "READ")
     public List<GetTicketResponseDto> searchTicketsByEventId(UUID eventId, String query) {
         log.debug("Searching tickets for event. EventId: {}, Query: {}", eventId, query);
-
-        ticketSecurityUtils.checkRead();
 
         return ticketDao.searchByEventIdAndQuery(eventId, query.trim())
                 .stream().map(ticketMapper::ticketToGetTicketResponseDto)
