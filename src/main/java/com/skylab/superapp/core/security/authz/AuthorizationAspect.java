@@ -5,9 +5,10 @@ import com.skylab.superapp.core.security.opa.OpaInput;
 import com.skylab.superapp.core.security.opa.OpaResource;
 import com.skylab.superapp.core.security.opa.OpaUser;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -34,7 +35,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 @Slf4j
 @Aspect
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 2)
 public class AuthorizationAspect {
 
     private final OpaClient opaClient;
@@ -46,8 +47,12 @@ public class AuthorizationAspect {
                 .collect(Collectors.toMap(ResourceContextResolver::resourceType, Function.identity()));
     }
 
-    @Before(value = "@annotation(authorize)", argNames = "joinPoint,authorize")
-    public void enforce(JoinPoint joinPoint, Authorize authorize) {
+
+    @Pointcut("@annotation(authorize)")
+    public void authorizedMethod(Authorize authorize) {}
+
+    @Around(value = "authorizedMethod(authorize)", argNames = "pjp,authorize")
+    public Object enforce(ProceedingJoinPoint pjp, Authorize authorize) throws Throwable {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("authz-decision",
@@ -71,8 +76,7 @@ public class AuthorizationAspect {
             }
         }
 
-        // Kaynak baglamini coz (varsa resolver + @AuthzKey)
-        ResourceContext ctx = resolveContext(joinPoint, authorize.resource(), authorize.action());
+        ResourceContext ctx = resolveContext(pjp, authorize.resource(), authorize.action());
 
         String effectiveOwner = (ctx.getOwnerGroup() != null && !ctx.getOwnerGroup().isBlank())
                 ? ctx.getOwnerGroup() : ctx.getEventType();
@@ -88,7 +92,6 @@ public class AuthorizationAspect {
                 .action(authorize.action())
                 .build();
 
-        // Karar korelasyonu: her karara benzersiz id; traceId loglara MDC'den otomatik gelir.
         String decisionId = UUID.randomUUID().toString();
         long start = System.currentTimeMillis();
 
@@ -110,9 +113,10 @@ public class AuthorizationAspect {
         }
 
         audit(decisionId, authorize, auth.getName(), effectiveOwner, ctx, "GRANTED", "policy", duration);
+
+        return pjp.proceed();
     }
 
-    /** Her yetki karari yapisal JSON audit log (traceId MDC'den otomatik) -> Loki/Elastic. */
     private void audit(String decisionId, Authorize authorize, String userId, String ownerGroup,
                        ResourceContext ctx, String decision, String reason, long durationMs) {
         log.info("authz-decision",
@@ -128,20 +132,20 @@ public class AuthorizationAspect {
                 kv("durationMs", durationMs));
     }
 
-    private ResourceContext resolveContext(JoinPoint joinPoint, String resource, String action) {
+    private ResourceContext resolveContext(ProceedingJoinPoint pjp, String resource, String action) {
         ResourceContextResolver resolver = resolvers.get(resource);
         if (resolver == null) {
             return ResourceContext.empty();
         }
-        Object key = findAuthzKey(joinPoint);
+        Object key = findAuthzKey(pjp);
         return resolver.resolve(action, key);
     }
 
     /** @AuthzKey ile isaretli parametrenin degerini bulur. */
-    private Object findAuthzKey(JoinPoint joinPoint) {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+    private Object findAuthzKey(ProceedingJoinPoint pjp) {
+        MethodSignature signature = (MethodSignature) pjp.getSignature();
         Annotation[][] paramAnnotations = signature.getMethod().getParameterAnnotations();
-        Object[] args = joinPoint.getArgs();
+        Object[] args = pjp.getArgs();
 
         for (int i = 0; i < paramAnnotations.length; i++) {
             for (Annotation annotation : paramAnnotations[i]) {
