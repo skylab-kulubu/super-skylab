@@ -20,6 +20,8 @@ public interface UserService{
 
     UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest);
 
+    UserDto patchAuthenticatedUser(PatchUserRequest patchUserRequest);
+
     void promoteUserToLdap(UUID userId, String targetRole, String initialPassword);
 
 
@@ -30,6 +32,8 @@ public interface UserService{
     Image uploadProfilePictureOfAuthenticatedUser(MultipartFile image);
 
     UserDto updateUser(UUID id, UpdateUserRequest updateUserRequest);
+
+    UserDto patchUser(UUID id, PatchUserRequest patchUserRequest);
 
     void deleteUser(UUID id);
 

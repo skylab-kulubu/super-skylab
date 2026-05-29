@@ -3,6 +3,7 @@ package com.skylab.superapp.business.abstracts;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
+import com.skylab.superapp.entities.DTOs.eventType.PatchEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
 
@@ -21,6 +22,8 @@ public interface EventTypeService {
     EventTypeDto addEventType(CreateEventTypeRequest createEventTypeRequest);
 
     EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest);
+
+    EventTypeDto patchEventType(UUID id, PatchEventTypeRequest patchEventTypeRequest);
 
     void deleteEventType(UUID id);
 

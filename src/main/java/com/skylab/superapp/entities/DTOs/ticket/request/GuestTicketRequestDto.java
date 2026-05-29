@@ -19,17 +19,17 @@ import java.util.UUID;
 @NoArgsConstructor
 public class GuestTicketRequestDto {
 
-    @NotBlank(message = "Ad boş olamaz")
+    @NotBlank(message = TicketMessages.GUEST_FIRST_NAME_NOT_BLANK)
     private String firstName;
 
-    @NotBlank(message = "Soyad boş olamaz")
+    @NotBlank(message = TicketMessages.GUEST_LAST_NAME_NOT_BLANK)
     private String lastName;
 
-    @NotBlank(message = "Email boş olamaz")
-    @Email(message = "Geçerli bir email formatı giriniz")
+    @NotBlank(message = TicketMessages.GUEST_EMAIL_NOT_BLANK)
+    @Email(message = TicketMessages.GUEST_EMAIL_INVALID)
     private String email;
 
-    @NotBlank(message = "Telefon numarası boş olamaz")
+    @NotBlank(message = TicketMessages.GUEST_PHONE_NOT_BLANK)
     private String phoneNumber;
 
     private LocalDateTime birthDate;

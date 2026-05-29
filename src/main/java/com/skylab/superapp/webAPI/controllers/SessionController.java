@@ -5,6 +5,7 @@ import com.skylab.superapp.core.constants.SessionMessages;
 import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.entities.DTOs.sessions.CreateSessionRequest;
+import com.skylab.superapp.entities.DTOs.sessions.PatchSessionRequest;
 import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import com.skylab.superapp.entities.DTOs.sessions.UpdateSessionRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,12 +55,24 @@ public class SessionController {
 
 
     @PutMapping("/{id}")
-    @Operation(summary = "Oturum Güncelle", description = "Var olan bir oturumun spesifik verilerini günceller.")
+    @Operation(summary = "Oturum Güncelle (Tam)", description = "Oturumu tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
     public ResponseEntity<DataResult<SessionDto>> updateSession(
             @Parameter(description = "Oturum UUID") @PathVariable UUID id,
             @RequestBody @Valid UpdateSessionRequest request) {
 
         var result = sessionService.updateSession(id, request);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, SessionMessages.SESSION_UPDATED_SUCCESFULLY, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Oturum Güncelle (Kısmi)", description = "Oturumun yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<SessionDto>> patchSession(
+            @Parameter(description = "Oturum UUID") @PathVariable UUID id,
+            @RequestBody PatchSessionRequest request) {
+
+        var result = sessionService.patchSession(id, request);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, SessionMessages.SESSION_UPDATED_SUCCESFULLY, HttpStatus.OK));

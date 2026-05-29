@@ -9,6 +9,7 @@ import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.LeaderboardDto;
+import com.skylab.superapp.entities.DTOs.Competitor.PatchCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +41,7 @@ public class CompetitorController {
             @ApiResponse(responseCode = "400", description = "Kullanıcı zaten yarışmacı veya iş kuralı ihlali.", content = @Content),
             @ApiResponse(responseCode = "403", description = "Yetkisiz erişim.", content = @Content)
     })
-    public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@RequestBody CreateCompetitorRequest request) {
+    public ResponseEntity<DataResult<CompetitorDto>> addCompetitor(@Valid @RequestBody CreateCompetitorRequest request) {
         var result = competitorService.addCompetitor(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.CREATED));
@@ -62,9 +64,17 @@ public class CompetitorController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Yarışmacı Verisini Güncelle", description = "Yarışmacının puanlama veya kazanma durumunu günceller.")
-    public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @RequestBody UpdateCompetitorRequest request) {
+    @Operation(summary = "Yarışmacı Verisini Güncelle (Tam)", description = "Yarışmacı kaydını tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
+    public ResponseEntity<DataResult<CompetitorDto>> updateCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @Valid @RequestBody UpdateCompetitorRequest request) {
         var result = competitorService.updateCompetitor(id, request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Yarışmacı Verisini Güncelle (Kısmi)", description = "Yarışmacının yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<CompetitorDto>> patchCompetitor(@Parameter(description = "Yarışmacı UUID") @PathVariable UUID id, @RequestBody PatchCompetitorRequest request) {
+        var result = competitorService.patchCompetitor(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_ADD_SUCCESS, HttpStatus.OK));
     }

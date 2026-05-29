@@ -11,6 +11,7 @@ import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
+import com.skylab.superapp.entities.DTOs.Event.PatchEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import com.skylab.superapp.entities.DTOs.ticket.request.GuestTicketRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -106,30 +107,54 @@ public class EventManager implements EventService {
     @Transactional
     @Authorize(resource = "EVENT", action = "UPDATE")
     public EventDto updateEvent(@AuthzKey UUID id, UpdateEventRequest updateEventRequest) {
-        log.info("Initiating event update. EventId: {}", id);
+        log.info("Initiating event replace (PUT). EventId: {}", id);
         Event event = getEventEntityById(id);
 
-        if (updateEventRequest.getName() != null) event.setName(updateEventRequest.getName());
-        if (updateEventRequest.getDescription() != null) event.setDescription(updateEventRequest.getDescription());
-        if (updateEventRequest.getFormUrl() != null) event.setFormUrl(updateEventRequest.getFormUrl());
-        if (updateEventRequest.getStartDate() != null) event.setStartDate(updateEventRequest.getStartDate());
-        if (updateEventRequest.getEndDate() != null) event.setEndDate(updateEventRequest.getEndDate());
-        if (updateEventRequest.getLinkedin() != null) event.setLinkedin(updateEventRequest.getLinkedin());
-        if (updateEventRequest.getLocation() != null) event.setLocation(updateEventRequest.getLocation());
-        if (updateEventRequest.getPrizeInfo() != null) event.setPrizeInfo(updateEventRequest.getPrizeInfo());
-
+        event.setName(updateEventRequest.getName());
+        event.setDescription(updateEventRequest.getDescription());
+        event.setFormUrl(updateEventRequest.getFormUrl());
+        event.setStartDate(updateEventRequest.getStartDate());
+        event.setEndDate(updateEventRequest.getEndDate());
+        event.setLinkedin(updateEventRequest.getLinkedin());
+        event.setLocation(updateEventRequest.getLocation());
+        event.setPrizeInfo(updateEventRequest.getPrizeInfo());
         event.setRanked(updateEventRequest.isRanked());
         event.setActive(updateEventRequest.isActive());
+        event.setType(eventTypeService.getEventTypeEntityById(updateEventRequest.getTypeId()));
+        event.setSeason(seasonService.getSeasonEntityById(updateEventRequest.getSeasonId()));
 
-        if (updateEventRequest.getTypeId() != null) {
-            event.setType(eventTypeService.getEventTypeEntityById(updateEventRequest.getTypeId()));
+        Event updatedEvent = eventDao.save(event);
+        log.info("Event replaced successfully. EventId: {}", updatedEvent.getId());
+
+        return eventMapper.eventToEventDto(updatedEvent);
+    }
+
+    @Override
+    @Transactional
+    @Authorize(resource = "EVENT", action = "UPDATE")
+    public EventDto patchEvent(@AuthzKey UUID id, PatchEventRequest request) {
+        log.info("Initiating event patch (PATCH). EventId: {}", id);
+        Event event = getEventEntityById(id);
+
+        if (request.getName() != null) event.setName(request.getName());
+        if (request.getDescription() != null) event.setDescription(request.getDescription());
+        if (request.getFormUrl() != null) event.setFormUrl(request.getFormUrl());
+        if (request.getStartDate() != null) event.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) event.setEndDate(request.getEndDate());
+        if (request.getLinkedin() != null) event.setLinkedin(request.getLinkedin());
+        if (request.getLocation() != null) event.setLocation(request.getLocation());
+        if (request.getPrizeInfo() != null) event.setPrizeInfo(request.getPrizeInfo());
+        if (request.getIsRanked() != null) event.setRanked(request.getIsRanked());
+        if (request.getActive() != null) event.setActive(request.getActive());
+        if (request.getTypeId() != null) {
+            event.setType(eventTypeService.getEventTypeEntityById(request.getTypeId()));
         }
-        if (updateEventRequest.getSeasonId() != null) {
-            event.setSeason(seasonService.getSeasonEntityById(updateEventRequest.getSeasonId()));
+        if (request.getSeasonId() != null) {
+            event.setSeason(seasonService.getSeasonEntityById(request.getSeasonId()));
         }
 
         Event updatedEvent = eventDao.save(event);
-        log.info("Event updated successfully. EventId: {}", updatedEvent.getId());
+        log.info("Event patched successfully. EventId: {}", updatedEvent.getId());
 
         return eventMapper.eventToEventDto(updatedEvent);
     }

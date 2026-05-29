@@ -12,6 +12,7 @@ import com.skylab.superapp.core.security.authz.AuthzKey;
 import com.skylab.superapp.dataAccess.EventDayDao;
 import com.skylab.superapp.entities.DTOs.eventDay.CreateEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.GetEventDayResponseDto;
+import com.skylab.superapp.entities.DTOs.eventDay.PatchEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.UpdateEventDayRequest;
 import com.skylab.superapp.entities.EventDay;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +93,29 @@ public class EventDayManager implements EventDayService {
     @Transactional
     @Authorize(resource = "EVENT_DAY", action = "UPDATE")
     public GetEventDayResponseDto updateEventDay(@AuthzKey UUID id, UpdateEventDayRequest request) {
-        log.info("Initiating event day update. EventDayId: {}", id);
+        log.info("Initiating event day replace (PUT). EventDayId: {}", id);
+
+        var eventDay = getEventDayEntityById(id);
+
+        if (request.getStartDate() != null && request.getEndDate() != null
+                && request.getStartDate().isAfter(request.getEndDate())) {
+            throw new ValidationException(EventDayMessages.EVENT_DAY_START_DATE_AFTER_END_DATE);
+        }
+
+        eventDay.setStartDate(request.getStartDate());
+        eventDay.setEndDate(request.getEndDate());
+
+        var saved = eventDayDao.save(eventDay);
+        log.info("Event day replaced successfully. EventDayId: {}", id);
+
+        return eventDayMapper.eventDayToGetEventDayResponseDto(saved);
+    }
+
+    @Override
+    @Transactional
+    @Authorize(resource = "EVENT_DAY", action = "UPDATE")
+    public GetEventDayResponseDto patchEventDay(@AuthzKey UUID id, PatchEventDayRequest request) {
+        log.info("Initiating event day patch (PATCH). EventDayId: {}", id);
 
         var eventDay = getEventDayEntityById(id);
 
@@ -107,7 +130,7 @@ public class EventDayManager implements EventDayService {
         if (request.getEndDate() != null) eventDay.setEndDate(request.getEndDate());
 
         var saved = eventDayDao.save(eventDay);
-        log.info("Event day updated successfully. EventDayId: {}", id);
+        log.info("Event day patched successfully. EventDayId: {}", id);
 
         return eventDayMapper.eventDayToGetEventDayResponseDto(saved);
     }

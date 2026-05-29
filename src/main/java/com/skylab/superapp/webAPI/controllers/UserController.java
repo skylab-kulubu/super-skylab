@@ -6,6 +6,7 @@ import com.skylab.superapp.core.results.DataResult;
 import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
+import com.skylab.superapp.entities.DTOs.User.PatchUserRequest;
 import com.skylab.superapp.entities.DTOs.User.PromoteUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UpdateUserRequest;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,13 +48,25 @@ public class UserController {
                      HttpStatus.OK));
     }
 
-    @PatchMapping("/me")
-    @Operation(summary = "Aktif Kullanıcı Profilini Güncelle", description = "Sisteme giriş yapmış kullanıcının kendi profil bilgilerini güncellemesini sağlar.")
+    @PutMapping("/me")
+    @Operation(summary = "Aktif Kullanıcı Profilini Güncelle (Tam)", description = "Sisteme giriş yapmış kullanıcının profilini tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Kullanıcı profili güncellendi.")
     })
-    public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@RequestBody UpdateUserRequest updateUserRequest) {
-       var result =userService.updateAuthenticatedUser(updateUserRequest);
+    public ResponseEntity<DataResult<UserDto>> updateAuthenticatedUser(@Valid @RequestBody UpdateUserRequest updateUserRequest) {
+        var result = userService.updateAuthenticatedUser(updateUserRequest);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK));
+    }
+
+    @PatchMapping("/me")
+    @Operation(summary = "Aktif Kullanıcı Profilini Güncelle (Kısmi)", description = "Sisteme giriş yapmış kullanıcının yalnızca gönderilen profil alanlarını günceller (PATCH).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Kullanıcı profili güncellendi.")
+    })
+    public ResponseEntity<DataResult<UserDto>> patchAuthenticatedUser(@RequestBody PatchUserRequest patchUserRequest) {
+        var result = userService.patchAuthenticatedUser(patchUserRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS, HttpStatus.OK));
@@ -104,11 +118,22 @@ public class UserController {
                 .body(new SuccessDataResult<>(result, UserMessages.USER_GET_SUCCESS, HttpStatus.OK));
     }
 
-    @PatchMapping("/{id}")
-    @Operation(summary = "Kullanıcı Güncelle (Admin)", description = "Yetkili personelin belirtilen kullanıcının verilerini güncellemesini sağlar.")
+    @PutMapping("/{id}")
+    @Operation(summary = "Kullanıcı Güncelle - Tam (Admin)", description = "Yetkili personelin belirtilen kullanıcıyı tamamen değiştirmesini sağlar (PUT). Zorunlu alanlar gönderilmelidir.")
     public ResponseEntity<DataResult<UserDto>> updateUserById(@PathVariable UUID id,
-                                                 @RequestBody UpdateUserRequest updateUserRequest) {
+                                                 @Valid @RequestBody UpdateUserRequest updateUserRequest) {
         var result = userService.updateUser(id, updateUserRequest);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS,
+                        HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Kullanıcı Güncelle - Kısmi (Admin)", description = "Yetkili personelin belirtilen kullanıcının yalnızca gönderilen alanlarını güncellemesini sağlar (PATCH).")
+    public ResponseEntity<DataResult<UserDto>> patchUserById(@PathVariable UUID id,
+                                                 @RequestBody PatchUserRequest patchUserRequest) {
+        var result = userService.patchUser(id, patchUserRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, UserMessages.USER_UPDATED_SUCCESS,

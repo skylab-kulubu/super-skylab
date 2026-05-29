@@ -8,6 +8,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.Event.CreateEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.EventDto;
+import com.skylab.superapp.entities.DTOs.Event.PatchEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -103,15 +104,29 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Etkinliği Güncelle", description = "Var olan bir etkinliğin bilgilerini günceller.")
+    @Operation(summary = "Etkinliği Güncelle (Tam)", description = "Etkinliği tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla güncellendi."),
             @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),
             @ApiResponse(responseCode = "404", description = "Güncellenmek istenen etkinlik bulunamadı.", content = @Content)
     })
     public ResponseEntity<DataResult<EventDto>> updateEvent(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id,
-                                                            @RequestBody UpdateEventRequest updateEventRequest) {
+                                                            @Valid @RequestBody UpdateEventRequest updateEventRequest) {
         var result = eventService.updateEvent(id, updateEventRequest);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Etkinliği Güncelle (Kısmi)", description = "Etkinliğin yalnızca gönderilen alanlarını günceller (PATCH).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Etkinlik başarıyla güncellendi."),
+            @ApiResponse(responseCode = "403", description = "Erişim reddedildi (Yetersiz rol).", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Güncellenmek istenen etkinlik bulunamadı.", content = @Content)
+    })
+    public ResponseEntity<DataResult<EventDto>> patchEvent(@Parameter(description = "Etkinlik UUID", required = true) @PathVariable UUID id,
+                                                           @RequestBody PatchEventRequest patchEventRequest) {
+        var result = eventService.patchEvent(id, patchEventRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventMessages.SUCCESS_UPDATE_EVENT, HttpStatus.OK));
     }

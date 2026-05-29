@@ -32,9 +32,10 @@ public class CompetitorResourceContextResolver implements ResourceContextResolve
 
     @Override
     public ResourceContext resolve(String action, Object key) {
-        // CREATE: hedef kullanici = request.userId (self-registration kontrolu icin)
         if (key instanceof CreateCompetitorRequest request) {
-            EventType type = eventDao.findById(request.getEventId()).map(Event::getType).orElse(null);
+
+            EventType type = request.getEventId() == null ? null
+                    : eventDao.findById(request.getEventId()).map(Event::getType).orElse(null);
             return build(type, request.getUserId());
         }
         // UPDATE/DELETE: kaynak sahibi = competitor.user

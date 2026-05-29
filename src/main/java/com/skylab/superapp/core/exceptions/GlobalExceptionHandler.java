@@ -9,8 +9,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import jakarta.validation.ConstraintViolationException;
 
 
 @Slf4j
@@ -77,6 +81,32 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResult(
                 translate("system.data.integrity.violation"),
                 HttpStatus.CONFLICT
+        ));
+    }
+
+    // 400 - @Valid body validation (bean validation on @RequestBody/@RequestPart DTOs)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResult> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String messageKey = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("validation.failed");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResult(
+                translate(messageKey),
+                HttpStatus.BAD_REQUEST
+        ));
+    }
+
+    // 400 - @Validated constraint violations (e.g. validated method params / path variables)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResult> handleConstraintViolation(ConstraintViolationException ex) {
+        String messageKey = ex.getConstraintViolations().stream()
+                .findFirst()
+                .map(v -> v.getMessage())
+                .orElse("validation.failed");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResult(
+                translate(messageKey),
+                HttpStatus.BAD_REQUEST
         ));
     }
 

@@ -1,5 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
+import jakarta.validation.Valid;
+
 import com.skylab.superapp.business.abstracts.CertificateService;
 import com.skylab.superapp.core.constants.CertificateMessages;
 import com.skylab.superapp.core.results.DataResult;
@@ -8,6 +10,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.certificate.CertificateDto;
 import com.skylab.superapp.entities.DTOs.certificate.CreateCertificateRequest;
+import com.skylab.superapp.entities.DTOs.certificate.PatchCertificateRequest;
 import com.skylab.superapp.entities.DTOs.certificate.UpdateCertificateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -66,18 +69,28 @@ public class CertificateController {
     @PostMapping
     @Operation(summary = "Sertifika Oluştur")
     public ResponseEntity<DataResult<CertificateDto>> createCertificate(
-            @RequestBody CreateCertificateRequest request) {
+            @Valid @RequestBody CreateCertificateRequest request) {
         var result = certificateService.createCertificate(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, CertificateMessages.CERTIFICATE_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Sertifika Güncelle")
+    @Operation(summary = "Sertifika Güncelle (Tam)", description = "Sertifikayı tamamen değiştirir (PUT).")
     public ResponseEntity<DataResult<CertificateDto>> updateCertificate(
             @Parameter(description = "Sertifika UUID") @PathVariable UUID id,
-            @RequestBody UpdateCertificateRequest request) {
+            @Valid @RequestBody UpdateCertificateRequest request) {
         var result = certificateService.updateCertificate(id, request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, CertificateMessages.CERTIFICATE_UPDATED_SUCCESSFULLY, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Sertifika Güncelle (Kısmi)", description = "Sertifikanın yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<CertificateDto>> patchCertificate(
+            @Parameter(description = "Sertifika UUID") @PathVariable UUID id,
+            @RequestBody PatchCertificateRequest request) {
+        var result = certificateService.patchCertificate(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CertificateMessages.CERTIFICATE_UPDATED_SUCCESSFULLY, HttpStatus.OK));
     }

@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.sessions.CreateSessionRequest;
+import com.skylab.superapp.entities.DTOs.sessions.PatchSessionRequest;
 import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import com.skylab.superapp.entities.DTOs.sessions.UpdateSessionRequest;
 import com.skylab.superapp.entities.Session;
@@ -18,6 +19,8 @@ public interface SessionService {
     SessionDto getSessionById(UUID id);
 
     SessionDto updateSession(UUID id, UpdateSessionRequest updateSessionRequest);
+
+    SessionDto patchSession(UUID id, PatchSessionRequest patchSessionRequest);
 
     void deleteSession(UUID id);
 

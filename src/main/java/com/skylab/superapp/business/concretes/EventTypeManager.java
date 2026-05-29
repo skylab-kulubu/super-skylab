@@ -13,6 +13,7 @@ import com.skylab.superapp.dataAccess.EventTypeDao;
 import com.skylab.superapp.entities.DTOs.User.UserDto;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
+import com.skylab.superapp.entities.DTOs.eventType.PatchEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import com.skylab.superapp.entities.EventType;
 import lombok.RequiredArgsConstructor;
@@ -82,22 +83,40 @@ public class EventTypeManager implements EventTypeService {
     @Override
     @Authorize(resource = "EVENT_TYPE", action = "UPDATE")
     public EventTypeDto updateEventType(UUID id, UpdateEventTypeRequest updateEventTypeRequest) {
-        log.info("Initiating event type update. EventTypeId: {}", id);
+        log.info("Initiating event type replace (PUT). EventTypeId: {}", id);
 
         var eventType = getEventTypeEntityById(id);
+        applyName(id, eventType, updateEventTypeRequest.getName());
 
-        if (updateEventTypeRequest.getName() != null && !updateEventTypeRequest.getName().isEmpty()) {
-            if (!opaClient.isValidEventType(updateEventTypeRequest.getName())) {
-                log.warn("Event type update failed: New name not defined in OPA or e-skylab. EventTypeId: {}, RequestedName: {}", id, updateEventTypeRequest.getName());
-                throw new BusinessException(EventTypeMessages.EVENT_TYPE_NOT_DEFINED_IN_OPA);
-            }
-            eventType.setName(updateEventTypeRequest.getName());
+        var updatedEventType = eventTypeDao.save(eventType);
+        log.info("Event type replaced successfully. EventTypeId: {}", updatedEventType.getId());
+
+        return eventTypeMapper.toDto(updatedEventType);
+    }
+
+    @Override
+    @Authorize(resource = "EVENT_TYPE", action = "UPDATE")
+    public EventTypeDto patchEventType(UUID id, PatchEventTypeRequest request) {
+        log.info("Initiating event type patch (PATCH). EventTypeId: {}", id);
+
+        var eventType = getEventTypeEntityById(id);
+        if (request.getName() != null) {
+            applyName(id, eventType, request.getName());
         }
 
         var updatedEventType = eventTypeDao.save(eventType);
-        log.info("Event type updated successfully. EventTypeId: {}", updatedEventType.getId());
+        log.info("Event type patched successfully. EventTypeId: {}", updatedEventType.getId());
 
         return eventTypeMapper.toDto(updatedEventType);
+    }
+
+    /** Isim degisimini OPA/e-skylab gecerlilik kontrolu ile uygular. */
+    private void applyName(UUID id, EventType eventType, String name) {
+        if (!opaClient.isValidEventType(name)) {
+            log.warn("Event type update failed: New name not defined in OPA or e-skylab. EventTypeId: {}, RequestedName: {}", id, name);
+            throw new BusinessException(EventTypeMessages.EVENT_TYPE_NOT_DEFINED_IN_OPA);
+        }
+        eventType.setName(name);
     }
 
     @Override

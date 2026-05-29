@@ -1,28 +1,16 @@
 package com.skylab.superapp.entities.DTOs.User;
 
-import com.skylab.superapp.core.constants.UserMessages;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Getter
 @Setter
-public class UpdateUserRequest {
-
-    @NotBlank(message = UserMessages.FIRST_NAME_CANNOT_BE_NULL)
+public class PatchUserRequest {
     private String firstName;
-
-    @NotBlank(message = UserMessages.LAST_NAME_CANNOT_BE_NULL)
     private String lastName;
-
     private String linkedin;
-
     private String university;
-
     private String faculty;
-
     private String department;
-
-
 }

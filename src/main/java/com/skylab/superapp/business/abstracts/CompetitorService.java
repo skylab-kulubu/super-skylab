@@ -4,6 +4,7 @@ import com.skylab.superapp.entities.Competitor;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
 import com.skylab.superapp.entities.DTOs.Competitor.CreateCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.LeaderboardDto;
+import com.skylab.superapp.entities.DTOs.Competitor.PatchCompetitorRequest;
 import com.skylab.superapp.entities.DTOs.Competitor.UpdateCompetitorRequest;
 
 import java.util.List;
@@ -14,6 +15,8 @@ public interface CompetitorService {
     CompetitorDto addCompetitor(CreateCompetitorRequest createCompetitorRequest);
 
     CompetitorDto updateCompetitor(UUID id, UpdateCompetitorRequest updateCompetitorRequest);
+
+    CompetitorDto patchCompetitor(UUID id, PatchCompetitorRequest patchCompetitorRequest);
 
     void deleteCompetitor(UUID competitorId);
 

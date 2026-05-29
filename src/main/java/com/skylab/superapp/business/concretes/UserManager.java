@@ -193,17 +193,47 @@ public class UserManager implements UserService {
     @Override
     @Transactional
     public UserDto updateAuthenticatedUser(UpdateUserRequest updateUserRequest) {
-        log.info("Initiating authenticated user update.");
+        log.info("Initiating authenticated user replace (PUT).");
 
         User currentUser = getAuthenticatedUserEntity();
 
-        if (updateUserRequest.getLinkedin() != null) currentUser.setLinkedin(updateUserRequest.getLinkedin());
-        if (updateUserRequest.getUniversity() != null) currentUser.setUniversity(updateUserRequest.getUniversity());
-        if (updateUserRequest.getFaculty() != null) currentUser.setFaculty(updateUserRequest.getFaculty());
-        if (updateUserRequest.getDepartment() != null) currentUser.setDepartment(updateUserRequest.getDepartment());
+        boolean nameChanged = applyFullName(currentUser, updateUserRequest.getFirstName(), updateUserRequest.getLastName());
+        currentUser.setLinkedin(updateUserRequest.getLinkedin());
+        currentUser.setUniversity(updateUserRequest.getUniversity());
+        currentUser.setFaculty(updateUserRequest.getFaculty());
+        currentUser.setDepartment(updateUserRequest.getDepartment());
+
+        if (nameChanged) {
+            log.info("Authenticated user name updated, initiating Keycloak sync. UserId: {}", currentUser.getId());
+            keycloakAdminService.updateUserFullName(currentUser.getId(), currentUser.getFirstName(), currentUser.getLastName());
+        }
 
         currentUser = userDao.save(currentUser);
-        log.info("Authenticated user profile updated successfully. UserId: {}", currentUser.getId());
+        log.info("Authenticated user profile replaced successfully. UserId: {}", currentUser.getId());
+
+        return userMapper.toDto(currentUser);
+    }
+
+    @Override
+    @Transactional
+    public UserDto patchAuthenticatedUser(PatchUserRequest request) {
+        log.info("Initiating authenticated user patch (PATCH).");
+
+        User currentUser = getAuthenticatedUserEntity();
+
+        boolean nameChanged = applyPartialName(currentUser, request.getFirstName(), request.getLastName());
+        if (request.getLinkedin() != null) currentUser.setLinkedin(request.getLinkedin());
+        if (request.getUniversity() != null) currentUser.setUniversity(request.getUniversity());
+        if (request.getFaculty() != null) currentUser.setFaculty(request.getFaculty());
+        if (request.getDepartment() != null) currentUser.setDepartment(request.getDepartment());
+
+        if (nameChanged) {
+            log.info("Authenticated user name patched, initiating Keycloak sync. UserId: {}", currentUser.getId());
+            keycloakAdminService.updateUserFullName(currentUser.getId(), currentUser.getFirstName(), currentUser.getLastName());
+        }
+
+        currentUser = userDao.save(currentUser);
+        log.info("Authenticated user profile patched successfully. UserId: {}", currentUser.getId());
 
         return userMapper.toDto(currentUser);
     }
@@ -274,24 +304,18 @@ public class UserManager implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(UUID id, UpdateUserRequest updateUserRequest) {
-        log.info("Initiating user profile update. UserId: {}", id);
+        log.info("Initiating user profile replace (PUT). UserId: {}", id);
 
         User user = userDao.findById(id).orElseThrow(() -> {
             log.error("User update failed: Resource not found. UserId: {}", id);
             return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
         });
 
-        boolean nameChanged = false;
-
-        if (updateUserRequest.getFirstName() != null && !updateUserRequest.getFirstName().isBlank() && !updateUserRequest.getFirstName().equals(user.getFirstName())) {
-            user.setFirstName(updateUserRequest.getFirstName());
-            nameChanged = true;
-        }
-
-        if (updateUserRequest.getLinkedin() != null) user.setLinkedin(updateUserRequest.getLinkedin());
-        if (updateUserRequest.getUniversity() != null) user.setUniversity(updateUserRequest.getUniversity());
-        if (updateUserRequest.getFaculty() != null) user.setFaculty(updateUserRequest.getFaculty());
-        if (updateUserRequest.getDepartment() != null) user.setDepartment(updateUserRequest.getDepartment());
+        boolean nameChanged = applyFullName(user, updateUserRequest.getFirstName(), updateUserRequest.getLastName());
+        user.setLinkedin(updateUserRequest.getLinkedin());
+        user.setUniversity(updateUserRequest.getUniversity());
+        user.setFaculty(updateUserRequest.getFaculty());
+        user.setDepartment(updateUserRequest.getDepartment());
 
         if (nameChanged) {
             log.info("User name updated locally, initiating Keycloak sync. UserId: {}", id);
@@ -299,9 +323,62 @@ public class UserManager implements UserService {
         }
 
         user = userDao.save(user);
-        log.info("User updated successfully. UserId: {}", id);
+        log.info("User replaced successfully. UserId: {}", id);
 
         return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    public UserDto patchUser(UUID id, PatchUserRequest request) {
+        log.info("Initiating user profile patch (PATCH). UserId: {}", id);
+
+        User user = userDao.findById(id).orElseThrow(() -> {
+            log.error("User update failed: Resource not found. UserId: {}", id);
+            return new ResourceNotFoundException(UserMessages.USER_NOT_FOUND);
+        });
+
+        boolean nameChanged = applyPartialName(user, request.getFirstName(), request.getLastName());
+        if (request.getLinkedin() != null) user.setLinkedin(request.getLinkedin());
+        if (request.getUniversity() != null) user.setUniversity(request.getUniversity());
+        if (request.getFaculty() != null) user.setFaculty(request.getFaculty());
+        if (request.getDepartment() != null) user.setDepartment(request.getDepartment());
+
+        if (nameChanged) {
+            log.info("User name patched locally, initiating Keycloak sync. UserId: {}", id);
+            keycloakAdminService.updateUserFullName(id, user.getFirstName(), user.getLastName());
+        }
+
+        user = userDao.save(user);
+        log.info("User patched successfully. UserId: {}", id);
+
+        return userMapper.toDto(user);
+    }
+
+    private boolean applyFullName(User user, String firstName, String lastName) {
+        boolean nameChanged = false;
+        if (firstName != null && !firstName.equals(user.getFirstName())) {
+            user.setFirstName(firstName);
+            nameChanged = true;
+        }
+        if (lastName != null && !lastName.equals(user.getLastName())) {
+            user.setLastName(lastName);
+            nameChanged = true;
+        }
+        return nameChanged;
+    }
+
+    private boolean applyPartialName(User user, String firstName, String lastName) {
+        boolean nameChanged = false;
+        if (firstName != null && !firstName.isBlank() && !firstName.equals(user.getFirstName())) {
+            user.setFirstName(firstName);
+            nameChanged = true;
+        }
+        if (lastName != null && !lastName.isBlank() && !lastName.equals(user.getLastName())) {
+            user.setLastName(lastName);
+            nameChanged = true;
+        }
+        return nameChanged;
     }
 
     @Override

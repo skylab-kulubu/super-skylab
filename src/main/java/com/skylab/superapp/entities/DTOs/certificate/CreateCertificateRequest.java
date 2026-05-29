@@ -1,5 +1,7 @@
 package com.skylab.superapp.entities.DTOs.certificate;
 
+import com.skylab.superapp.core.constants.CertificateMessages;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +17,7 @@ import java.util.UUID;
 public class CreateCertificateRequest {
     private String name;
     private String description;
+    @NotNull(message = CertificateMessages.EVENT_ID_NOT_NULL)
     private UUID eventId;
     private List<UUID> ownerIds;
     private String storedLink;

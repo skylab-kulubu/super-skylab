@@ -1,5 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
+import jakarta.validation.Valid;
+
 import com.skylab.superapp.business.abstracts.SeasonService;
 import com.skylab.superapp.core.constants.SeasonMessages;
 import com.skylab.superapp.core.results.DataResult;
@@ -7,6 +9,7 @@ import com.skylab.superapp.core.results.Result;
 import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
+import com.skylab.superapp.entities.DTOs.season.PatchSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,16 +65,24 @@ public class SeasonController {
             @ApiResponse(responseCode = "201", description = "Sezon başarıyla oluşturuldu."),
             @ApiResponse(responseCode = "400", description = "Sezon adı zaten mevcut veya tarihler hatalı.", content = @Content)
     })
-    public ResponseEntity<DataResult<SeasonDto>> addSeason(@RequestBody CreateSeasonRequest request) {
+    public ResponseEntity<DataResult<SeasonDto>> addSeason(@Valid @RequestBody CreateSeasonRequest request) {
         var result = seasonService.addSeason(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Sezon Güncelle", description = "Belirtilen sezonun isim, tarih veya aktiflik durumunu günceller.")
-    public ResponseEntity<DataResult<SeasonDto>> updateSeason(@PathVariable UUID id, @RequestBody UpdateSeasonRequest request) {
+    @Operation(summary = "Sezon Güncelle (Tam)", description = "Sezonu tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
+    public ResponseEntity<DataResult<SeasonDto>> updateSeason(@PathVariable UUID id, @Valid @RequestBody UpdateSeasonRequest request) {
         var result = seasonService.updateSeason(id, request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_UPDATED_SUCCESSFULLY, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Sezon Güncelle (Kısmi)", description = "Sezonun yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<SeasonDto>> patchSeason(@PathVariable UUID id, @RequestBody PatchSeasonRequest request) {
+        var result = seasonService.patchSeason(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, SeasonMessages.SEASON_UPDATED_SUCCESSFULLY, HttpStatus.OK));
     }

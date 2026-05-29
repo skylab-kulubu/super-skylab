@@ -1,6 +1,7 @@
 package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
+import com.skylab.superapp.entities.DTOs.season.PatchSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
@@ -15,6 +16,8 @@ public interface SeasonService {
     void deleteSeason(UUID id);
 
     SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest);
+
+    SeasonDto patchSeason(UUID id, PatchSeasonRequest patchSeasonRequest);
 
     List<SeasonDto> getAllSeasons();
 

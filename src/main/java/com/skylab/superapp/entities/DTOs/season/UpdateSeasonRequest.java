@@ -15,8 +15,10 @@ public class UpdateSeasonRequest {
     @NotNull(message = SeasonMessages.SEASON_NAME_CANNOT_BE_NULL_OR_BLANK)
     private String name;
 
+    @NotNull(message = SeasonMessages.SEASON_START_DATE_CANNOT_BE_NULL)
     private LocalDateTime startDate;
 
+    @NotNull(message = SeasonMessages.SEASON_END_DATE_CANNOT_BE_NULL)
     private LocalDateTime endDate;
 
     private boolean active;

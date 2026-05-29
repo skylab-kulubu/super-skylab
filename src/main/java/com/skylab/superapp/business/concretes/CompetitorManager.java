@@ -71,7 +71,25 @@ public class CompetitorManager implements CompetitorService {
     @Transactional
     @Authorize(resource = "COMPETITOR", action = "UPDATE")
     public CompetitorDto updateCompetitor(@AuthzKey UUID id, UpdateCompetitorRequest request) {
-        log.info("Initiating competitor update. CompetitorId: {}", id);
+        log.info("Initiating competitor replace (PUT). CompetitorId: {}", id);
+        var competitor = getCompetitorEntityById(id);
+
+        competitor.setUser(userService.getUserEntityById(request.getUserId()));
+        competitor.setEvent(eventService.getEventEntityById(request.getEventId()));
+        competitor.setScore(request.getPoints());
+        competitor.setWinner(request.isWinner());
+
+        var updatedCompetitor = competitorDao.save(competitor);
+        log.info("Competitor replaced successfully. CompetitorId: {}", updatedCompetitor.getId());
+
+        return convertToDto(updatedCompetitor);
+    }
+
+    @Override
+    @Transactional
+    @Authorize(resource = "COMPETITOR", action = "UPDATE")
+    public CompetitorDto patchCompetitor(@AuthzKey UUID id, PatchCompetitorRequest request) {
+        log.info("Initiating competitor patch (PATCH). CompetitorId: {}", id);
         var competitor = getCompetitorEntityById(id);
 
         if (request.getUserId() != null) {
@@ -80,13 +98,15 @@ public class CompetitorManager implements CompetitorService {
         if (request.getEventId() != null) {
             competitor.setEvent(eventService.getEventEntityById(request.getEventId()));
         }
-        if (request.getPoints() != 0) {
+        if (request.getPoints() != null) {
             competitor.setScore(request.getPoints());
         }
-        competitor.setWinner(request.isWinner());
+        if (request.getIsWinner() != null) {
+            competitor.setWinner(request.getIsWinner());
+        }
 
         var updatedCompetitor = competitorDao.save(competitor);
-        log.info("Competitor updated successfully. CompetitorId: {}", updatedCompetitor.getId());
+        log.info("Competitor patched successfully. CompetitorId: {}", updatedCompetitor.getId());
 
         return convertToDto(updatedCompetitor);
     }

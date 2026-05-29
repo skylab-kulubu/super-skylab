@@ -9,4 +9,7 @@ public class EventDayMessages {
     public static final String EVENT_DAY_UPDATED_SUCCESSFULLY = "event.day.updated.success";
     public static final String EVENT_DAY_CREATED_SUCCESSFULLY = "event.day.created.success";
     public static final String EVENT_DAY_GET_ALL_SUCCESS = "event.day.get.all.success";
+    public static final String EVENT_ID_NOT_NULL = "event.day.event.id.not.null";
+    public static final String START_DATE_NOT_NULL = "event.day.start.date.not.null";
+    public static final String END_DATE_NOT_NULL = "event.day.end.date.not.null";
 }

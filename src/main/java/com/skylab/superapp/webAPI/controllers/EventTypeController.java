@@ -8,6 +8,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.eventType.CreateEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
+import com.skylab.superapp.entities.DTOs.eventType.PatchEventTypeRequest;
 import com.skylab.superapp.entities.DTOs.eventType.UpdateEventTypeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,9 +62,17 @@ public class EventTypeController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Etkinlik Türünü Güncelle", description = "Etkinlik kategorisinin ismini veya yetkili rollerini günceller.")
-    public ResponseEntity<DataResult<EventTypeDto>> updateEventType(@PathVariable UUID id, @RequestBody UpdateEventTypeRequest request) {
+    @Operation(summary = "Etkinlik Türünü Güncelle (Tam)", description = "Etkinlik kategorisini tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
+    public ResponseEntity<DataResult<EventTypeDto>> updateEventType(@PathVariable UUID id, @RequestBody @Valid UpdateEventTypeRequest request) {
         var result = eventTypeService.updateEventType(id, request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPE_UPDATED, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Etkinlik Türünü Güncelle (Kısmi)", description = "Etkinlik kategorisinin yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<EventTypeDto>> patchEventType(@PathVariable UUID id, @RequestBody PatchEventTypeRequest request) {
+        var result = eventTypeService.patchEventType(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventTypeMessages.EVENT_TYPE_UPDATED, HttpStatus.OK));
     }

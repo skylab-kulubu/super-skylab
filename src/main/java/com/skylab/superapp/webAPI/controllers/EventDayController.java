@@ -1,5 +1,7 @@
 package com.skylab.superapp.webAPI.controllers;
 
+import jakarta.validation.Valid;
+
 import com.skylab.superapp.business.abstracts.EventDayService;
 import com.skylab.superapp.core.constants.EventDayMessages;
 import com.skylab.superapp.core.results.DataResult;
@@ -8,6 +10,7 @@ import com.skylab.superapp.core.results.SuccessDataResult;
 import com.skylab.superapp.core.results.SuccessResult;
 import com.skylab.superapp.entities.DTOs.eventDay.CreateEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.GetEventDayResponseDto;
+import com.skylab.superapp.entities.DTOs.eventDay.PatchEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.UpdateEventDayRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,18 +52,28 @@ public class EventDayController {
     @PostMapping
     @Operation(summary = "Etkinlik Günü Oluştur")
     public ResponseEntity<DataResult<GetEventDayResponseDto>> createEventDay(
-            @RequestBody CreateEventDayRequest request) {
+            @Valid @RequestBody CreateEventDayRequest request) {
         var result = eventDayService.createEventDay(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new SuccessDataResult<>(result, EventDayMessages.EVENT_DAY_CREATED_SUCCESSFULLY, HttpStatus.CREATED));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Etkinlik Günü Güncelle")
+    @Operation(summary = "Etkinlik Günü Güncelle (Tam)", description = "Etkinlik gününü tamamen değiştirir (PUT). Zorunlu alanlar gönderilmelidir.")
     public ResponseEntity<DataResult<GetEventDayResponseDto>> updateEventDay(
             @Parameter(description = "Etkinlik Günü UUID") @PathVariable UUID id,
-            @RequestBody UpdateEventDayRequest request) {
+            @Valid @RequestBody UpdateEventDayRequest request) {
         var result = eventDayService.updateEventDay(id, request);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(result, EventDayMessages.EVENT_DAY_UPDATED_SUCCESSFULLY, HttpStatus.OK));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Etkinlik Günü Güncelle (Kısmi)", description = "Etkinlik gününün yalnızca gönderilen alanlarını günceller (PATCH).")
+    public ResponseEntity<DataResult<GetEventDayResponseDto>> patchEventDay(
+            @Parameter(description = "Etkinlik Günü UUID") @PathVariable UUID id,
+            @RequestBody PatchEventDayRequest request) {
+        var result = eventDayService.patchEventDay(id, request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, EventDayMessages.EVENT_DAY_UPDATED_SUCCESSFULLY, HttpStatus.OK));
     }

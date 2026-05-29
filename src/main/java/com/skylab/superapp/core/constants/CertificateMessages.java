@@ -7,5 +7,6 @@ public class CertificateMessages {
     public static final String CERTIFICATE_CREATED_SUCCESSFULLY = "certificate.created.success";
     public static final String CERTIFICATE_UPDATED_SUCCESSFULLY = "certificate.updated.success";
     public static final String CERTIFICATE_DELETED_SUCCESSFULLY = "certificate.deleted.success";
+    public static final String EVENT_ID_NOT_NULL = "certificate.event.id.not.null";
 
 }

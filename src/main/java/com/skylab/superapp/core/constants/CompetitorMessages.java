@@ -6,4 +6,6 @@ public final class CompetitorMessages {
     public static final String COMPETITOR_DELETE_SUCCESS = "competitor.delete.success";
     public static final String COMPETITOR_GET_SUCCESS = "competitor.get.success";
     public static final String COMPETITOR_ALREADY_IN_COMPETITION = "competitor.already.in.competition";
+    public static final String USER_ID_NOT_NULL = "competitor.user.id.not.null";
+    public static final String EVENT_ID_NOT_NULL = "competitor.event.id.not.null";
 }

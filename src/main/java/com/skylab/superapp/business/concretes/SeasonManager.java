@@ -9,9 +9,12 @@ import com.skylab.superapp.core.mappers.SeasonMapper;
 import com.skylab.superapp.core.security.authz.Authorize;
 import com.skylab.superapp.dataAccess.SeasonDao;
 import com.skylab.superapp.entities.DTOs.season.CreateSeasonRequest;
+import com.skylab.superapp.entities.DTOs.season.PatchSeasonRequest;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.season.UpdateSeasonRequest;
 import com.skylab.superapp.entities.Season;
+
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,26 +78,61 @@ public class SeasonManager implements SeasonService {
     @Transactional
     @Authorize(resource = "SEASON", action = "UPDATE")
     public SeasonDto updateSeason(UUID id, UpdateSeasonRequest updateSeasonRequest) {
-        log.info("Initiating season update. SeasonId: {}", id);
+        log.info("Initiating season replace (PUT). SeasonId: {}", id);
 
         var season = getSeasonEntityById(id);
 
-        var newStartDate = updateSeasonRequest.getStartDate() != null ? updateSeasonRequest.getStartDate() : season.getStartDate();
-        var newEndDate = updateSeasonRequest.getEndDate() != null ? updateSeasonRequest.getEndDate() : season.getEndDate();
-
-        if (newStartDate != null && newEndDate != null && newStartDate.isAfter(newEndDate)) {
-            log.warn("Season update failed: Start date is after end date. SeasonId: {}", id);
-            throw new ValidationException(SeasonMessages.START_DATE_CANNOT_BE_AFTER_END_DATE);
-        }
-
-        if (updateSeasonRequest.getStartDate() != null) season.setStartDate(updateSeasonRequest.getStartDate());
-        if (updateSeasonRequest.getEndDate() != null) season.setEndDate(updateSeasonRequest.getEndDate());
+        validateDateRange(id, updateSeasonRequest.getStartDate(), updateSeasonRequest.getEndDate());
+        applyName(id, season, updateSeasonRequest.getName());
+        season.setStartDate(updateSeasonRequest.getStartDate());
+        season.setEndDate(updateSeasonRequest.getEndDate());
         season.setActive(updateSeasonRequest.isActive());
 
         var savedSeason = seasonDao.save(season);
-        log.info("Season updated successfully. SeasonId: {}", id);
+        log.info("Season replaced successfully. SeasonId: {}", id);
 
         return seasonMapper.toDto(savedSeason);
+    }
+
+    @Override
+    @Transactional
+    @Authorize(resource = "SEASON", action = "UPDATE")
+    public SeasonDto patchSeason(UUID id, PatchSeasonRequest request) {
+        log.info("Initiating season patch (PATCH). SeasonId: {}", id);
+
+        var season = getSeasonEntityById(id);
+
+        var newStartDate = request.getStartDate() != null ? request.getStartDate() : season.getStartDate();
+        var newEndDate = request.getEndDate() != null ? request.getEndDate() : season.getEndDate();
+        validateDateRange(id, newStartDate, newEndDate);
+
+        if (request.getName() != null) applyName(id, season, request.getName());
+        if (request.getStartDate() != null) season.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) season.setEndDate(request.getEndDate());
+        if (request.getActive() != null) season.setActive(request.getActive());
+
+        var savedSeason = seasonDao.save(season);
+        log.info("Season patched successfully. SeasonId: {}", id);
+
+        return seasonMapper.toDto(savedSeason);
+    }
+
+    private void validateDateRange(UUID id, LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            log.warn("Season update failed: Start date is after end date. SeasonId: {}", id);
+            throw new ValidationException(SeasonMessages.START_DATE_CANNOT_BE_AFTER_END_DATE);
+        }
+    }
+
+    private void applyName(UUID id, Season season, String name) {
+        if (name.equals(season.getName())) {
+            return;
+        }
+        if (seasonDao.existsByName(name)) {
+            log.warn("Season update failed: Name already exists. SeasonId: {}, RequestedName: {}", id, name);
+            throw new BusinessException(SeasonMessages.SEASON_NAME_ALREADY_EXISTS);
+        }
+        season.setName(name);
     }
 
     @Override

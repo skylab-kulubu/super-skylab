@@ -2,6 +2,7 @@ package com.skylab.superapp.business.abstracts;
 
 import com.skylab.superapp.entities.DTOs.eventDay.CreateEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.GetEventDayResponseDto;
+import com.skylab.superapp.entities.DTOs.eventDay.PatchEventDayRequest;
 import com.skylab.superapp.entities.DTOs.eventDay.UpdateEventDayRequest;
 import com.skylab.superapp.entities.EventDay;
 
@@ -17,6 +18,7 @@ public interface EventDayService {
 
     GetEventDayResponseDto createEventDay(CreateEventDayRequest request);
     GetEventDayResponseDto updateEventDay(UUID id, UpdateEventDayRequest request);
+    GetEventDayResponseDto patchEventDay(UUID id, PatchEventDayRequest request);
     void deleteEventDay(UUID id);
     List<GetEventDayResponseDto> getEventDaysByEventId(UUID eventId);
 

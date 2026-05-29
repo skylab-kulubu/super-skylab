@@ -12,6 +12,7 @@ import com.skylab.superapp.dataAccess.CertificateDao;
 import com.skylab.superapp.entities.Certificate;
 import com.skylab.superapp.entities.DTOs.certificate.CertificateDto;
 import com.skylab.superapp.entities.DTOs.certificate.CreateCertificateRequest;
+import com.skylab.superapp.entities.DTOs.certificate.PatchCertificateRequest;
 import com.skylab.superapp.entities.DTOs.certificate.UpdateCertificateRequest;
 import com.skylab.superapp.entities.User;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,27 @@ public class CertificateManager implements CertificateService {
     @Transactional
     @Authorize(resource = "CERTIFICATE", action = "UPDATE")
     public CertificateDto updateCertificate(@AuthzKey UUID id, UpdateCertificateRequest request) {
-        log.info("Initiating certificate update. CertificateId: {}", id);
+        log.info("Initiating certificate replace (PUT). CertificateId: {}", id);
+
+        var certificate = getCertificateEntityById(id);
+
+        certificate.setName(request.getName());
+        certificate.setDescription(request.getDescription());
+        certificate.setStoredLink(request.getStoredLink());
+        certificate.setNameboxCenterX(request.getNameboxCenterX());
+        certificate.setNameboxCenterY(request.getNameboxCenterY());
+
+        var saved = certificateDao.save(certificate);
+        log.info("Certificate replaced successfully. CertificateId: {}", id);
+
+        return certificateMapper.toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    @Authorize(resource = "CERTIFICATE", action = "UPDATE")
+    public CertificateDto patchCertificate(@AuthzKey UUID id, PatchCertificateRequest request) {
+        log.info("Initiating certificate patch (PATCH). CertificateId: {}", id);
 
         var certificate = getCertificateEntityById(id);
 
@@ -79,7 +100,7 @@ public class CertificateManager implements CertificateService {
         if (request.getNameboxCenterY() != null) certificate.setNameboxCenterY(request.getNameboxCenterY());
 
         var saved = certificateDao.save(certificate);
-        log.info("Certificate updated successfully. CertificateId: {}", id);
+        log.info("Certificate patched successfully. CertificateId: {}", id);
 
         return certificateMapper.toDto(saved);
     }
