@@ -26,7 +26,6 @@ public final class EventMessages {
     public static final String USER_ALREADY_REGISTERED = "event.user.already.registered.to.event";
     public static final String EVENT_HAS_EVENT_DAYS = "event.has.event.days";
     public static final String EVENT_HAS_TICKETS = "event.has.tickets";
-    public static final String EVENT_HAS_CERTIFICATES = "event.has.certificates";
     public static final String SUCCESS_ADD_IMAGES_TO_EVENT = "event.images.add.success";
     public static final String SUCCESS_REMOVE_IMAGES_FROM_EVENT = "event.images.remove.success";
     public static final String EVENT_NOT_ASSIGNED_TO_THIS_SEASON = "event.not.assigned.to.this.season";

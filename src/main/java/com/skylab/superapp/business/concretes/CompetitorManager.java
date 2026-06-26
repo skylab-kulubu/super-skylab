@@ -28,7 +28,6 @@ public class CompetitorManager implements CompetitorService {
     private final CompetitorDao competitorDao;
     private final UserService userService;
     private final EventService eventService;
-    private final EventTypeService eventTypeService;
     private final CompetitorMapper competitorMapper;
 
     @Override
@@ -155,9 +154,9 @@ public class CompetitorManager implements CompetitorService {
     }
 
     @Override
-    public List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId) {
-        log.debug("Retrieving competitors by event type. EventTypeId: {}", eventTypeId);
-        return convertToDtoList(competitorDao.findAllByEventType(eventTypeService.getEventTypeEntityById(eventTypeId)));
+    public List<CompetitorDto> getCompetitorsByOwnerTeam(String ownerTeam) {
+        log.debug("Retrieving competitors by owner team. OwnerTeam: {}", ownerTeam);
+        return convertToDtoList(competitorDao.findAllByEvent_OwnerTeam(ownerTeam));
     }
 
     @Override

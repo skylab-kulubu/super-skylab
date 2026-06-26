@@ -7,7 +7,6 @@ import com.skylab.superapp.entities.DTOs.Event.PatchEventRequest;
 import com.skylab.superapp.entities.DTOs.Event.UpdateEventRequest;
 import com.skylab.superapp.entities.DTOs.ticket.request.GuestTicketRequestDto;
 import com.skylab.superapp.entities.Event;
-import com.skylab.superapp.entities.EventType;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -22,8 +21,6 @@ public interface EventService {
     EventDto updateEvent(UUID id, UpdateEventRequest updateEventRequest);
 
     EventDto patchEvent(UUID id, PatchEventRequest patchEventRequest);
-
-    List<EventDto> getAllEventsByEventType(EventType eventType);
 
     EventDto getEventById(UUID id);
 

@@ -54,9 +54,9 @@ public class TicketCheckInManager implements TicketCheckInService {
         log.info("Ticket checked in successfully. TicketId: {}, EventDayId: {}", ticketId, eventDayId);
     }
 
-    private String extractEventTypeName(Ticket ticket) {
-        if (ticket != null && ticket.getEvent() != null && ticket.getEvent().getType() != null) {
-            return ticket.getEvent().getType().getName();
+    private String extractOwnerTeam(Ticket ticket) {
+        if (ticket != null && ticket.getEvent() != null) {
+            return ticket.getEvent().getOwnerTeam();
         }
         return null;
     }

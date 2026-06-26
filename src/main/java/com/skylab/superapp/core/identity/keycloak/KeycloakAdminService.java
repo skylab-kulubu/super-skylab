@@ -213,6 +213,101 @@ public class KeycloakAdminService {
         }
     }
 
+    /**
+     * Grup herkese acik listelenebilir mi? Keycloak'ta grup attribute'u ile yonetilir:
+     *   Group -> Attributes -> public_listing = true
+     * Bulunamayan ya da flag'i olmayan/false olan grup -> false.
+     * Boylece allowlist app config'de degil, dogrudan Keycloak'ta yonetilir.
+     */
+    public boolean isGroupPublic(String groupName) {
+        if (groupName == null || groupName.isBlank()) {
+            return false;
+        }
+        try {
+            var realm = keycloak.realm(keycloakProperties.getRealm());
+            GroupRepresentation match = findGroupByName(realm.groups().groups(groupName, 0, 100), groupName);
+            if (match == null) {
+                return false;
+            }
+            // Brief temsil attribute icermez -> tam temsili cek.
+            GroupRepresentation full = realm.groups().group(match.getId()).toRepresentation();
+            Map<String, List<String>> attrs = full.getAttributes();
+            if (attrs == null) {
+                return false;
+            }
+            List<String> values = attrs.get("public_listing");
+            return values != null && values.stream().anyMatch("true"::equalsIgnoreCase);
+        } catch (Exception e) {
+            log.error("Error checking public flag for group: {}. Error: {}", groupName, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Grubun TÜM attribute'larini (ilk degerleriyle) tek cagrida doner; orn:
+     * display_name_tr, display_name_en, description_tr, description_en ...
+     * Bulunamayan grup -> bos map. Etiketler/aciklamalar Keycloak'tan yonetilir (kodda harita yok).
+     */
+    public Map<String, String> getGroupAttributes(String groupName) {
+        Map<String, String> result = new HashMap<>();
+        if (groupName == null || groupName.isBlank()) {
+            return result;
+        }
+        try {
+            var realm = keycloak.realm(keycloakProperties.getRealm());
+            GroupRepresentation match = findGroupByName(realm.groups().groups(groupName, 0, 100), groupName);
+            if (match == null) {
+                return result;
+            }
+            GroupRepresentation full = realm.groups().group(match.getId()).toRepresentation();
+            Map<String, List<String>> attrs = full.getAttributes();
+            if (attrs != null) {
+                for (Map.Entry<String, List<String>> e : attrs.entrySet()) {
+                    List<String> v = e.getValue();
+                    if (v != null && !v.isEmpty() && v.get(0) != null && !v.get(0).isBlank()) {
+                        result.put(e.getKey(), v.get(0));
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Error reading attributes for group: {}. Error: {}", groupName, e.getMessage());
+            return result;
+        }
+    }
+
+    /**
+     * Verilen takimin LIDER alt grubunun (LIDERLER / KOORDINATORLER) DOGRUDAN uyelerini doner.
+     */
+    public Set<UUID> getTeamLeaderUserIds(String teamName) {
+        Set<UUID> leaderIds = new HashSet<>();
+        if (teamName == null || teamName.isBlank()) {
+            return leaderIds;
+        }
+        Set<String> leaderSubgroups = Set.of("LIDERLER", "KOORDINATORLER");
+        try {
+            var realm = keycloak.realm(keycloakProperties.getRealm());
+            GroupRepresentation team = findGroupByName(realm.groups().groups(teamName, 0, 100), teamName);
+            if (team == null) {
+                return leaderIds;
+            }
+            List<GroupRepresentation> subGroups = realm.groups().group(team.getId()).getSubGroups(0, 100, false);
+            if (subGroups != null) {
+                for (GroupRepresentation sub : subGroups) {
+                    if (leaderSubgroups.contains(sub.getName())) {
+                        keycloak.realm(keycloakProperties.getRealm()).groups().group(sub.getId())
+                                .members(0, 2000)
+                                .forEach(u -> leaderIds.add(UUID.fromString(u.getId())));
+                    }
+                }
+            }
+            return leaderIds;
+        } catch (Exception e) {
+            log.error("Error retrieving leaders for team: {}. Error: {}", teamName, e.getMessage());
+            return leaderIds;
+        }
+    }
+
     private GroupRepresentation findGroupByName(List<GroupRepresentation> groups, String name) {
         if (groups == null) return null;
         for (GroupRepresentation g : groups) {

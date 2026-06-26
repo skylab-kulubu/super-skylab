@@ -30,7 +30,7 @@ public interface CompetitorService {
 
     List<CompetitorDto> getCompetitorsByUserId(UUID userId);
 
-    List<CompetitorDto> getCompetitorsByEventTypeId(UUID eventTypeId);
+    List<CompetitorDto> getCompetitorsByOwnerTeam(String ownerTeam);
 
     List<LeaderboardDto> getLeaderboardByEventType(String eventTypeName);
 

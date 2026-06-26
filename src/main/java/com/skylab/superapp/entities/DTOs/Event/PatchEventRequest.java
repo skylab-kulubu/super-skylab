@@ -18,7 +18,7 @@ public class PatchEventRequest {
     private String linkedin;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private UUID typeId;
+    private String ownerTeam;
     private UUID seasonId;
     private Boolean isRanked;
     private Boolean active;

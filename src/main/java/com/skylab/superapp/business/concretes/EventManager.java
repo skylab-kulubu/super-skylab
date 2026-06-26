@@ -30,7 +30,6 @@ public class EventManager implements EventService {
 
     private final EventDao eventDao;
     private final ImageService imageService;
-    private final EventTypeService eventTypeService;
     private final EventMapper eventMapper;
     private final SeasonService seasonService;
     private final UserService userService;
@@ -42,7 +41,6 @@ public class EventManager implements EventService {
     @Authorize(resource = "EVENT", action = "CREATE")
     public EventDto addEvent(@AuthzKey CreateEventRequest createEventRequest) {
         log.info("Initiating event creation. EventName: {}", createEventRequest.getName());
-        EventType eventType = eventTypeService.getEventTypeEntityById(createEventRequest.getEventTypeId());
 
         Season season = createEventRequest.getSeasonId() != null
                 ? seasonService.getSeasonEntityById(createEventRequest.getSeasonId())
@@ -57,7 +55,7 @@ public class EventManager implements EventService {
         Event event = Event.builder()
                 .name(createEventRequest.getName())
                 .description(createEventRequest.getDescription())
-                .type(eventType)
+                .ownerTeam(createEventRequest.getOwnerTeam())
                 .capacity(createEventRequest.getCapacity())
                 .formUrl(createEventRequest.getFormUrl())
                 .startDate(createEventRequest.getStartDate())
@@ -94,11 +92,6 @@ public class EventManager implements EventService {
             throw new BusinessException(EventMessages.EVENT_HAS_EVENT_DAYS);
         }
 
-        if (event.getCertificates() != null && !event.getCertificates().isEmpty()) {
-            log.warn("Event deletion failed: Has certificates. EventId: {}", id);
-            throw new BusinessException(EventMessages.EVENT_HAS_CERTIFICATES);
-        }
-
         eventDao.delete(event);
         log.info("Event deleted successfully. EventId: {}", id);
     }
@@ -120,7 +113,7 @@ public class EventManager implements EventService {
         event.setPrizeInfo(updateEventRequest.getPrizeInfo());
         event.setRanked(updateEventRequest.isRanked());
         event.setActive(updateEventRequest.isActive());
-        event.setType(eventTypeService.getEventTypeEntityById(updateEventRequest.getTypeId()));
+        event.setOwnerTeam(updateEventRequest.getOwnerTeam());
         event.setSeason(seasonService.getSeasonEntityById(updateEventRequest.getSeasonId()));
 
         Event updatedEvent = eventDao.save(event);
@@ -146,8 +139,8 @@ public class EventManager implements EventService {
         if (request.getPrizeInfo() != null) event.setPrizeInfo(request.getPrizeInfo());
         if (request.getIsRanked() != null) event.setRanked(request.getIsRanked());
         if (request.getActive() != null) event.setActive(request.getActive());
-        if (request.getTypeId() != null) {
-            event.setType(eventTypeService.getEventTypeEntityById(request.getTypeId()));
+        if (request.getOwnerTeam() != null) {
+            event.setOwnerTeam(request.getOwnerTeam());
         }
         if (request.getSeasonId() != null) {
             event.setSeason(seasonService.getSeasonEntityById(request.getSeasonId()));
@@ -157,17 +150,6 @@ public class EventManager implements EventService {
         log.info("Event patched successfully. EventId: {}", updatedEvent.getId());
 
         return eventMapper.eventToEventDto(updatedEvent);
-    }
-
-    @Override
-    public List<EventDto> getAllEventsByEventType(EventType eventType) {
-        var events = eventDao.findAllByType(eventTypeService.getEventTypeEntityById(eventType.getId()));
-
-        log.info("Retrieved events by type. EventType: {}, TotalCount: {}", eventType.getName(), events.size());
-
-        return events.stream()
-                .map(eventMapper::eventToEventDto)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -210,7 +192,7 @@ public class EventManager implements EventService {
 
     @Override
     public List<EventDto> getAllFutureEventsByEventType(String eventType) {
-        var futureEvents = eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventType));
+        var futureEvents = eventDao.findAllByOwnerTeam(eventType);
         return futureEvents.stream().map(eventMapper::eventToEventDto).collect(Collectors.toList());
     }
 
@@ -224,7 +206,7 @@ public class EventManager implements EventService {
 
     @Override
     public List<EventDto> getAllEventsByEventTypeName(String eventTypeName) {
-        return eventDao.findAllByType(eventTypeService.getEventTypeEntityByName(eventTypeName))
+        return eventDao.findAllByOwnerTeam(eventTypeName)
                 .stream()
                 .map(eventMapper::eventToEventDto)
                 .collect(Collectors.toList());

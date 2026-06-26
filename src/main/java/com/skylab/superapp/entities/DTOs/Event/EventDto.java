@@ -2,7 +2,6 @@ package com.skylab.superapp.entities.DTOs.Event;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.skylab.superapp.entities.DTOs.Competitor.CompetitorDto;
-import com.skylab.superapp.entities.DTOs.eventType.EventTypeDto;
 import com.skylab.superapp.entities.DTOs.season.SeasonDto;
 import com.skylab.superapp.entities.DTOs.sessions.SessionDto;
 import lombok.AllArgsConstructor;
@@ -26,7 +25,7 @@ public class EventDto {
     private String description;
     private String location;
 
-    private EventTypeDto type;
+    private String ownerTeam;
 
     private String formUrl;
     private LocalDateTime startDate;

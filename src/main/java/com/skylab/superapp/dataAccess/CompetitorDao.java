@@ -20,7 +20,7 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
             "SUM(c.score), " +
             "COUNT(c)) " +
             "FROM Competitor c " +
-            "WHERE c.event.type.name = :eventTypeName " +
+            "WHERE c.event.ownerTeam = :eventTypeName " +
             "GROUP BY c.user.id " +
             "ORDER BY SUM(c.score) DESC")
     List<LeaderboardScoreDto> getLeaderboardScoresByEventType(@Param("eventTypeName") String eventTypeName);
@@ -30,7 +30,7 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
             "SUM(c.score), " +
             "COUNT(c)) " +
             "FROM Competitor c " +
-            "WHERE c.event.type.name = :eventTypeName " +
+            "WHERE c.event.ownerTeam = :eventTypeName " +
             "AND c.event.season.id = :seasonId " +
             "GROUP BY c.user.id " +
             "ORDER BY SUM(c.score) DESC")
@@ -45,7 +45,7 @@ public interface CompetitorDao extends JpaRepository<Competitor, UUID> {
 
     List<Competitor> findCompetitorsByUser(User user);
 
-    List<Competitor> findAllByEventType(EventType eventType);
+    List<Competitor> findAllByEvent_OwnerTeam(String ownerTeam);
 
     @Query("SELECT c FROM Competitor c WHERE c.event =:event and c.isWinner = true")
     Competitor findWinnerOfEvent(Event event);

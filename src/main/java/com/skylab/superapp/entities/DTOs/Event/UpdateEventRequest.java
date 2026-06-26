@@ -21,8 +21,6 @@ public class UpdateEventRequest {
     @NotNull(message = EventMessages.LOCATION_NOT_NULL)
     private String location;
 
-    private String type;
-
     private String formUrl;
 
     private String prizeInfo;
@@ -32,7 +30,7 @@ public class UpdateEventRequest {
     private boolean isRanked;
 
     @NotNull(message = EventMessages.EVENT_TYPE_ID_NOT_NULL)
-    private UUID typeId;
+    private String ownerTeam;
 
     @NotNull(message = EventMessages.SEASON_ID_NOT_NULL)
     private UUID seasonId;

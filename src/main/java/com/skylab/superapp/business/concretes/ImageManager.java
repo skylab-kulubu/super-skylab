@@ -11,16 +11,12 @@ import com.skylab.superapp.core.utilities.storage.R2StorageService;
 import com.skylab.superapp.dataAccess.ImageDao;
 import com.skylab.superapp.entities.DTOs.Image.response.UploadImageResponseDto;
 import com.skylab.superapp.entities.Image;
+import com.skylab.superapp.core.utilities.media.MediaSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.imaging.Imaging;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +31,7 @@ public class ImageManager implements ImageService {
     private final ImageDao imageDao;
     private final R2StorageService r2StorageService;
     private final ImageMapper imageMapper;
+    private final MediaSanitizer mediaSanitizer;
 
     @Override
     public Image uploadImage(MultipartFile image) {
@@ -52,18 +49,19 @@ public class ImageManager implements ImageService {
 
         try {
             log.debug("Processing image sanitization to remove metadata. FileName: {}", image.getOriginalFilename());
-            byte[] cleanImageBytes = removeMetadata(image);
+            MediaSanitizer.SanitizedMedia clean = mediaSanitizer.sanitize(image.getBytes());
+            byte[] cleanImageBytes = clean.data();
 
             String imageKey = r2StorageService.uploadFile(
                     cleanImageBytes,
                     image.getOriginalFilename(),
-                    image.getContentType(),
+                    clean.contentType(),
                     FolderType.IMAGE
             );
 
             Image newImage = new Image();
             newImage.setFileName(image.getOriginalFilename());
-            newImage.setFileType(image.getContentType());
+            newImage.setFileType(clean.contentType());
             newImage.setFileUrl(imageKey);
             newImage.setFileSize((long) cleanImageBytes.length);
 
@@ -126,23 +124,4 @@ public class ImageManager implements ImageService {
                 });
     }
 
-    private byte[] removeMetadata(MultipartFile image) throws IOException {
-        String extension = getFileExtension(image.getOriginalFilename()).toLowerCase().substring(1);
-
-        log.debug("Stripping metadata from image. Extension: {}", extension);
-
-        BufferedImage bufferedImage = Imaging.getBufferedImage(image.getInputStream());
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageIO.write(bufferedImage, extension, outputStream);
-
-        return outputStream.toByteArray();
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            log.warn("File extension validation failed: No extension found. FileName: {}", fileName);
-            throw new ValidationException(ImageMessages.IMAGE_EXTENSION_MISSING);
-        }
-        return fileName.substring(fileName.lastIndexOf("."));
-    }
 }

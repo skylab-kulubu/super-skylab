@@ -121,11 +121,11 @@ public class CompetitorController {
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }
 
-    @GetMapping("/event-type/{eventTypeId}")
-    @Operation(summary = "Etkinlik Türüne Göre Yarışmacıları Listele")
-    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByEventTypeId(
-            @Parameter(description = "Etkinlik Türü UUID") @PathVariable UUID eventTypeId) {
-        var result = competitorService.getCompetitorsByEventTypeId(eventTypeId);
+    @GetMapping("/team/{ownerTeam}")
+    @Operation(summary = "Sahip Takıma Göre Yarışmacıları Listele", description = "Belirtilen takımın (Örn: AGC) sahip olduğu etkinliklerdeki yarışmacıları listeler.")
+    public ResponseEntity<DataResult<List<CompetitorDto>>> getCompetitorsByOwnerTeam(
+            @Parameter(description = "Sahip Takım Adı") @PathVariable String ownerTeam) {
+        var result = competitorService.getCompetitorsByOwnerTeam(ownerTeam);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new SuccessDataResult<>(result, CompetitorMessages.COMPETITOR_GET_SUCCESS, HttpStatus.OK));
     }

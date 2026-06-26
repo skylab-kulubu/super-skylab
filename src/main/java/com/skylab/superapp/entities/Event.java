@@ -7,7 +7,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -45,9 +44,9 @@ public class Event extends BaseEntity{
     @Column(name = "location")
     private String location;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_type_id", nullable = false)
-    private EventType type;
+
+    @Column(name = "owner_team", nullable = false)
+    private String ownerTeam;
 
     @Column(name = "form_url")
     private String formUrl;
@@ -95,10 +94,5 @@ public class Event extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "season_id")
     private Season season;
-
-    @OneToMany(mappedBy = "event")
-    @Builder.Default
-    private List<Certificate> certificates = new ArrayList<>();
-
 
 }

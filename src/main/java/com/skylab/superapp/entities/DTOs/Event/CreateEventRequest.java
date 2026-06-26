@@ -24,7 +24,7 @@ public class CreateEventRequest {
     private String location;
 
     @NotNull(message = EventMessages.EVENT_TYPE_ID_NOT_NULL)
-    private UUID eventTypeId;
+    private String ownerTeam;
 
     @NotNull(message = EventMessages.SEASON_ID_NOT_NULL)
     private UUID seasonId;

@@ -6,7 +6,6 @@ import com.skylab.superapp.dataAccess.EventDayDao;
 import com.skylab.superapp.dataAccess.SessionDao;
 import com.skylab.superapp.entities.Event;
 import com.skylab.superapp.entities.EventDay;
-import com.skylab.superapp.entities.EventType;
 import com.skylab.superapp.entities.Session;
 import com.skylab.superapp.entities.DTOs.sessions.CreateSessionRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +14,9 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * SESSION -> sahip etkinligin turu (session -> eventDay -> event -> type).
- *   CREATE        : CreateSessionRequest -> eventDayId -> EventDay -> getEvent() -> type
- *   UPDATE/DELETE : UUID sessionId       -> Session -> getEventDay() -> getEvent() -> type
+ * SESSION -> sahip etkinligin takimi (session -> eventDay -> event -> ownerTeam).
+ *   CREATE        : CreateSessionRequest -> eventDayId -> EventDay -> getEvent() -> ownerTeam
+ *   UPDATE/DELETE : UUID sessionId       -> Session -> getEventDay() -> getEvent() -> ownerTeam
  */
 @Component
 @RequiredArgsConstructor
@@ -33,24 +32,24 @@ public class SessionResourceContextResolver implements ResourceContextResolver {
 
     @Override
     public ResourceContext resolve(String action, Object key) {
-        EventType type = resolveType(key);
-        if (type == null) {
+        String team = resolveOwnerTeam(key);
+        if (team == null) {
             return ResourceContext.empty();
         }
         return ResourceContext.builder()
-                .eventType(type.getName())
-                .ownerGroup(type.getOwnerGroup())
+                .eventType(team)
+                .ownerGroup(team)
                 .build();
     }
 
-    private EventType resolveType(Object key) {
+    private String resolveOwnerTeam(Object key) {
         if (key instanceof CreateSessionRequest request) {
             return eventDayDao.findById(request.getEventDayId())
-                    .map(EventDay::getEvent).map(Event::getType).orElse(null);
+                    .map(EventDay::getEvent).map(Event::getOwnerTeam).orElse(null);
         }
         if (key instanceof UUID id) {
             return sessionDao.findById(id)
-                    .map(Session::getEventDay).map(EventDay::getEvent).map(Event::getType).orElse(null);
+                    .map(Session::getEventDay).map(EventDay::getEvent).map(Event::getOwnerTeam).orElse(null);
         }
         return null;
     }

@@ -40,26 +40,4 @@ public class OpaClient {
         }
     }
 
-    public boolean isValidEventType(String eventTypeName) {
-        log.debug("Initiating OPA event type validation. EventTypeName: {}", eventTypeName);
-
-        try {
-            OpaResponse response = webClient.post()
-                    .uri(opaProperties.getUrl() + "/v1/data/skylab/event_types/is_valid")
-                    .bodyValue(Map.of("input", Map.of("name", eventTypeName)))
-                    .retrieve()
-                    .bodyToMono(OpaResponse.class)
-                    .block();
-
-            boolean isValid = response != null && Boolean.TRUE.equals(response.getResult());
-            log.debug("OPA event type validation completed. EventTypeName: {}, IsValid: {}", eventTypeName, isValid);
-
-            return isValid;
-
-        } catch (Exception e) {
-            log.error("OPA service connection failed during event type validation. EventTypeName: {}, ErrorMessage: {}", eventTypeName, e.getMessage(), e);
-            throw new AccessDeniedException("opa.service.unavailable");
-        }
-    }
-
 }

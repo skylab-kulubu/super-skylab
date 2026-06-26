@@ -41,6 +41,15 @@ public interface UserService{
 
     List<UserDto> getUsersByGroupName(String groupName, boolean includeSubGroups);
 
+
+    List<UserDto> getPublicTeamMembers(String groupName);
+
+
+    Set<UUID> getTeamLeaderIds(String groupName);
+
+
+    java.util.Map<String, String> getTeamAttributes(String groupName);
+
     User getUserEntityById(UUID id);
 
     void syncUserFromKeycloak(String userId, UserRepresentation keycloakUser);
