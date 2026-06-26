@@ -470,6 +470,21 @@ public class UserManager implements UserService {
     }
 
     @Override
+    public List<UserDto> getPublicTeamLeaders(String groupName) {
+        if (!keycloakAdminService.isGroupPublic(groupName)) {
+            log.warn("Public team leaders denied: group not public or not found. GroupName: {}", groupName);
+            throw new ResourceNotFoundException("Takım bulunamadı veya listelenemez.");
+        }
+        Set<UUID> leaderIds = keycloakAdminService.getTeamLeaderUserIds(groupName);
+        if (leaderIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return userDao.findAllById(leaderIds).stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Map<String, String> getTeamAttributes(String groupName) {
         return keycloakAdminService.getGroupAttributes(groupName);
     }

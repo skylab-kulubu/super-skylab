@@ -37,7 +37,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/teams")
 @RequiredArgsConstructor
-@Tag(name = "Takım Yönetimi", description = "public_listing işaretli takımların üyelerini listeleme (PII'siz).")
+@Tag(name = "Takım Yönetimi", description = "public_listing işaretli takımların üyelerini/liderlerini listeleme (PII'siz).")
 public class TeamController {
 
     private final UserService userService;
@@ -45,9 +45,8 @@ public class TeamController {
     @GetMapping("/{team}/members")
     @Operation(
             summary = "Takım Üyelerini Getir",
-            description = "Keycloak'ta 'public_listing=true' işaretli bir takımın (örn. WEBLAB) üyelerini, " +
-                    "alt gruplar dahil listeler. Yalnızca güvenli alanlar (ad, foto, linkedin, üniversite...) döner. " +
-                    "İşaretsiz/yapısal gruplar (UYELER, ADMIN...) için 404."
+            description = "Takımın tüm üyelerini (alt gruplar dahil) listeler; her üyede 'leader' bayrağı vardır. " +
+                    "Yalnızca güvenli alanlar döner. İşaretsiz/yapısal gruplar için 404."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Üyeler listelendi."),
@@ -58,9 +57,37 @@ public class TeamController {
 
         List<UserDto> users = userService.getPublicTeamMembers(team);
         Set<UUID> leaderIds = userService.getTeamLeaderIds(team);
+
+        TeamMembersResponse response = buildResponse(team, users, leaderIds);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(response, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
+    }
+
+    @GetMapping("/{team}/leaders")
+    @Operation(
+            summary = "Takım Liderlerini Getir",
+            description = "Yalnızca takımın lider alt grubundaki (LIDERLER/KOORDINATORLER) üyeleri listeler. " +
+                    "İşaretsiz/yapısal gruplar için 404."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Liderler listelendi."),
+            @ApiResponse(responseCode = "404", description = "Takım bulunamadı veya listelenemez.")
+    })
+    public ResponseEntity<DataResult<TeamMembersResponse>> getTeamLeaders(
+            @Parameter(description = "Takım adı", example = "WEBLAB") @PathVariable String team) {
+
+        List<UserDto> leaders = userService.getPublicTeamLeaders(team);
+        Set<UUID> leaderIds = userService.getTeamLeaderIds(team);
+
+        TeamMembersResponse response = buildResponse(team, leaders, leaderIds);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new SuccessDataResult<>(response, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
+    }
+
+    // ---- ortak: attribute'lardan çok dilli etiket + güvenli üye DTO'su kurar ----
+    private TeamMembersResponse buildResponse(String team, List<UserDto> users, Set<UUID> leaderIds) {
         Map<String, String> attrs = userService.getTeamAttributes(team);
 
-        // display_name_tr/en, description_tr/en -> cok dilli; tr yoksa ham takim adina dus.
         LocalizedText displayName = new LocalizedText(
                 attrs.getOrDefault("display_name_tr", team),
                 attrs.get("display_name_en"));
@@ -80,14 +107,6 @@ public class TeamController {
                         leaderIds.contains(u.getId())))
                 .toList();
 
-        TeamMembersResponse response = new TeamMembersResponse(
-                team,
-                displayName,
-                description,
-                members.size(),
-                members);
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new SuccessDataResult<>(response, UserMessages.USERS_LISTED_SUCCESS, HttpStatus.OK));
+        return new TeamMembersResponse(team, displayName, description, members.size(), members);
     }
 }

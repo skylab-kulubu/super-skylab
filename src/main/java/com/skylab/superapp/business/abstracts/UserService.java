@@ -45,6 +45,9 @@ public interface UserService{
     List<UserDto> getPublicTeamMembers(String groupName);
 
 
+    List<UserDto> getPublicTeamLeaders(String groupName);
+
+
     Set<UUID> getTeamLeaderIds(String groupName);
 
 
